@@ -62,7 +62,7 @@ export default function Movements() {
     queryKey: ["movements", filterType, filterProductId],
     queryFn: async () => {
       let q = supabase.from("movements").select("*, products(sku, description), lots(lot_code), from_addr:addresses!movements_from_address_id_fkey(code), to_addr:addresses!movements_to_address_id_fkey(code)").order("created_at", { ascending: false }).limit(100);
-      if (filterType !== "ALL") q = q.eq("type", filterType);
+      if (filterType !== "ALL") q = q.eq("type", filterType as "IN" | "OUT" | "TRANSFER");
       if (filterProductId) q = q.eq("product_id", filterProductId);
       const { data, error } = await q;
       if (error) throw error;
