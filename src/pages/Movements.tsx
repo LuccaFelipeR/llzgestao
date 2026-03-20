@@ -100,6 +100,7 @@ export default function Movements() {
         lot_id: finalLotId,
         qty: qtyNum,
         note: note.trim() || null,
+        operator_user_id: user?.id ?? null,
       };
 
       if (type === "IN") {
