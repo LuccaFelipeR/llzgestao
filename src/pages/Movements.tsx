@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,7 @@ type MovementType = "IN" | "OUT" | "TRANSFER";
 const TYPE_LABELS: Record<MovementType, string> = { IN: "Entrada", OUT: "Saída", TRANSFER: "Transferência" };
 
 export default function Movements() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<MovementType>("IN");
@@ -98,6 +100,7 @@ export default function Movements() {
         lot_id: finalLotId,
         qty: qtyNum,
         note: note.trim() || null,
+        operator_user_id: user?.id ?? null,
       };
 
       if (type === "IN") {

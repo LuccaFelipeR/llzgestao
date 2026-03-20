@@ -1,16 +1,26 @@
 import { Link, useLocation } from "react-router-dom";
-import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard } from "lucide-react";
-
-const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Início" },
-  { to: "/produtos", icon: Package, label: "Produtos" },
-  { to: "/enderecos", icon: MapPin, label: "Endereços" },
-  { to: "/movimentacoes", icon: ArrowRightLeft, label: "Movimentações" },
-  { to: "/estoque", icon: Search, label: "Estoque" },
-];
+import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const { user, profile, isAdmin, role, signOut } = useAuth();
+
+  const navItems = [
+    { to: "/", icon: LayoutDashboard, label: "Início" },
+    { to: "/produtos", icon: Package, label: "Produtos" },
+    { to: "/enderecos", icon: MapPin, label: "Endereços" },
+    { to: "/movimentacoes", icon: ArrowRightLeft, label: "Movimentações" },
+    { to: "/estoque", icon: Search, label: "Estoque" },
+    ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
+  ];
+
+  const ROLE_LABELS: Record<string, string> = {
+    operator: "Operador",
+    supervisor: "Supervisor",
+    admin: "Administrador",
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -21,6 +31,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             LLZ
           </Link>
           <span className="text-xs text-muted-foreground hidden sm:inline">Gestão de Estoque</span>
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+              <User size={14} />
+              <span className="truncate max-w-[150px]">{profile?.full_name || user?.email}</span>
+              {role && (
+                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] font-semibold">
+                  {ROLE_LABELS[role] ?? role}
+                </span>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground hover:text-foreground h-8 px-2">
+              <LogOut size={16} />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -45,6 +69,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Link>
             );
           })}
+
+          {/* User info at bottom of sidebar */}
+          <div className="mt-auto pt-4 border-t border-border">
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground truncate">{profile?.full_name || "Usuário"}</p>
+              <p className="truncate">{user?.email}</p>
+            </div>
+          </div>
         </nav>
 
         {/* Main content */}
