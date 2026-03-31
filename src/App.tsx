@@ -10,6 +10,9 @@ import Addresses from "@/pages/Addresses";
 import Movements from "@/pages/Movements";
 import StockQuery from "@/pages/StockQuery";
 import AdminPanel from "@/pages/AdminPanel";
+import Scanner from "@/pages/Scanner";
+import Onboarding from "@/pages/Onboarding";
+import NotificationSettings from "@/pages/NotificationSettings";
 import Login from "@/pages/Login";
 import ResetPassword from "@/pages/ResetPassword";
 import PendingApproval from "@/pages/PendingApproval";
@@ -61,6 +64,9 @@ function AppRoutes() {
                 <Route path="/enderecos" element={<Addresses />} />
                 <Route path="/movimentacoes" element={<Movements />} />
                 <Route path="/estoque" element={<StockQuery />} />
+                <Route path="/scanner" element={<Scanner />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/notificacoes" element={<NotificationSettings />} />
                 <Route
                   path="/admin"
                   element={
