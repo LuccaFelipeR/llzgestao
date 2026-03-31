@@ -185,26 +185,35 @@ export type Database = {
       }
       products: {
         Row: {
+          barcode: string | null
           created_at: string
           description: string
           id: string
           is_active: boolean
+          min_stock: number
+          price: number
           sku: string
           unit: string
         }
         Insert: {
+          barcode?: string | null
           created_at?: string
           description: string
           id?: string
           is_active?: boolean
+          min_stock?: number
+          price?: number
           sku: string
           unit?: string
         }
         Update: {
+          barcode?: string | null
           created_at?: string
           description?: string
           id?: string
           is_active?: boolean
+          min_stock?: number
+          price?: number
           sku?: string
           unit?: string
         }
@@ -217,7 +226,10 @@ export type Database = {
           full_name: string | null
           id: string
           is_approved: boolean
+          notify_daily_summary: boolean
+          notify_min_stock: boolean
           updated_at: string
+          whatsapp_number: string | null
         }
         Insert: {
           created_at?: string
@@ -225,7 +237,10 @@ export type Database = {
           full_name?: string | null
           id: string
           is_approved?: boolean
+          notify_daily_summary?: boolean
+          notify_min_stock?: boolean
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Update: {
           created_at?: string
@@ -233,7 +248,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_approved?: boolean
+          notify_daily_summary?: boolean
+          notify_min_stock?: boolean
           updated_at?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
