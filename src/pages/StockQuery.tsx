@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatAddressDisplay } from "@/lib/address-utils";
+import { Download } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const STALE_DAYS_DEFAULT = 30;
 
@@ -13,7 +16,7 @@ export default function StockQuery() {
   const [filterType, setFilterType] = useState("ALL");
   const [staleDays, setStaleDays] = useState(STALE_DAYS_DEFAULT);
 
-  const { data: stock, isLoading } = useQuery({
+  const { data: stock } = useQuery({
     queryKey: ["stock-query"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -38,9 +41,44 @@ export default function StockQuery() {
     return { ...s, daysStale };
   }).sort((a: any, b: any) => b.daysStale - a.daysStale);
 
+  function exportCSV() {
+    if (!filtered || filtered.length === 0) {
+      toast({ title: "Nada para exportar", variant: "destructive" });
+      return;
+    }
+    const headers = ["SKU", "Produto", "Endereço", "Tipo", "Lote", "Validade", "Saldo", "Unidade", "Última Mov.", "Dias Parado"];
+    const rows = filtered.map((s: any) => [
+      s.products?.sku,
+      s.products?.description,
+      s.addresses?.code ? formatAddressDisplay(s.addresses.code) : "",
+      s.addresses?.type,
+      s.lots?.lot_code,
+      s.lots?.expires_at ? new Date(s.lots.expires_at).toLocaleDateString("pt-BR") : "",
+      s.qty,
+      s.products?.unit,
+      new Date(s.last_movement_at).toLocaleDateString("pt-BR"),
+      s.daysStale,
+    ]);
+
+    const csv = [headers, ...rows].map((r) => r.map((c: any) => `"${c ?? ""}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `estoque_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV exportado com sucesso!" });
+  }
+
   return (
     <div className="page-container">
-      <h1 className="page-title">Consulta de Estoque</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="page-title mb-0">Consulta de Estoque</h1>
+        <Button onClick={exportCSV} variant="outline" size="sm" className="gap-2">
+          <Download size={16} /> Exportar CSV
+        </Button>
+      </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
         <Input placeholder="Buscar SKU ou produto..." value={filterSku} onChange={(e) => setFilterSku(e.target.value)} className="w-56" />

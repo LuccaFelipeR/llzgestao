@@ -2,6 +2,8 @@ import { Link, useLocation } from "react-router-dom";
 import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import ThemeToggle from "@/components/ThemeToggle";
+import QuickSearch from "@/components/QuickSearch";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -31,7 +33,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             LLZ
           </Link>
           <span className="text-xs text-muted-foreground hidden sm:inline">Gestão de Estoque</span>
-          <div className="ml-auto flex items-center gap-3">
+          
+          <QuickSearch />
+          
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
             <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
               <User size={14} />
               <span className="truncate max-w-[150px]">{profile?.full_name || user?.email}</span>
@@ -48,7 +54,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Bottom nav (mobile) / Side nav (desktop) */}
       <div className="flex">
         {/* Desktop sidebar */}
         <nav className="hidden md:flex flex-col w-56 border-r border-border bg-card min-h-[calc(100vh-3.5rem)] p-3 gap-1 sticky top-14">
@@ -70,7 +75,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             );
           })}
 
-          {/* User info at bottom of sidebar */}
           <div className="mt-auto pt-4 border-t border-border">
             <div className="px-3 py-2 text-xs text-muted-foreground">
               <p className="font-medium text-foreground truncate">{profile?.full_name || "Usuário"}</p>
@@ -79,7 +83,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </nav>
 
-        {/* Main content */}
         <main className="flex-1 pb-20 md:pb-6">
           {children}
         </main>
