@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User } from "lucide-react";
+import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -11,10 +11,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { to: "/", icon: LayoutDashboard, label: "Início" },
+    { to: "/scanner", icon: ScanLine, label: "Scanner" },
     { to: "/produtos", icon: Package, label: "Produtos" },
     { to: "/enderecos", icon: MapPin, label: "Endereços" },
     { to: "/movimentacoes", icon: ArrowRightLeft, label: "Movimentações" },
     { to: "/estoque", icon: Search, label: "Estoque" },
+    { to: "/onboarding", icon: Upload, label: "Importar" },
+    { to: "/notificacoes", icon: Bell, label: "Alertas" },
     ...(isAdmin ? [{ to: "/admin", icon: Shield, label: "Admin" }] : []),
   ];
 
@@ -88,9 +91,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav - show top 5 items */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-card border-t border-border z-50 flex justify-around py-1.5 px-2">
-        {navItems.map((item) => {
+        {navItems.slice(0, 5).map((item) => {
           const active = location.pathname === item.to;
           return (
             <Link
