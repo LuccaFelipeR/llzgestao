@@ -68,6 +68,7 @@ function AppRoutes() {
                 <Route path="/scanner" element={<Scanner />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/notificacoes" element={<NotificationSettings />} />
+                <Route path="/ai-insights" element={<AIInsights />} />
                 <Route
                   path="/admin"
                   element={
