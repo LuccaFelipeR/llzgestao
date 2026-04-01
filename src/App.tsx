@@ -16,6 +16,7 @@ import NotificationSettings from "@/pages/NotificationSettings";
 import Login from "@/pages/Login";
 import ResetPassword from "@/pages/ResetPassword";
 import PendingApproval from "@/pages/PendingApproval";
+import AIInsights from "@/pages/AIInsights";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
