@@ -16,6 +16,7 @@ import NotificationSettings from "@/pages/NotificationSettings";
 import Login from "@/pages/Login";
 import ResetPassword from "@/pages/ResetPassword";
 import PendingApproval from "@/pages/PendingApproval";
+import AIInsights from "@/pages/AIInsights";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +68,7 @@ function AppRoutes() {
                 <Route path="/scanner" element={<Scanner />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/notificacoes" element={<NotificationSettings />} />
+                <Route path="/ai-insights" element={<AIInsights />} />
                 <Route
                   path="/admin"
                   element={
