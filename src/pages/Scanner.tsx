@@ -101,7 +101,7 @@ export default function Scanner() {
         if (!newLotCode.trim()) throw new Error("Informe o código do lote.");
         const { data: lotData, error: lotErr } = await supabase
           .from("lots")
-          .insert({ product_id: product.id, lot_code: newLotCode.trim() })
+          .insert({ product_id: product.id, lot_code: newLotCode.trim(), company_id: companyId })
           .select("id")
           .single();
         if (lotErr) throw new Error(lotErr.message);
