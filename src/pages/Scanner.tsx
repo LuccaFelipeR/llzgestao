@@ -14,6 +14,7 @@ import { Camera, CameraOff, Package, ArrowDownToLine, ArrowUpFromLine } from "lu
 
 export default function Scanner() {
   const { user } = useAuth();
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState("");
