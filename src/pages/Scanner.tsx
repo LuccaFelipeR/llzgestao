@@ -115,6 +115,7 @@ export default function Scanner() {
         lot_id: finalLotId,
         qty: qtyNum,
         operator_user_id: user?.id ?? null,
+        company_id: companyId,
       };
       if (action === "IN") movement.to_address_id = addressId;
       else movement.from_address_id = addressId;
