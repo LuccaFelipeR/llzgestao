@@ -24,6 +24,7 @@ type Product = {
 const UNITS = ["UN", "KG", "L", "M", "CX", "PC", "PAR"];
 
 export default function Products() {
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
