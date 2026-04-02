@@ -19,6 +19,7 @@ const TYPE_LABELS: Record<MovementType, string> = { IN: "Entrada", OUT: "Saída"
 
 export default function Movements() {
   const { user } = useAuth();
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<MovementType>("IN");
