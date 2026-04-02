@@ -39,16 +39,16 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      const { data: membership } = await supabase
-        .from("company_members" as any)
+      const { data: membership } = await (supabase as any)
+        .from("company_members")
         .select("company_id")
         .eq("user_id", user.id)
         .limit(1)
         .single();
 
       if (membership?.company_id) {
-        const { data: companyData } = await supabase
-          .from("companies" as any)
+        const { data: companyData } = await (supabase as any)
+          .from("companies")
           .select("*")
           .eq("id", membership.company_id)
           .single();
