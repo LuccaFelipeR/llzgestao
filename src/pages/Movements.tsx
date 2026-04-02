@@ -89,6 +89,7 @@ export default function Movements() {
           product_id: productId,
           lot_code: lotCode.trim(),
           expires_at: expiresAt || null,
+          company_id: companyId,
         }).select("id").single();
         if (lotError) throw new Error(`Erro ao criar lote: ${lotError.message}`);
         finalLotId = lotData.id;
