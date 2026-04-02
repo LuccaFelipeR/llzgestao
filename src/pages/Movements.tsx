@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ const TYPE_LABELS: Record<MovementType, string> = { IN: "Entrada", OUT: "Saída"
 
 export default function Movements() {
   const { user } = useAuth();
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<MovementType>("IN");
@@ -87,6 +89,7 @@ export default function Movements() {
           product_id: productId,
           lot_code: lotCode.trim(),
           expires_at: expiresAt || null,
+          company_id: companyId,
         }).select("id").single();
         if (lotError) throw new Error(`Erro ao criar lote: ${lotError.message}`);
         finalLotId = lotData.id;
@@ -101,6 +104,7 @@ export default function Movements() {
         qty: qtyNum,
         note: note.trim() || null,
         operator_user_id: user?.id ?? null,
+        company_id: companyId,
       };
 
       if (type === "IN") {

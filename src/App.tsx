@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { CompanyProvider, useCompany } from "@/contexts/CompanyContext";
 import AppLayout from "@/components/AppLayout";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
@@ -17,6 +18,8 @@ import Login from "@/pages/Login";
 import ResetPassword from "@/pages/ResetPassword";
 import PendingApproval from "@/pages/PendingApproval";
 import AIInsights from "@/pages/AIInsights";
+import CompanyOnboarding from "@/pages/CompanyOnboarding";
+import Documentation from "@/pages/Documentation";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +38,24 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
   if (!session) return <Navigate to="/login" replace />;
   if (!isApproved) return <PendingApproval />;
   if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+
+  return <>{children}</>;
+}
+
+function CompanyGate({ children }: { children: React.ReactNode }) {
+  const { company, loading } = useCompany();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground text-sm">Carregando empresa...</div>
+      </div>
+    );
+  }
+
+  if (company && !company.onboarding_completed) {
+    return <CompanyOnboarding />;
+  }
 
   return <>{children}</>;
 }
@@ -58,28 +79,24 @@ function AppRoutes() {
         path="/*"
         element={
           <ProtectedRoute>
-            <AppLayout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/produtos" element={<Products />} />
-                <Route path="/enderecos" element={<Addresses />} />
-                <Route path="/movimentacoes" element={<Movements />} />
-                <Route path="/estoque" element={<StockQuery />} />
-                <Route path="/scanner" element={<Scanner />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/notificacoes" element={<NotificationSettings />} />
-                <Route path="/ai-insights" element={<AIInsights />} />
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedRoute adminOnly>
-                      <AdminPanel />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </AppLayout>
+            <CompanyGate>
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/produtos" element={<Products />} />
+                  <Route path="/enderecos" element={<Addresses />} />
+                  <Route path="/movimentacoes" element={<Movements />} />
+                  <Route path="/estoque" element={<StockQuery />} />
+                  <Route path="/scanner" element={<Scanner />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  <Route path="/notificacoes" element={<NotificationSettings />} />
+                  <Route path="/ai-insights" element={<AIInsights />} />
+                  <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
+            </CompanyGate>
           </ProtectedRoute>
         }
       />
@@ -93,7 +110,9 @@ const App = () => (
       <Toaster />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <CompanyProvider>
+            <AppRoutes />
+          </CompanyProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

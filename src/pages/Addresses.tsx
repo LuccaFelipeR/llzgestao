@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { Plus, Pencil } from "lucide-react";
 import { validateAddressCode, parseAddressCode, formatAddressDisplay } from "@/lib/address-utils";
 
 export default function Addresses() {
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -34,7 +36,7 @@ export default function Addresses() {
         const { error } = await supabase.from("addresses").update({ code, type: form.type, ...parsed }).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("addresses").insert({ code, type: form.type, ...parsed });
+        const { error } = await supabase.from("addresses").insert({ code, type: form.type, ...parsed, company_id: companyId });
         if (error) throw error;
       }
     },

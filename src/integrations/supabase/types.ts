@@ -17,6 +17,7 @@ export type Database = {
       activity_log: {
         Row: {
           action: string
+          company_id: string | null
           created_at: string
           details: Json | null
           entity_id: string | null
@@ -26,6 +27,7 @@ export type Database = {
         }
         Insert: {
           action: string
+          company_id?: string | null
           created_at?: string
           details?: Json | null
           entity_id?: string | null
@@ -35,6 +37,7 @@ export type Database = {
         }
         Update: {
           action?: string
+          company_id?: string | null
           created_at?: string
           details?: Json | null
           entity_id?: string | null
@@ -42,12 +45,21 @@ export type Database = {
           id?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       addresses: {
         Row: {
           andar: string
           code: string
+          company_id: string | null
           created_at: string
           face: string
           id: string
@@ -60,6 +72,7 @@ export type Database = {
         Insert: {
           andar: string
           code: string
+          company_id?: string | null
           created_at?: string
           face: string
           id?: string
@@ -72,6 +85,7 @@ export type Database = {
         Update: {
           andar?: string
           code?: string
+          company_id?: string | null
           created_at?: string
           face?: string
           id?: string
@@ -81,10 +95,90 @@ export type Database = {
           rua?: string
           type?: Database["public"]["Enums"]["address_type"]
         }
+        Relationships: [
+          {
+            foreignKeyName: "addresses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          business_type: Database["public"]["Enums"]["business_type"]
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          onboarding_completed: boolean
+          operation_mode: Database["public"]["Enums"]["operation_mode"]
+          plan: string
+          settings: Json
+          updated_at: string
+        }
+        Insert: {
+          business_type?: Database["public"]["Enums"]["business_type"]
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          onboarding_completed?: boolean
+          operation_mode?: Database["public"]["Enums"]["operation_mode"]
+          plan?: string
+          settings?: Json
+          updated_at?: string
+        }
+        Update: {
+          business_type?: Database["public"]["Enums"]["business_type"]
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          onboarding_completed?: boolean
+          operation_mode?: Database["public"]["Enums"]["operation_mode"]
+          plan?: string
+          settings?: Json
+          updated_at?: string
+        }
         Relationships: []
+      }
+      company_members: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lots: {
         Row: {
+          company_id: string | null
           created_at: string
           expires_at: string | null
           id: string
@@ -92,6 +186,7 @@ export type Database = {
           product_id: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -99,6 +194,7 @@ export type Database = {
           product_id: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
@@ -106,6 +202,13 @@ export type Database = {
           product_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lots_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lots_product_id_fkey"
             columns: ["product_id"]
@@ -117,6 +220,7 @@ export type Database = {
       }
       movements: {
         Row: {
+          company_id: string | null
           created_at: string
           from_address_id: string | null
           id: string
@@ -129,6 +233,7 @@ export type Database = {
           type: Database["public"]["Enums"]["movement_type"]
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           from_address_id?: string | null
           id?: string
@@ -141,6 +246,7 @@ export type Database = {
           type: Database["public"]["Enums"]["movement_type"]
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           from_address_id?: string | null
           id?: string
@@ -153,6 +259,13 @@ export type Database = {
           type?: Database["public"]["Enums"]["movement_type"]
         }
         Relationships: [
+          {
+            foreignKeyName: "movements_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "movements_from_address_id_fkey"
             columns: ["from_address_id"]
@@ -186,6 +299,7 @@ export type Database = {
       products: {
         Row: {
           barcode: string | null
+          company_id: string | null
           created_at: string
           description: string
           id: string
@@ -197,6 +311,7 @@ export type Database = {
         }
         Insert: {
           barcode?: string | null
+          company_id?: string | null
           created_at?: string
           description: string
           id?: string
@@ -208,6 +323,7 @@ export type Database = {
         }
         Update: {
           barcode?: string | null
+          company_id?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -217,7 +333,15 @@ export type Database = {
           sku?: string
           unit?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -258,6 +382,7 @@ export type Database = {
       stock_balance: {
         Row: {
           address_id: string
+          company_id: string | null
           id: string
           last_movement_at: string
           lot_id: string
@@ -267,6 +392,7 @@ export type Database = {
         }
         Insert: {
           address_id: string
+          company_id?: string | null
           id?: string
           last_movement_at?: string
           lot_id: string
@@ -276,6 +402,7 @@ export type Database = {
         }
         Update: {
           address_id?: string
+          company_id?: string | null
           id?: string
           last_movement_at?: string
           lot_id?: string
@@ -289,6 +416,13 @@ export type Database = {
             columns: ["address_id"]
             isOneToOne: false
             referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_balance_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -330,6 +464,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -341,7 +476,15 @@ export type Database = {
     Enums: {
       address_type: "ARMAZENAGEM" | "TECNICO"
       app_role: "operator" | "supervisor" | "admin"
+      business_type:
+        | "bakery"
+        | "retail"
+        | "distributor"
+        | "warehouse"
+        | "logistics_center"
+        | "other"
       movement_type: "IN" | "OUT" | "TRANSFER"
+      operation_mode: "essential" | "operations" | "wms"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -471,7 +614,16 @@ export const Constants = {
     Enums: {
       address_type: ["ARMAZENAGEM", "TECNICO"],
       app_role: ["operator", "supervisor", "admin"],
+      business_type: [
+        "bakery",
+        "retail",
+        "distributor",
+        "warehouse",
+        "logistics_center",
+        "other",
+      ],
       movement_type: ["IN", "OUT", "TRANSFER"],
+      operation_mode: ["essential", "operations", "wms"],
     },
   },
 } as const

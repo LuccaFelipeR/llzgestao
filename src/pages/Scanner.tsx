@@ -3,6 +3,7 @@ import { Html5Qrcode } from "html5-qrcode";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { Camera, CameraOff, Package, ArrowDownToLine, ArrowUpFromLine } from "lu
 
 export default function Scanner() {
   const { user } = useAuth();
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState("");
@@ -99,7 +101,7 @@ export default function Scanner() {
         if (!newLotCode.trim()) throw new Error("Informe o código do lote.");
         const { data: lotData, error: lotErr } = await supabase
           .from("lots")
-          .insert({ product_id: product.id, lot_code: newLotCode.trim() })
+          .insert({ product_id: product.id, lot_code: newLotCode.trim(), company_id: companyId })
           .select("id")
           .single();
         if (lotErr) throw new Error(lotErr.message);
@@ -113,6 +115,7 @@ export default function Scanner() {
         lot_id: finalLotId,
         qty: qtyNum,
         operator_user_id: user?.id ?? null,
+        company_id: companyId,
       };
       if (action === "IN") movement.to_address_id = addressId;
       else movement.from_address_id = addressId;

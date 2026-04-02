@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ type Product = {
 const UNITS = ["UN", "KG", "L", "M", "CX", "PC", "PAR"];
 
 export default function Products() {
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
@@ -68,6 +70,7 @@ export default function Products() {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
+        payload.company_id = companyId;
         const { error } = await supabase.from("products").insert(payload);
         if (error) throw error;
       }

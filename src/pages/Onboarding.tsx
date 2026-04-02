@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ const DB_FIELDS = [
 ];
 
 export default function Onboarding() {
+  const { companyId } = useCompany();
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
@@ -89,7 +91,7 @@ export default function Onboarding() {
       if (mapping.min_stock && row[mapping.min_stock]) product.min_stock = Number(row[mapping.min_stock]) || 0;
       if (mapping.price && row[mapping.price]) product.price = Number(row[mapping.price]) || 0;
 
-      const { error } = await supabase.from("products").insert(product);
+      const { error } = await supabase.from("products").insert({ ...product, company_id: companyId });
       if (error) errors++;
       else success++;
       setProgress(Math.round(((i + 1) / total) * 100));
