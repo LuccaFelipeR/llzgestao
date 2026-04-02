@@ -91,7 +91,7 @@ export default function Onboarding() {
       if (mapping.min_stock && row[mapping.min_stock]) product.min_stock = Number(row[mapping.min_stock]) || 0;
       if (mapping.price && row[mapping.price]) product.price = Number(row[mapping.price]) || 0;
 
-      const { error } = await supabase.from("products").insert(product);
+      const { error } = await supabase.from("products").insert({ ...product, company_id: companyId });
       if (error) errors++;
       else success++;
       setProgress(Math.round(((i + 1) / total) * 100));
