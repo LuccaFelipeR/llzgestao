@@ -104,6 +104,7 @@ export default function Movements() {
         qty: qtyNum,
         note: note.trim() || null,
         operator_user_id: user?.id ?? null,
+        company_id: companyId,
       };
 
       if (type === "IN") {
