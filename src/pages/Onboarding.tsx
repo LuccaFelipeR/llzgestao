@@ -19,6 +19,7 @@ const DB_FIELDS = [
 ];
 
 export default function Onboarding() {
+  const { companyId } = useCompany();
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
