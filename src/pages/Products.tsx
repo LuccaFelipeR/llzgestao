@@ -70,6 +70,7 @@ export default function Products() {
         const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
+        payload.company_id = companyId;
         const { error } = await supabase.from("products").insert(payload);
         if (error) throw error;
       }
