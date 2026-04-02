@@ -12,6 +12,7 @@ import { Plus, Pencil } from "lucide-react";
 import { validateAddressCode, parseAddressCode, formatAddressDisplay } from "@/lib/address-utils";
 
 export default function Addresses() {
+  const { companyId } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
