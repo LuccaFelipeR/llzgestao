@@ -38,8 +38,8 @@ export default function CompanyOnboarding() {
     if (!operationMode) { toast({ title: "Selecione o modo de operação", variant: "destructive" }); return; }
 
     setSaving(true);
-    const { error } = await supabase
-      .from("companies" as any)
+    const { error } = await (supabase as any)
+      .from("companies")
       .update({
         name: name.trim(),
         business_type: businessType,
