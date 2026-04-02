@@ -36,7 +36,7 @@ export default function Addresses() {
         const { error } = await supabase.from("addresses").update({ code, type: form.type, ...parsed }).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("addresses").insert({ code, type: form.type, ...parsed });
+        const { error } = await supabase.from("addresses").insert({ code, type: form.type, ...parsed, company_id: companyId });
         if (error) throw error;
       }
     },
