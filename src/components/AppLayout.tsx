@@ -44,7 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          <QuickSearch />
+          <ConversationalSearch />
 
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />

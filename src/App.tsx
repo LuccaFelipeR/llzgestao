@@ -92,6 +92,7 @@ function AppRoutes() {
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/notificacoes" element={<NotificationSettings />} />
                   <Route path="/ai-insights" element={<AIInsights />} />
+                  <Route path="/recebimento" element={<GuidedReceiving />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
