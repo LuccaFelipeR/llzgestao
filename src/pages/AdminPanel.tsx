@@ -18,7 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AdminPanel() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "activity" | "system">("users");
+  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system">("users");
 
   // Fetch all profiles (admin only)
   const { data: profiles } = useQuery({
