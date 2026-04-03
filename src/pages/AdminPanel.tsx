@@ -141,6 +141,7 @@ export default function AdminPanel() {
         {[
           { key: "users" as const, label: "Usuários", icon: Users },
           { key: "activity" as const, label: "Atividade", icon: Activity },
+          { key: "audit" as const, label: "Auditoria", icon: ClipboardCheck },
           { key: "system" as const, label: "Sistema", icon: TrendingUp },
         ].map((t) => (
           <button
