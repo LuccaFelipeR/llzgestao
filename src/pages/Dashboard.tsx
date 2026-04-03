@@ -150,11 +150,11 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
         {[
+          { to: "/recebimento", label: "Receber", icon: ClipboardList },
           { to: "/scanner", label: "Scanner", icon: Package },
           { to: "/produtos", label: "Produtos", icon: Package },
           { to: "/movimentacoes", label: "Movimentar", icon: ArrowRightLeft },
           { to: "/estoque", label: "Estoque", icon: Boxes },
-          { to: "/onboarding", label: "Importar CSV", icon: ShoppingCart },
         ].map((item, i) => (
           <motion.div key={item.to} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.4 + i * 0.05 }}>
             <Link to={item.to} className="flex items-center gap-3 bg-card border border-border rounded-xl p-4 hover:border-primary/30 hover:shadow-md transition-all font-medium text-sm">
