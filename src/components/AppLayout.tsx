@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import ThemeToggle from "@/components/ThemeToggle";
-import QuickSearch from "@/components/QuickSearch";
+import ConversationalSearch from "@/components/ConversationalSearch";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
