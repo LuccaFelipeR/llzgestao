@@ -253,6 +253,9 @@ export default function AdminPanel() {
         </div>
       )}
 
+      {/* Audit Tab */}
+      {tab === "audit" && <OperationalAudit />}
+
       {/* System Tab */}
       {tab === "system" && systemStats && (
         <div>
