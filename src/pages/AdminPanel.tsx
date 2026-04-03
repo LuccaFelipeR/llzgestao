@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck } from "lucide-react";
+import OperationalAudit from "@/components/OperationalAudit";
 
 const ROLE_LABELS: Record<string, string> = {
   operator: "Operador",
@@ -17,7 +18,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AdminPanel() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "activity" | "system">("users");
+  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system">("users");
 
   // Fetch all profiles (admin only)
   const { data: profiles } = useQuery({
@@ -140,6 +141,7 @@ export default function AdminPanel() {
         {[
           { key: "users" as const, label: "Usuários", icon: Users },
           { key: "activity" as const, label: "Atividade", icon: Activity },
+          { key: "audit" as const, label: "Auditoria", icon: ClipboardCheck },
           { key: "system" as const, label: "Sistema", icon: TrendingUp },
         ].map((t) => (
           <button
@@ -250,6 +252,9 @@ export default function AdminPanel() {
           ))}
         </div>
       )}
+
+      {/* Audit Tab */}
+      {tab === "audit" && <OperationalAudit />}
 
       {/* System Tab */}
       {tab === "system" && systemStats && (

@@ -20,6 +20,7 @@ import PendingApproval from "@/pages/PendingApproval";
 import AIInsights from "@/pages/AIInsights";
 import CompanyOnboarding from "@/pages/CompanyOnboarding";
 import Documentation from "@/pages/Documentation";
+import GuidedReceiving from "@/pages/GuidedReceiving";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -91,6 +92,7 @@ function AppRoutes() {
                   <Route path="/onboarding" element={<Onboarding />} />
                   <Route path="/notificacoes" element={<NotificationSettings />} />
                   <Route path="/ai-insights" element={<AIInsights />} />
+                  <Route path="/recebimento" element={<GuidedReceiving />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
