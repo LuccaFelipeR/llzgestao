@@ -20,6 +20,7 @@ import PendingApproval from "@/pages/PendingApproval";
 import AIInsights from "@/pages/AIInsights";
 import CompanyOnboarding from "@/pages/CompanyOnboarding";
 import Documentation from "@/pages/Documentation";
+import GuidedReceiving from "@/pages/GuidedReceiving";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
