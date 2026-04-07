@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Info } from "lucide-react";
+import { Plus, Info, AlertTriangle } from "lucide-react";
 import { formatAddressDisplay } from "@/lib/address-utils";
 
 type MovementType = "IN" | "OUT" | "TRANSFER";
@@ -32,8 +32,6 @@ export default function Movements() {
   const [fromAddressId, setFromAddressId] = useState("");
   const [toAddressId, setToAddressId] = useState("");
   const [note, setNote] = useState("");
-
-  // Filters for history
   const [filterType, setFilterType] = useState<string>("ALL");
   const [filterProductId, setFilterProductId] = useState("");
 
@@ -62,7 +60,22 @@ export default function Movements() {
     },
   });
 
-  const { data: movements, isLoading } = useQuery({
+  // Check available stock for selected product+lot+address
+  const { data: availableStock } = useQuery({
+    queryKey: ["available-stock", productId, lotId, fromAddressId],
+    enabled: !!productId && !!lotId && !!fromAddressId && (type === "OUT" || type === "TRANSFER"),
+    queryFn: async () => {
+      const { data } = await supabase.from("stock_balance")
+        .select("qty")
+        .eq("product_id", productId)
+        .eq("lot_id", lotId)
+        .eq("address_id", fromAddressId)
+        .single();
+      return data?.qty ?? 0;
+    },
+  });
+
+  const { data: movements } = useQuery({
     queryKey: ["movements", filterType, filterProductId],
     queryFn: async () => {
       let q = supabase.from("movements").select("*, products(sku, description), lots(lot_code), from_addr:addresses!movements_from_address_id_fkey(code), to_addr:addresses!movements_to_address_id_fkey(code)").order("created_at", { ascending: false }).limit(100);
@@ -74,15 +87,17 @@ export default function Movements() {
     },
   });
 
+  const qtyNum = Number(qty) || 0;
+  const insufficientStock = (type === "OUT" || type === "TRANSFER") && qtyNum > 0 && availableStock !== undefined && qtyNum > Number(availableStock);
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!productId) throw new Error("Selecione um produto.");
-      const qtyNum = Number(qty);
       if (!qtyNum || qtyNum <= 0) throw new Error("Quantidade deve ser maior que zero.");
+      if (insufficientStock) throw new Error(`Saldo insuficiente. Disponível: ${availableStock}, Solicitado: ${qtyNum}`);
 
       let finalLotId = lotId;
 
-      // Create lot if needed
       if (newLot) {
         if (!lotCode.trim()) throw new Error("Informe o código do lote.");
         const { data: lotData, error: lotError } = await supabase.from("lots").insert({
@@ -98,13 +113,8 @@ export default function Movements() {
       if (!finalLotId) throw new Error("Selecione ou crie um lote.");
 
       const movement: any = {
-        type,
-        product_id: productId,
-        lot_id: finalLotId,
-        qty: qtyNum,
-        note: note.trim() || null,
-        operator_user_id: user?.id ?? null,
-        company_id: companyId,
+        type, product_id: productId, lot_id: finalLotId, qty: qtyNum,
+        note: note.trim() || null, operator_user_id: user?.id ?? null, company_id: companyId,
       };
 
       if (type === "IN") {
@@ -122,9 +132,7 @@ export default function Movements() {
 
       const { error } = await supabase.from("movements").insert(movement);
       if (error) {
-        if (error.message.includes("Saldo insuficiente")) {
-          throw new Error("Saldo insuficiente neste endereço/lote para a quantidade solicitada.");
-        }
+        if (error.message.includes("Saldo insuficiente")) throw new Error("Saldo insuficiente neste endereço/lote.");
         throw new Error(error.message);
       }
     },
@@ -141,16 +149,8 @@ export default function Movements() {
   });
 
   function resetForm() {
-    setProductId("");
-    setLotId("");
-    setNewLot(false);
-    setLotCode("");
-    setExpiresAt("");
-    setQty("");
-    setFromAddressId("");
-    setToAddressId("");
-    setNote("");
-    setType("IN");
+    setProductId(""); setLotId(""); setNewLot(false); setLotCode("");
+    setExpiresAt(""); setQty(""); setFromAddressId(""); setToAddressId(""); setNote(""); setType("IN");
   }
 
   return (
@@ -160,16 +160,14 @@ export default function Movements() {
         <Button onClick={() => { resetForm(); setOpen(true); }} size="lg"><Plus size={18} className="mr-1" /> Nova</Button>
       </div>
 
-      {/* Immutability notice */}
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 mb-6 flex items-start gap-2 text-sm">
         <Info size={18} className="text-primary mt-0.5 shrink-0" />
-        <span>Movimentações são <strong>imutáveis</strong>. Para corrigir, registre uma nova movimentação.</span>
+        <span>Movimentações são <strong>imutáveis</strong>. Para corrigir, registre uma nova movimentação inversa.</span>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-3 mb-4">
         <Select value={filterType} onValueChange={setFilterType}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Tipo" /></SelectTrigger>
+          <SelectTrigger className="w-36"><SelectValue placeholder="Tipo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">Todos</SelectItem>
             <SelectItem value="IN">Entrada</SelectItem>
@@ -178,16 +176,16 @@ export default function Movements() {
           </SelectContent>
         </Select>
         <Select value={filterProductId || "ALL"} onValueChange={(v) => setFilterProductId(v === "ALL" ? "" : v)}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Produto" /></SelectTrigger>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Produto" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Todos os produtos</SelectItem>
+            <SelectItem value="ALL">Todos</SelectItem>
             {products?.map((p) => <SelectItem key={p.id} value={p.id}>{p.sku}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      {/* History */}
-      <div className="bg-card border border-border rounded-xl overflow-x-auto">
+      {/* Desktop table */}
+      <div className="hidden md:block bg-card border border-border rounded-xl overflow-x-auto">
         <table className="data-table">
           <thead>
             <tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Lote</th><th>Qtd</th><th>Origem</th><th>Destino</th><th>Obs</th></tr>
@@ -212,15 +210,40 @@ export default function Movements() {
         </table>
       </div>
 
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {movements?.map((m: any) => (
+          <div key={m.id} className="bg-card border border-border rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className={`badge-${m.type.toLowerCase()}`}>{TYPE_LABELS[m.type as MovementType]}</span>
+              <span className="text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleString("pt-BR")}</span>
+            </div>
+            <div className="text-sm">
+              <span className="font-mono font-semibold">{m.products?.sku}</span>
+              <span className="text-muted-foreground ml-2">Lote: {m.lots?.lot_code}</span>
+            </div>
+            <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
+              <span className="font-bold text-foreground text-base">{m.qty}</span>
+              {m.from_addr?.code && <span>De: {formatAddressDisplay(m.from_addr.code)}</span>}
+              {m.to_addr?.code && <span>Para: {formatAddressDisplay(m.to_addr.code)}</span>}
+            </div>
+            {m.note && <p className="text-xs text-muted-foreground mt-1 truncate">{m.note}</p>}
+          </div>
+        ))}
+        {movements?.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">Nenhuma movimentação registrada.</p>
+        )}
+      </div>
+
       {/* New Movement Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nova Movimentação</DialogTitle>
           </DialogHeader>
           <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4">
             <div>
-              <Label>Tipo de Movimentação *</Label>
+              <Label>Tipo *</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 {(["IN", "OUT", "TRANSFER"] as MovementType[]).map((t) => (
                   <button key={t} type="button" onClick={() => setType(t)}
@@ -235,9 +258,7 @@ export default function Movements() {
               <Label>Produto *</Label>
               <Select value={productId} onValueChange={(v) => { setProductId(v); setLotId(""); setNewLot(false); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {products?.map((p) => <SelectItem key={p.id} value={p.id}>{p.sku} — {p.description}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{products?.map((p) => <SelectItem key={p.id} value={p.id}>{p.sku} — {p.description}</SelectItem>)}</SelectContent>
               </Select>
             </div>
 
@@ -283,10 +304,25 @@ export default function Movements() {
                 <Label>Endereço de Origem *</Label>
                 <Select value={fromAddressId} onValueChange={setFromAddressId}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {addresses?.map((a) => <SelectItem key={a.id} value={a.id}>{formatAddressDisplay(a.code)} ({a.type})</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{addresses?.map((a) => <SelectItem key={a.id} value={a.id}>{formatAddressDisplay(a.code)} ({a.type})</SelectItem>)}</SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {/* Stock warning */}
+            {insufficientStock && (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 flex items-start gap-2">
+                <AlertTriangle size={16} className="text-destructive mt-0.5 shrink-0" />
+                <span className="text-xs text-destructive font-medium">
+                  Saldo insuficiente! Disponível: <strong>{availableStock}</strong>, Solicitado: <strong>{qtyNum}</strong>
+                </span>
+              </div>
+            )}
+
+            {/* Available stock info */}
+            {(type === "OUT" || type === "TRANSFER") && availableStock !== undefined && !insufficientStock && fromAddressId && lotId && (
+              <div className="bg-success/10 border border-success/30 rounded-lg p-2 text-xs text-success font-medium">
+                Saldo disponível: {availableStock}
               </div>
             )}
 
@@ -295,9 +331,7 @@ export default function Movements() {
                 <Label>Endereço de Destino *</Label>
                 <Select value={toAddressId} onValueChange={setToAddressId}>
                   <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                  <SelectContent>
-                    {addresses?.map((a) => <SelectItem key={a.id} value={a.id}>{formatAddressDisplay(a.code)} ({a.type})</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{addresses?.map((a) => <SelectItem key={a.id} value={a.id}>{formatAddressDisplay(a.code)} ({a.type})</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             )}
@@ -307,7 +341,7 @@ export default function Movements() {
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Opcional" maxLength={500} rows={2} />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={saveMutation.isPending}>
+            <Button type="submit" className="w-full" size="lg" disabled={saveMutation.isPending || insufficientStock}>
               {saveMutation.isPending ? "Registrando..." : "Confirmar Movimentação"}
             </Button>
           </form>
