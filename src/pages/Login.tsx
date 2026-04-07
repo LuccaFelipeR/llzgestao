@@ -4,22 +4,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, KeyRound, Eye, EyeOff, Shield, User, Boxes, Zap } from "lucide-react";
+import { LogIn, UserPlus, KeyRound, Eye, EyeOff, Shield, Boxes, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DEV_EMAIL = "luccafelipe99@gmail.com";
 const DEV_PASS = "pro99123@";
-const DEMO_EMAIL = "demo@llz.app";
-const DEMO_PASS = "demo123456";
+const DEV_ACCESS_CODE = "AdminLLZ0726";
 
 export default function Login() {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "dev">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [devCode, setDevCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [quickLoading, setQuickLoading] = useState<string | null>(null);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +43,7 @@ export default function Login() {
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Conta criada! 🎉", description: "Faça login agora." });
+      toast({ title: "Conta criada! 🎉", description: "Aguarde aprovação do administrador para acessar." });
       setMode("login");
     }
   }
@@ -58,61 +57,48 @@ export default function Login() {
     else { toast({ title: "Email enviado" }); setMode("login"); }
   }
 
-  async function quickAccess(type: "admin" | "user") {
-    setQuickLoading(type);
-    const e = type === "admin" ? DEV_EMAIL : DEMO_EMAIL;
-    const p = type === "admin" ? DEV_PASS : DEMO_PASS;
-
+  async function handleDevAccess(e: React.FormEvent) {
+    e.preventDefault();
+    if (devCode !== DEV_ACCESS_CODE) {
+      toast({ title: "Código inválido", description: "O código de acesso do desenvolvedor está incorreto.", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
     // Try login first
-    let { error } = await supabase.auth.signInWithPassword({ email: e, password: p });
-    
+    let { error } = await supabase.auth.signInWithPassword({ email: DEV_EMAIL, password: DEV_PASS });
     if (error?.message?.includes("Invalid login credentials")) {
-      // Account doesn't exist, create it
-      const name = type === "admin" ? "Admin Dev" : "Usuário Demo";
       const { error: signupErr } = await supabase.auth.signUp({
-        email: e, password: p,
-        options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
+        email: DEV_EMAIL, password: DEV_PASS,
+        options: { data: { full_name: "Admin Dev" }, emailRedirectTo: window.location.origin },
       });
       if (signupErr) {
         toast({ title: "Erro", description: signupErr.message, variant: "destructive" });
-        setQuickLoading(null);
+        setLoading(false);
         return;
       }
-      // Now login
-      const { error: loginErr } = await supabase.auth.signInWithPassword({ email: e, password: p });
+      const { error: loginErr } = await supabase.auth.signInWithPassword({ email: DEV_EMAIL, password: DEV_PASS });
       if (loginErr) {
         toast({ title: "Erro ao entrar", description: loginErr.message, variant: "destructive" });
-        setQuickLoading(null);
+        setLoading(false);
         return;
       }
     } else if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     }
-    setQuickLoading(null);
+    setLoading(false);
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
-      {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full bg-accent/5 blur-3xl" />
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="w-full max-w-md relative z-10"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-            className="inline-flex items-center gap-3 mb-3"
-          >
+          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5, type: "spring", stiffness: 200 }} className="inline-flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
               <Boxes size={24} className="text-primary-foreground" />
             </div>
@@ -126,37 +112,18 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Quick Access Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="grid grid-cols-2 gap-3 mb-4"
-        >
+        {/* Dev Access Button */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-4">
           <button
-            onClick={() => quickAccess("admin")}
-            disabled={!!quickLoading}
-            className="group flex items-center gap-2.5 p-3.5 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all text-left disabled:opacity-60"
+            onClick={() => setMode("dev")}
+            className="group flex items-center gap-2.5 p-3.5 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all text-left w-full disabled:opacity-60"
           >
             <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:scale-110 transition-transform">
               <Shield size={18} className="text-primary" />
             </div>
             <div>
-              <p className="text-xs font-bold text-foreground">{quickLoading === "admin" ? "Entrando..." : "Admin"}</p>
-              <p className="text-[10px] text-muted-foreground">Acesso total</p>
-            </div>
-          </button>
-          <button
-            onClick={() => quickAccess("user")}
-            disabled={!!quickLoading}
-            className="group flex items-center gap-2.5 p-3.5 rounded-2xl border-2 border-accent/20 bg-accent/5 hover:bg-accent/10 hover:border-accent/40 transition-all text-left disabled:opacity-60"
-          >
-            <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <User size={18} className="text-accent" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-foreground">{quickLoading === "user" ? "Entrando..." : "Usuário"}</p>
-              <p className="text-[10px] text-muted-foreground">Modo demo</p>
+              <p className="text-xs font-bold text-foreground">Acesso Desenvolvedor</p>
+              <p className="text-[10px] text-muted-foreground">Requer código de acesso</p>
             </div>
           </button>
         </motion.div>
@@ -170,6 +137,28 @@ export default function Login() {
         {/* Auth Card */}
         <div className="glass-card p-6">
           <AnimatePresence mode="wait">
+            {mode === "dev" && (
+              <motion.form key="dev" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} onSubmit={handleDevAccess} className="space-y-4">
+                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                  <Shield size={20} className="text-primary" /> Acesso Desenvolvedor
+                </h2>
+                <p className="text-xs text-muted-foreground">Insira o código de acesso do desenvolvedor para entrar como admin.</p>
+                <div>
+                  <Label className="text-xs font-semibold">Código de Acesso</Label>
+                  <div className="relative mt-1">
+                    <Input type={showPassword ? "text" : "password"} value={devCode} onChange={(e) => setDevCode(e.target.value)} required placeholder="Digite o código..." className="h-11 rounded-xl pr-10" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+                <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm" disabled={loading}>
+                  {loading ? "Verificando..." : "Entrar como Admin"}
+                </Button>
+                <button type="button" onClick={() => setMode("login")} className="text-xs text-primary hover:underline w-full text-center font-medium">Voltar ao login</button>
+              </motion.form>
+            )}
+
             {mode === "login" && (
               <motion.form key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} onSubmit={handleLogin} className="space-y-4">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -244,16 +233,10 @@ export default function Login() {
           </AnimatePresence>
         </div>
 
-        {/* Features strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="flex items-center justify-center gap-4 mt-6 text-[10px] text-muted-foreground"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} className="flex items-center justify-center gap-4 mt-6 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1"><Zap size={10} className="text-accent" /> Scanner QR</span>
           <span>•</span>
-          <span className="flex items-center gap-1"><Boxes size={10} className="text-primary" /> Multi-canal</span>
+          <span className="flex items-center gap-1"><Boxes size={10} className="text-primary" /> Multi-tenant</span>
           <span>•</span>
           <span className="flex items-center gap-1"><Shield size={10} className="text-success" /> RBAC</span>
         </motion.div>
