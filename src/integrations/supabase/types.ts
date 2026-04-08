@@ -110,6 +110,7 @@ export type Database = {
           business_type: Database["public"]["Enums"]["business_type"]
           created_at: string
           id: string
+          invite_code: string | null
           logo_url: string | null
           name: string
           onboarding_completed: boolean
@@ -122,6 +123,7 @@ export type Database = {
           business_type?: Database["public"]["Enums"]["business_type"]
           created_at?: string
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           name: string
           onboarding_completed?: boolean
@@ -134,6 +136,7 @@ export type Database = {
           business_type?: Database["public"]["Enums"]["business_type"]
           created_at?: string
           id?: string
+          invite_code?: string | null
           logo_url?: string | null
           name?: string
           onboarding_completed?: boolean
@@ -229,6 +232,7 @@ export type Database = {
           operator_user_id: string | null
           product_id: string
           qty: number
+          subtype: string | null
           to_address_id: string | null
           type: Database["public"]["Enums"]["movement_type"]
         }
@@ -242,6 +246,7 @@ export type Database = {
           operator_user_id?: string | null
           product_id: string
           qty: number
+          subtype?: string | null
           to_address_id?: string | null
           type: Database["public"]["Enums"]["movement_type"]
         }
@@ -255,6 +260,7 @@ export type Database = {
           operator_user_id?: string | null
           product_id?: string
           qty?: number
+          subtype?: string | null
           to_address_id?: string | null
           type?: Database["public"]["Enums"]["movement_type"]
         }
