@@ -347,6 +347,54 @@ export default function AdminPanel() {
       {/* Audit Tab */}
       {tab === "audit" && <OperationalAudit />}
 
+      {/* Companies Tab */}
+      {tab === "companies" && (
+        <div className="space-y-3">
+          {companiesList?.map((c: any) => (
+            <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">{c.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Membros: {c.company_members?.length ?? 0} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="bg-secondary rounded-lg px-3 py-2 flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">Código:</span>
+                    <span className="font-mono font-bold text-sm text-primary">{c.invite_code || "—"}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(c.invite_code || "");
+                        toast({ title: "Código copiado!" });
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1"
+                    onClick={() => regenerateCodeMutation.mutate(c.id)}
+                    disabled={regenerateCodeMutation.isPending}
+                  >
+                    <RefreshCw size={14} /> Novo Código
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {(!companiesList || companiesList.length === 0) && (
+            <p className="text-center text-muted-foreground py-8">Nenhuma empresa cadastrada.</p>
+          )}
+        </div>
+      )}
+
       {/* System Tab */}
       {tab === "system" && systemStats && (
         <div>
