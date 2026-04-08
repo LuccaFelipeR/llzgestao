@@ -279,7 +279,19 @@ export default function Movements() {
               </div>
             </div>
 
+            {/* Subtype selector */}
             <div>
+              <Label>Motivo / Subtipo</Label>
+              <Select value={subtype} onValueChange={setSubtype}>
+                <SelectTrigger><SelectValue placeholder="Selecione o motivo..." /></SelectTrigger>
+                <SelectContent>
+                  {(type === "OUT" ? OUT_SUBTYPES : type === "IN" ? IN_SUBTYPES : TRANSFER_SUBTYPES).map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
               <Label>Produto *</Label>
               <Select value={productId} onValueChange={(v) => { setProductId(v); setLotId(""); setNewLot(false); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
