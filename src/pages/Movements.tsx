@@ -219,7 +219,10 @@ export default function Movements() {
             {movements?.map((m: any) => (
               <tr key={m.id}>
                 <td className="text-xs whitespace-nowrap">{new Date(m.created_at).toLocaleString("pt-BR")}</td>
-                <td><span className={`badge-${m.type.toLowerCase()}`}>{TYPE_LABELS[m.type as MovementType]}</span></td>
+                <td>
+                  <span className={`badge-${m.type.toLowerCase()}`}>{TYPE_LABELS[m.type as MovementType]}</span>
+                  {m.subtype && <span className="block text-[10px] text-muted-foreground mt-0.5">{m.subtype}</span>}
+                </td>
                 <td className="font-mono text-xs">{m.products?.sku}</td>
                 <td className="text-xs">{m.lots?.lot_code}</td>
                 <td className="font-semibold">{m.qty}</td>
