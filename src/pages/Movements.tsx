@@ -17,6 +17,29 @@ type MovementType = "IN" | "OUT" | "TRANSFER";
 
 const TYPE_LABELS: Record<MovementType, string> = { IN: "Entrada", OUT: "Saída", TRANSFER: "Transferência" };
 
+const OUT_SUBTYPES = [
+  { value: "venda", label: "Venda" },
+  { value: "devolucao_fornecedor", label: "Devolução ao Fornecedor" },
+  { value: "descarte", label: "Descarte / Avaria" },
+  { value: "consumo_interno", label: "Consumo Interno" },
+  { value: "ajuste", label: "Ajuste de Inventário" },
+  { value: "amostra", label: "Amostra / Brinde" },
+];
+
+const IN_SUBTYPES = [
+  { value: "compra", label: "Compra" },
+  { value: "devolucao_cliente", label: "Devolução de Cliente" },
+  { value: "producao", label: "Produção" },
+  { value: "ajuste", label: "Ajuste de Inventário" },
+  { value: "transferencia_entrada", label: "Transferência entre Filiais" },
+];
+
+const TRANSFER_SUBTYPES = [
+  { value: "reposicao", label: "Reposição de Picking" },
+  { value: "reorganizacao", label: "Reorganização" },
+  { value: "consolidacao", label: "Consolidação" },
+];
+
 export default function Movements() {
   const { user } = useAuth();
   const { companyId } = useCompany();
@@ -32,6 +55,7 @@ export default function Movements() {
   const [fromAddressId, setFromAddressId] = useState("");
   const [toAddressId, setToAddressId] = useState("");
   const [note, setNote] = useState("");
+  const [subtype, setSubtype] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
   const [filterProductId, setFilterProductId] = useState("");
 
@@ -115,6 +139,7 @@ export default function Movements() {
       const movement: any = {
         type, product_id: productId, lot_id: finalLotId, qty: qtyNum,
         note: note.trim() || null, operator_user_id: user?.id ?? null, company_id: companyId,
+        subtype: subtype || null,
       };
 
       if (type === "IN") {
@@ -150,7 +175,7 @@ export default function Movements() {
 
   function resetForm() {
     setProductId(""); setLotId(""); setNewLot(false); setLotCode("");
-    setExpiresAt(""); setQty(""); setFromAddressId(""); setToAddressId(""); setNote(""); setType("IN");
+    setExpiresAt(""); setQty(""); setFromAddressId(""); setToAddressId(""); setNote(""); setType("IN"); setSubtype("");
   }
 
   return (
