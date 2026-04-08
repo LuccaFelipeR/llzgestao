@@ -38,7 +38,7 @@ export default function Login() {
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: email.trim(), password,
-      options: { data: { full_name: fullName.trim() }, emailRedirectTo: window.location.origin },
+      options: { data: { full_name: fullName.trim(), invite_code: inviteCode.trim() || undefined }, emailRedirectTo: window.location.origin },
     });
     setLoading(false);
     if (error) {
