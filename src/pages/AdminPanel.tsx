@@ -78,6 +78,29 @@ export default function AdminPanel() {
     },
   });
 
+  const { data: companiesList } = useQuery({
+    queryKey: ["admin-companies"],
+    enabled: tab === "companies",
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("companies").select("*, company_members(user_id, role)").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const regenerateCodeMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const newCode = Math.random().toString(36).substring(2, 10);
+      const { error } = await (supabase as any).from("companies").update({ invite_code: newCode }).eq("id", companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Código regenerado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
   const { data: systemStats } = useQuery({
     queryKey: ["admin-system-stats"],
     enabled: tab === "system",
