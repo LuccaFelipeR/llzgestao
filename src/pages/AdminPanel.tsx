@@ -33,7 +33,7 @@ const ALL_TABS = [
 export default function AdminPanel() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system">("users");
+  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system" | "companies">("users");
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
 
