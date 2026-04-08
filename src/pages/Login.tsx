@@ -210,6 +210,11 @@ export default function Login() {
                     </button>
                   </div>
                 </div>
+                <div>
+                  <Label className="text-xs font-semibold">Código da Empresa (opcional)</Label>
+                  <Input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} placeholder="Ex: a1b2c3d4" autoComplete="off" className="mt-1 h-11 rounded-xl" maxLength={20} />
+                  <p className="text-[10px] text-muted-foreground mt-1">Se tiver um código, você entrará na empresa existente. Caso contrário, uma nova será criada.</p>
+                </div>
                 <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm" disabled={loading}>
                   {loading ? "Cadastrando..." : "Cadastrar"}
                 </Button>
