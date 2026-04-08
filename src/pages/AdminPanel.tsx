@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -229,6 +229,7 @@ export default function AdminPanel() {
           { key: "users" as const, label: "Usuários", icon: Users },
           { key: "activity" as const, label: "Atividade", icon: Activity },
           { key: "audit" as const, label: "Auditoria", icon: ClipboardCheck },
+          { key: "companies" as const, label: "Empresas", icon: Building2 },
           { key: "system" as const, label: "Sistema", icon: TrendingUp },
         ].map((t) => (
           <button
