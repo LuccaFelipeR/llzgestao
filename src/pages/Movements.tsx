@@ -292,7 +292,7 @@ export default function Movements() {
               </Select>
             </div>
 
-              <Label>Produto *</Label>
+            <div>
               <Select value={productId} onValueChange={(v) => { setProductId(v); setLotId(""); setNewLot(false); }}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>{products?.map((p) => <SelectItem key={p.id} value={p.id}>{p.sku} — {p.description}</SelectItem>)}</SelectContent>
