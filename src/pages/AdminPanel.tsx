@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -33,7 +33,7 @@ const ALL_TABS = [
 export default function AdminPanel() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system">("users");
+  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system" | "companies">("users");
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
 
@@ -76,6 +76,29 @@ export default function AdminPanel() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: companiesList } = useQuery({
+    queryKey: ["admin-companies"],
+    enabled: tab === "companies",
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("companies").select("*, company_members(user_id, role)").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const regenerateCodeMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const newCode = Math.random().toString(36).substring(2, 10);
+      const { error } = await (supabase as any).from("companies").update({ invite_code: newCode }).eq("id", companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Código regenerado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
   const { data: systemStats } = useQuery({
@@ -206,6 +229,7 @@ export default function AdminPanel() {
           { key: "users" as const, label: "Usuários", icon: Users },
           { key: "activity" as const, label: "Atividade", icon: Activity },
           { key: "audit" as const, label: "Auditoria", icon: ClipboardCheck },
+          { key: "companies" as const, label: "Empresas", icon: Building2 },
           { key: "system" as const, label: "Sistema", icon: TrendingUp },
         ].map((t) => (
           <button
@@ -322,6 +346,54 @@ export default function AdminPanel() {
 
       {/* Audit Tab */}
       {tab === "audit" && <OperationalAudit />}
+
+      {/* Companies Tab */}
+      {tab === "companies" && (
+        <div className="space-y-3">
+          {companiesList?.map((c: any) => (
+            <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm">{c.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Membros: {c.company_members?.length ?? 0} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="bg-secondary rounded-lg px-3 py-2 flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">Código:</span>
+                    <span className="font-mono font-bold text-sm text-primary">{c.invite_code || "—"}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(c.invite_code || "");
+                        toast({ title: "Código copiado!" });
+                      }}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1"
+                    onClick={() => regenerateCodeMutation.mutate(c.id)}
+                    disabled={regenerateCodeMutation.isPending}
+                  >
+                    <RefreshCw size={14} /> Novo Código
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {(!companiesList || companiesList.length === 0) && (
+            <p className="text-center text-muted-foreground py-8">Nenhuma empresa cadastrada.</p>
+          )}
+        </div>
+      )}
 
       {/* System Tab */}
       {tab === "system" && systemStats && (

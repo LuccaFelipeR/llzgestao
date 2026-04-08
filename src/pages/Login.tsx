@@ -16,6 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [devCode, setDevCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +38,7 @@ export default function Login() {
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: email.trim(), password,
-      options: { data: { full_name: fullName.trim() }, emailRedirectTo: window.location.origin },
+      options: { data: { full_name: fullName.trim(), invite_code: inviteCode.trim() || undefined }, emailRedirectTo: window.location.origin },
     });
     setLoading(false);
     if (error) {
@@ -208,6 +209,11 @@ export default function Login() {
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
+                </div>
+                <div>
+                  <Label className="text-xs font-semibold">Código da Empresa (opcional)</Label>
+                  <Input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} placeholder="Ex: a1b2c3d4" autoComplete="off" className="mt-1 h-11 rounded-xl" maxLength={20} />
+                  <p className="text-[10px] text-muted-foreground mt-1">Se tiver um código, você entrará na empresa existente. Caso contrário, uma nova será criada.</p>
                 </div>
                 <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm" disabled={loading}>
                   {loading ? "Cadastrando..." : "Cadastrar"}
