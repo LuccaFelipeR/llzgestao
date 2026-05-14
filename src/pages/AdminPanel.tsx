@@ -578,6 +578,44 @@ export default function AdminPanel() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Company Dialog */}
+      <Dialog open={!!editCompany} onOpenChange={(o) => !o && setEditCompany(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil size={18} className="text-primary" /> Editar Empresa</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome da empresa</Label>
+              <Input value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} />
+            </div>
+            <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setEditCompany(null)}>Cancelar</Button>
+            <Button className="flex-1" disabled={!editCompanyName.trim() || updateCompanyMutation.isPending}
+              onClick={() => updateCompanyMutation.mutate({ id: editCompany.id, name: editCompanyName.trim() })}>
+              {updateCompanyMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Company Dialog */}
+      <Dialog open={!!deleteCompany} onOpenChange={(o) => !o && setDeleteCompany(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir Empresa</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tem certeza que deseja excluir <strong>{deleteCompany?.name}</strong>?
+            Todos os produtos, endereços, lotes, movimentações e estoque desta empresa serão perdidos. Esta ação não pode ser desfeita.
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleteCompany(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => deleteCompanyMutation.mutate(deleteCompany.id)} disabled={deleteCompanyMutation.isPending}>
+              {deleteCompanyMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
