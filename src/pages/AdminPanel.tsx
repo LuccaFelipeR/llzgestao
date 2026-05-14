@@ -300,6 +300,32 @@ export default function AdminPanel() {
       {/* Users Tab */}
       {tab === "users" && (
         <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{profiles?.length ?? 0} usuário(s) • {profiles?.filter(p => !p.is_approved).length ?? 0} pendente(s)</p>
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setShowAbc(s => !s)}>
+              <BarChart3 size={14} /> {showAbc ? "Ocultar" : "Curva ABC"}
+            </Button>
+          </div>
+          {showAbc && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><BarChart3 size={16} className="text-primary" /> Curva ABC de Usuários (por movimentações)</h3>
+              <p className="text-[10px] text-muted-foreground mb-3">A: 70% das ações • B: 20% • C: 10%</p>
+              <div className="space-y-1.5">
+                {userAbc?.length === 0 && <p className="text-xs text-muted-foreground">Sem atividade registrada ainda.</p>}
+                {userAbc?.map((u) => {
+                  const prof = profiles?.find(p => p.id === u.user_id);
+                  const color = u.cls === "A" ? "bg-accent/15 text-accent" : u.cls === "B" ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground";
+                  return (
+                    <div key={u.user_id} className="flex items-center gap-2 text-xs py-1.5 border-b border-border last:border-0">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold ${color}`}>{u.cls}</span>
+                      <span className="flex-1 truncate font-medium">{prof?.full_name || prof?.email || u.user_id.slice(0, 8)}</span>
+                      <span className="font-mono text-muted-foreground">{u.count} ações</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {profiles?.map((p) => {
             const isMe = p.id === user?.id;
             const userRole = getUserRole(p.id);
