@@ -5,10 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,6 +38,10 @@ export default function AdminPanel() {
   const [tab, setTab] = useState<"users" | "activity" | "audit" | "system" | "companies">("users");
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
+  const [editCompany, setEditCompany] = useState<any>(null);
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [deleteCompany, setDeleteCompany] = useState<any>(null);
+  const [showAbc, setShowAbc] = useState(false);
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
