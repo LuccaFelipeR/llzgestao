@@ -107,6 +107,52 @@ export default function AdminPanel() {
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  const updateCompanyMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await (supabase as any).from("companies").update({ name, updated_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Empresa atualizada" });
+      setEditCompany(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const { error } = await (supabase as any).from("companies").delete().eq("id", companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Empresa excluída" });
+      setDeleteCompany(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+  });
+
+  // ABC curve for users — based on their movement activity counts
+  const { data: userAbc } = useQuery({
+    queryKey: ["admin-user-abc"],
+    enabled: showAbc,
+    queryFn: async () => {
+      const { data } = await supabase.from("activity_log").select("user_id").not("user_id", "is", null);
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { counts[r.user_id] = (counts[r.user_id] ?? 0) + 1; });
+      const arr = Object.entries(counts).map(([user_id, count]) => ({ user_id, count }));
+      arr.sort((a, b) => b.count - a.count);
+      const total = arr.reduce((s, r) => s + r.count, 0) || 1;
+      let acc = 0;
+      return arr.map((r) => {
+        acc += r.count;
+        const pct = (acc / total) * 100;
+        const cls = pct <= 70 ? "A" : pct <= 90 ? "B" : "C";
+        return { ...r, pct, cls };
+      });
+    },
+  });
   const { data: systemStats } = useQuery({
     queryKey: ["admin-system-stats"],
     enabled: tab === "system",
