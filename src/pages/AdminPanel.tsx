@@ -463,6 +463,12 @@ export default function AdminPanel() {
                   >
                     <RefreshCw size={14} /> Novo Código
                   </Button>
+                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
+                    <Pencil size={14} /> Editar
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </div>
             </div>
