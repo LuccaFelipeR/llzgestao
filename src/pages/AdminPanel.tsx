@@ -5,10 +5,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -36,6 +38,10 @@ export default function AdminPanel() {
   const [tab, setTab] = useState<"users" | "activity" | "audit" | "system" | "companies">("users");
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
+  const [editCompany, setEditCompany] = useState<any>(null);
+  const [editCompanyName, setEditCompanyName] = useState("");
+  const [deleteCompany, setDeleteCompany] = useState<any>(null);
+  const [showAbc, setShowAbc] = useState(false);
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
@@ -101,6 +107,52 @@ export default function AdminPanel() {
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  const updateCompanyMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await (supabase as any).from("companies").update({ name, updated_at: new Date().toISOString() }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Empresa atualizada" });
+      setEditCompany(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (companyId: string) => {
+      const { error } = await (supabase as any).from("companies").delete().eq("id", companyId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Empresa excluída" });
+      setDeleteCompany(null);
+    },
+    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+  });
+
+  // ABC curve for users — based on their movement activity counts
+  const { data: userAbc } = useQuery({
+    queryKey: ["admin-user-abc"],
+    enabled: showAbc,
+    queryFn: async () => {
+      const { data } = await supabase.from("activity_log").select("user_id").not("user_id", "is", null);
+      const counts: Record<string, number> = {};
+      (data ?? []).forEach((r: any) => { counts[r.user_id] = (counts[r.user_id] ?? 0) + 1; });
+      const arr = Object.entries(counts).map(([user_id, count]) => ({ user_id, count }));
+      arr.sort((a, b) => b.count - a.count);
+      const total = arr.reduce((s, r) => s + r.count, 0) || 1;
+      let acc = 0;
+      return arr.map((r) => {
+        acc += r.count;
+        const pct = (acc / total) * 100;
+        const cls = pct <= 70 ? "A" : pct <= 90 ? "B" : "C";
+        return { ...r, pct, cls };
+      });
+    },
+  });
   const { data: systemStats } = useQuery({
     queryKey: ["admin-system-stats"],
     enabled: tab === "system",
@@ -248,6 +300,32 @@ export default function AdminPanel() {
       {/* Users Tab */}
       {tab === "users" && (
         <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">{profiles?.length ?? 0} usuário(s) • {profiles?.filter(p => !p.is_approved).length ?? 0} pendente(s)</p>
+            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setShowAbc(s => !s)}>
+              <BarChart3 size={14} /> {showAbc ? "Ocultar" : "Curva ABC"}
+            </Button>
+          </div>
+          {showAbc && (
+            <div className="bg-card border border-border rounded-xl p-4">
+              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><BarChart3 size={16} className="text-primary" /> Curva ABC de Usuários (por movimentações)</h3>
+              <p className="text-[10px] text-muted-foreground mb-3">A: 70% das ações • B: 20% • C: 10%</p>
+              <div className="space-y-1.5">
+                {userAbc?.length === 0 && <p className="text-xs text-muted-foreground">Sem atividade registrada ainda.</p>}
+                {userAbc?.map((u) => {
+                  const prof = profiles?.find(p => p.id === u.user_id);
+                  const color = u.cls === "A" ? "bg-accent/15 text-accent" : u.cls === "B" ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground";
+                  return (
+                    <div key={u.user_id} className="flex items-center gap-2 text-xs py-1.5 border-b border-border last:border-0">
+                      <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold ${color}`}>{u.cls}</span>
+                      <span className="flex-1 truncate font-medium">{prof?.full_name || prof?.email || u.user_id.slice(0, 8)}</span>
+                      <span className="font-mono text-muted-foreground">{u.count} ações</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {profiles?.map((p) => {
             const isMe = p.id === user?.id;
             const userRole = getUserRole(p.id);
@@ -385,6 +463,12 @@ export default function AdminPanel() {
                   >
                     <RefreshCw size={14} /> Novo Código
                   </Button>
+                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
+                    <Pencil size={14} /> Editar
+                  </Button>
+                  <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -490,6 +574,44 @@ export default function AdminPanel() {
             <Button variant="outline" className="flex-1" onClick={() => setDeleteDialogUser(null)}>Cancelar</Button>
             <Button variant="destructive" className="flex-1" onClick={() => deleteMutation.mutate(deleteDialogUser.id)} disabled={deleteMutation.isPending}>
               {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Company Dialog */}
+      <Dialog open={!!editCompany} onOpenChange={(o) => !o && setEditCompany(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil size={18} className="text-primary" /> Editar Empresa</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome da empresa</Label>
+              <Input value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} />
+            </div>
+            <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setEditCompany(null)}>Cancelar</Button>
+            <Button className="flex-1" disabled={!editCompanyName.trim() || updateCompanyMutation.isPending}
+              onClick={() => updateCompanyMutation.mutate({ id: editCompany.id, name: editCompanyName.trim() })}>
+              {updateCompanyMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Company Dialog */}
+      <Dialog open={!!deleteCompany} onOpenChange={(o) => !o && setDeleteCompany(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir Empresa</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Tem certeza que deseja excluir <strong>{deleteCompany?.name}</strong>?
+            Todos os produtos, endereços, lotes, movimentações e estoque desta empresa serão perdidos. Esta ação não pode ser desfeita.
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleteCompany(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => deleteCompanyMutation.mutate(deleteCompany.id)} disabled={deleteCompanyMutation.isPending}>
+              {deleteCompanyMutation.isPending ? "Excluindo..." : "Excluir"}
             </Button>
           </div>
         </DialogContent>
