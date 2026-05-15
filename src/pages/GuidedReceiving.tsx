@@ -207,6 +207,17 @@ export default function GuidedReceiving() {
 
           {step === 2 && (
             <div className="space-y-4">
+              {/* Product rules summary */}
+              {(requiresLot || requiresExpiration || selectedProduct?.is_perishable) && (
+                <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-xs space-y-1">
+                  <p className="font-bold text-warning">Regras deste produto:</p>
+                  {selectedProduct?.is_perishable && <p>• Produto perecível — validade obrigatória.</p>}
+                  {requiresLot && <p>• Código de lote obrigatório.</p>}
+                  {requiresExpiration && <p>• Data de validade obrigatória.</p>}
+                  {selectedProduct?.shelf_life_days && <p>• Vida útil sugerida: {selectedProduct.shelf_life_days} dias.</p>}
+                </div>
+              )}
+
               <div className="flex gap-2 mb-3">
                 <button onClick={() => setLotMode("new")}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${lotMode === "new" ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground"}`}>
@@ -219,8 +230,34 @@ export default function GuidedReceiving() {
               </div>
               {lotMode === "new" ? (
                 <div className="space-y-3">
-                  <div><Label className="text-xs font-semibold">Código do Lote *</Label><Input value={lotCode} onChange={e => setLotCode(e.target.value)} placeholder="Ex: LT-2026-001" className="mt-1" /></div>
-                  <div><Label className="text-xs font-semibold">Validade (opcional)</Label><Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" /></div>
+                  <div>
+                    <Label className="text-xs font-semibold">Código do Lote {requiresLot && "*"}</Label>
+                    <Input value={lotCode} onChange={e => setLotCode(e.target.value)} placeholder={requiresLot ? "Obrigatório" : "Opcional — gerado automaticamente se vazio"} className="mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Fabricação</Label>
+                      <Input type="date" value={manufacturingDate} onChange={e => setManufacturingDate(e.target.value)} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Validade {requiresExpiration && "*"}</Label>
+                      <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Fornecedor</Label>
+                      <Input value={supplier} onChange={e => setSupplier(e.target.value)} maxLength={120} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Nota fiscal</Label>
+                      <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} maxLength={50} className="mt-1" />
+                    </div>
+                  </div>
+
+                  {manufAfterExpiry && <p className="text-xs font-bold text-destructive">⚠ Fabricação não pode ser posterior à validade.</p>}
+                  {isExpired && <p className="text-xs font-bold text-destructive">⚠ Lote já vencido — não é permitido receber.</p>}
+                  {isNearExpiry && !isExpired && <p className="text-xs font-bold text-warning">⚠ Vencimento em ≤30 dias.</p>}
                 </div>
               ) : (
                 <Select value={lotId} onValueChange={setLotId}>
