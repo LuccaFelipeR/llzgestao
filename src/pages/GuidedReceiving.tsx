@@ -62,6 +62,10 @@ export default function GuidedReceiving() {
     },
   });
 
+  const selectedProduct: any = products?.find(p => p.id === productId);
+  const selectedAddress = addresses?.find(a => a.id === addressId);
+  const selectedLot = lots?.find(l => l.id === lotId);
+
   // product control rules
   const requiresLot = !!(selectedProduct?.controls_batch);
   const requiresExpiration = !!(selectedProduct?.controls_expiration || selectedProduct?.is_perishable);
