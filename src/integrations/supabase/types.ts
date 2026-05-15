@@ -107,65 +107,128 @@ export type Database = {
       }
       companies: {
         Row: {
+          address: string | null
           business_type: Database["public"]["Enums"]["business_type"]
+          city: string | null
+          country: string | null
           created_at: string
+          document_number: string | null
+          email: string | null
           id: string
           invite_code: string | null
+          legal_name: string | null
           logo_url: string | null
+          main_focal_user_id: string | null
+          max_addresses: number | null
+          max_products: number | null
+          max_users: number | null
           name: string
+          notes: string | null
           onboarding_completed: boolean
           operation_mode: Database["public"]["Enums"]["operation_mode"]
+          phone: string | null
           plan: string
           settings: Json
+          state: string | null
+          status: Database["public"]["Enums"]["company_status"]
+          trade_name: string | null
+          trial_ends_at: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
+          address?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
+          city?: string | null
+          country?: string | null
           created_at?: string
+          document_number?: string | null
+          email?: string | null
           id?: string
           invite_code?: string | null
+          legal_name?: string | null
           logo_url?: string | null
+          main_focal_user_id?: string | null
+          max_addresses?: number | null
+          max_products?: number | null
+          max_users?: number | null
           name: string
+          notes?: string | null
           onboarding_completed?: boolean
           operation_mode?: Database["public"]["Enums"]["operation_mode"]
+          phone?: string | null
           plan?: string
           settings?: Json
+          state?: string | null
+          status?: Database["public"]["Enums"]["company_status"]
+          trade_name?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
+          address?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
+          city?: string | null
+          country?: string | null
           created_at?: string
+          document_number?: string | null
+          email?: string | null
           id?: string
           invite_code?: string | null
+          legal_name?: string | null
           logo_url?: string | null
+          main_focal_user_id?: string | null
+          max_addresses?: number | null
+          max_products?: number | null
+          max_users?: number | null
           name?: string
+          notes?: string | null
           onboarding_completed?: boolean
           operation_mode?: Database["public"]["Enums"]["operation_mode"]
+          phone?: string | null
           plan?: string
           settings?: Json
+          state?: string | null
+          status?: Database["public"]["Enums"]["company_status"]
+          trade_name?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
       company_members: {
         Row: {
+          approved_at: string | null
+          blocked_at: string | null
           company_id: string
           created_at: string
           id: string
+          is_active: boolean
+          is_main_focal_point: boolean
           role: string
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          blocked_at?: string | null
           company_id: string
           created_at?: string
           id?: string
+          is_active?: boolean
+          is_main_focal_point?: boolean
           role?: string
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          blocked_at?: string | null
           company_id?: string
           created_at?: string
           id?: string
+          is_active?: boolean
+          is_main_focal_point?: boolean
           role?: string
           user_id?: string
         }
@@ -513,6 +576,7 @@ export type Database = {
         | "warehouse"
         | "logistics_center"
         | "other"
+      company_status: "active" | "inactive" | "blocked" | "trial"
       movement_type: "IN" | "OUT" | "TRANSFER"
       operation_mode: "essential" | "operations" | "wms"
     }
@@ -652,6 +716,7 @@ export const Constants = {
         "logistics_center",
         "other",
       ],
+      company_status: ["active", "inactive", "blocked", "trial"],
       movement_type: ["IN", "OUT", "TRANSFER"],
       operation_mode: ["essential", "operations", "wms"],
     },
