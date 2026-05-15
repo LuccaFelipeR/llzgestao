@@ -30,6 +30,9 @@ export default function GuidedReceiving() {
   const [lotId, setLotId] = useState("");
   const [lotCode, setLotCode] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [manufacturingDate, setManufacturingDate] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [qty, setQty] = useState("");
   const [addressId, setAddressId] = useState("");
   const [success, setSuccess] = useState(false);
