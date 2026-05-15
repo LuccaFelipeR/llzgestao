@@ -62,20 +62,42 @@ export default function GuidedReceiving() {
     },
   });
 
-  const selectedProduct = products?.find(p => p.id === productId);
-  const selectedAddress = addresses?.find(a => a.id === addressId);
-  const selectedLot = lots?.find(l => l.id === lotId);
+  // product control rules
+  const requiresLot = !!(selectedProduct?.controls_batch);
+  const requiresExpiration = !!(selectedProduct?.controls_expiration || selectedProduct?.is_perishable);
+
+  // expiration warnings
+  const expDate = expiresAt ? new Date(expiresAt) : null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const isExpired = !!(expDate && expDate < today);
+  const isNearExpiry = !!(expDate && !isExpired && (expDate.getTime() - today.getTime()) / 86400000 <= 30);
+  const manufAfterExpiry = !!(manufacturingDate && expiresAt && new Date(manufacturingDate) > new Date(expiresAt));
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       let finalLotId = lotId;
       if (lotMode === "new") {
-        if (!lotCode.trim()) throw new Error("Informe o código do lote.");
-        const { data: lotData, error: lotError } = await supabase.from("lots").insert({
-          product_id: productId, lot_code: lotCode.trim(), expires_at: expiresAt || null, company_id: companyId,
-        }).select("id").single();
-        if (lotError) throw new Error(lotError.message);
-        finalLotId = lotData.id;
+        if (requiresLot && !lotCode.trim()) throw new Error("Este produto exige código de lote.");
+        if (requiresExpiration && !expiresAt) throw new Error("Este produto exige data de validade.");
+        if (manufAfterExpiry) throw new Error("Data de fabricação não pode ser posterior à validade.");
+        // Reuse existing lot if same code already exists for this product/company
+        const lotCodeFinal = lotCode.trim() || `AUTO-${Date.now()}`;
+        const { data: existingLot } = await supabase.from("lots")
+          .select("id").eq("product_id", productId).ilike("lot_code", lotCodeFinal).maybeSingle();
+        if (existingLot) {
+          finalLotId = existingLot.id;
+        } else {
+          const { data: lotData, error: lotError } = await supabase.from("lots").insert({
+            product_id: productId, lot_code: lotCodeFinal,
+            expires_at: expiresAt || null,
+            manufacturing_date: manufacturingDate || null,
+            supplier: supplier.trim() || null,
+            invoice_number: invoiceNumber.trim() || null,
+            company_id: companyId,
+          }).select("id").single();
+          if (lotError) throw new Error(lotError.message);
+          finalLotId = lotData.id;
+        }
       }
       const { error } = await supabase.from("movements").insert({
         type: "IN" as const, product_id: productId, lot_id: finalLotId, qty: Number(qty),
@@ -92,12 +114,21 @@ export default function GuidedReceiving() {
   });
 
   function reset() {
-    setStep(1); setProductId(""); setLotMode("new"); setLotId(""); setLotCode(""); setExpiresAt(""); setQty(""); setAddressId(""); setSuccess(false);
+    setStep(1); setProductId(""); setLotMode("new"); setLotId(""); setLotCode("");
+    setExpiresAt(""); setManufacturingDate(""); setSupplier(""); setInvoiceNumber("");
+    setQty(""); setAddressId(""); setSuccess(false);
   }
 
   function canAdvance() {
     if (step === 1) return !!productId;
-    if (step === 2) return lotMode === "new" ? !!lotCode.trim() : !!lotId;
+    if (step === 2) {
+      if (lotMode === "existing") return !!lotId;
+      if (requiresLot && !lotCode.trim()) return false;
+      if (requiresExpiration && !expiresAt) return false;
+      if (manufAfterExpiry) return false;
+      if (isExpired) return false; // block expired lot creation
+      return true;
+    }
     if (step === 3) return Number(qty) > 0;
     if (step === 4) return !!addressId;
     return true;
