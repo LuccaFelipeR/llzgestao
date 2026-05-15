@@ -248,24 +248,42 @@ export type Database = {
           created_at: string
           expires_at: string | null
           id: string
+          invoice_number: string | null
           lot_code: string
+          manufacturing_date: string | null
+          notes: string | null
           product_id: string
+          received_at: string | null
+          status: Database["public"]["Enums"]["lot_status"]
+          supplier: string | null
         }
         Insert: {
           company_id?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
+          invoice_number?: string | null
           lot_code: string
+          manufacturing_date?: string | null
+          notes?: string | null
           product_id: string
+          received_at?: string | null
+          status?: Database["public"]["Enums"]["lot_status"]
+          supplier?: string | null
         }
         Update: {
           company_id?: string | null
           created_at?: string
           expires_at?: string | null
           id?: string
+          invoice_number?: string | null
           lot_code?: string
+          manufacturing_date?: string | null
+          notes?: string | null
           product_id?: string
+          received_at?: string | null
+          status?: Database["public"]["Enums"]["lot_status"]
+          supplier?: string | null
         }
         Relationships: [
           {
@@ -368,38 +386,95 @@ export type Database = {
       products: {
         Row: {
           barcode: string | null
+          brand: string | null
+          category: string | null
+          classification:
+            | Database["public"]["Enums"]["product_classification"]
+            | null
           company_id: string | null
+          controls_batch: boolean
+          controls_expiration: boolean
           created_at: string
           description: string
           id: string
+          image_url: string | null
+          internal_code: string | null
           is_active: boolean
+          is_perishable: boolean
+          max_temperature: number | null
           min_stock: number
+          min_temperature: number | null
+          ncm: string | null
+          notes: string | null
           price: number
+          product_type: Database["public"]["Enums"]["product_type"]
+          shelf_life_days: number | null
           sku: string
+          storage_condition: string | null
+          subcategory: string | null
+          temperature_control_required: boolean
           unit: string
         }
         Insert: {
           barcode?: string | null
+          brand?: string | null
+          category?: string | null
+          classification?:
+            | Database["public"]["Enums"]["product_classification"]
+            | null
           company_id?: string | null
+          controls_batch?: boolean
+          controls_expiration?: boolean
           created_at?: string
           description: string
           id?: string
+          image_url?: string | null
+          internal_code?: string | null
           is_active?: boolean
+          is_perishable?: boolean
+          max_temperature?: number | null
           min_stock?: number
+          min_temperature?: number | null
+          ncm?: string | null
+          notes?: string | null
           price?: number
+          product_type?: Database["public"]["Enums"]["product_type"]
+          shelf_life_days?: number | null
           sku: string
+          storage_condition?: string | null
+          subcategory?: string | null
+          temperature_control_required?: boolean
           unit?: string
         }
         Update: {
           barcode?: string | null
+          brand?: string | null
+          category?: string | null
+          classification?:
+            | Database["public"]["Enums"]["product_classification"]
+            | null
           company_id?: string | null
+          controls_batch?: boolean
+          controls_expiration?: boolean
           created_at?: string
           description?: string
           id?: string
+          image_url?: string | null
+          internal_code?: string | null
           is_active?: boolean
+          is_perishable?: boolean
+          max_temperature?: number | null
           min_stock?: number
+          min_temperature?: number | null
+          ncm?: string | null
+          notes?: string | null
           price?: number
+          product_type?: Database["public"]["Enums"]["product_type"]
+          shelf_life_days?: number | null
           sku?: string
+          storage_condition?: string | null
+          subcategory?: string | null
+          temperature_control_required?: boolean
           unit?: string
         }
         Relationships: [
@@ -577,8 +652,30 @@ export type Database = {
         | "logistics_center"
         | "other"
       company_status: "active" | "inactive" | "blocked" | "trial"
+      lot_status: "active" | "blocked" | "expired" | "consumed" | "quarantined"
       movement_type: "IN" | "OUT" | "TRANSFER"
       operation_mode: "essential" | "operations" | "wms"
+      product_classification:
+        | "perishable"
+        | "non_perishable"
+        | "consumer_good"
+        | "controlled_validity"
+        | "technical_item"
+        | "fragile"
+        | "hazardous"
+        | "frozen"
+        | "refrigerated"
+        | "dry_storage"
+        | "other"
+      product_type:
+        | "raw_material"
+        | "finished_product"
+        | "resale_product"
+        | "consumable"
+        | "packaging"
+        | "spare_part"
+        | "service_item"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -717,8 +814,32 @@ export const Constants = {
         "other",
       ],
       company_status: ["active", "inactive", "blocked", "trial"],
+      lot_status: ["active", "blocked", "expired", "consumed", "quarantined"],
       movement_type: ["IN", "OUT", "TRANSFER"],
       operation_mode: ["essential", "operations", "wms"],
+      product_classification: [
+        "perishable",
+        "non_perishable",
+        "consumer_good",
+        "controlled_validity",
+        "technical_item",
+        "fragile",
+        "hazardous",
+        "frozen",
+        "refrigerated",
+        "dry_storage",
+        "other",
+      ],
+      product_type: [
+        "raw_material",
+        "finished_product",
+        "resale_product",
+        "consumable",
+        "packaging",
+        "spare_part",
+        "service_item",
+        "other",
+      ],
     },
   },
 } as const

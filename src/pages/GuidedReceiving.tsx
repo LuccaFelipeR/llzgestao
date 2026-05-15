@@ -30,6 +30,9 @@ export default function GuidedReceiving() {
   const [lotId, setLotId] = useState("");
   const [lotCode, setLotCode] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  const [manufacturingDate, setManufacturingDate] = useState("");
+  const [supplier, setSupplier] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
   const [qty, setQty] = useState("");
   const [addressId, setAddressId] = useState("");
   const [success, setSuccess] = useState(false);
@@ -59,20 +62,46 @@ export default function GuidedReceiving() {
     },
   });
 
-  const selectedProduct = products?.find(p => p.id === productId);
+  const selectedProduct: any = products?.find(p => p.id === productId);
   const selectedAddress = addresses?.find(a => a.id === addressId);
   const selectedLot = lots?.find(l => l.id === lotId);
+
+  // product control rules
+  const requiresLot = !!(selectedProduct?.controls_batch);
+  const requiresExpiration = !!(selectedProduct?.controls_expiration || selectedProduct?.is_perishable);
+
+  // expiration warnings
+  const expDate = expiresAt ? new Date(expiresAt) : null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const isExpired = !!(expDate && expDate < today);
+  const isNearExpiry = !!(expDate && !isExpired && (expDate.getTime() - today.getTime()) / 86400000 <= 30);
+  const manufAfterExpiry = !!(manufacturingDate && expiresAt && new Date(manufacturingDate) > new Date(expiresAt));
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       let finalLotId = lotId;
       if (lotMode === "new") {
-        if (!lotCode.trim()) throw new Error("Informe o código do lote.");
-        const { data: lotData, error: lotError } = await supabase.from("lots").insert({
-          product_id: productId, lot_code: lotCode.trim(), expires_at: expiresAt || null, company_id: companyId,
-        }).select("id").single();
-        if (lotError) throw new Error(lotError.message);
-        finalLotId = lotData.id;
+        if (requiresLot && !lotCode.trim()) throw new Error("Este produto exige código de lote.");
+        if (requiresExpiration && !expiresAt) throw new Error("Este produto exige data de validade.");
+        if (manufAfterExpiry) throw new Error("Data de fabricação não pode ser posterior à validade.");
+        // Reuse existing lot if same code already exists for this product/company
+        const lotCodeFinal = lotCode.trim() || `AUTO-${Date.now()}`;
+        const { data: existingLot } = await supabase.from("lots")
+          .select("id").eq("product_id", productId).ilike("lot_code", lotCodeFinal).maybeSingle();
+        if (existingLot) {
+          finalLotId = existingLot.id;
+        } else {
+          const { data: lotData, error: lotError } = await supabase.from("lots").insert({
+            product_id: productId, lot_code: lotCodeFinal,
+            expires_at: expiresAt || null,
+            manufacturing_date: manufacturingDate || null,
+            supplier: supplier.trim() || null,
+            invoice_number: invoiceNumber.trim() || null,
+            company_id: companyId,
+          }).select("id").single();
+          if (lotError) throw new Error(lotError.message);
+          finalLotId = lotData.id;
+        }
       }
       const { error } = await supabase.from("movements").insert({
         type: "IN" as const, product_id: productId, lot_id: finalLotId, qty: Number(qty),
@@ -89,12 +118,21 @@ export default function GuidedReceiving() {
   });
 
   function reset() {
-    setStep(1); setProductId(""); setLotMode("new"); setLotId(""); setLotCode(""); setExpiresAt(""); setQty(""); setAddressId(""); setSuccess(false);
+    setStep(1); setProductId(""); setLotMode("new"); setLotId(""); setLotCode("");
+    setExpiresAt(""); setManufacturingDate(""); setSupplier(""); setInvoiceNumber("");
+    setQty(""); setAddressId(""); setSuccess(false);
   }
 
   function canAdvance() {
     if (step === 1) return !!productId;
-    if (step === 2) return lotMode === "new" ? !!lotCode.trim() : !!lotId;
+    if (step === 2) {
+      if (lotMode === "existing") return !!lotId;
+      if (requiresLot && !lotCode.trim()) return false;
+      if (requiresExpiration && !expiresAt) return false;
+      if (manufAfterExpiry) return false;
+      if (isExpired) return false; // block expired lot creation
+      return true;
+    }
     if (step === 3) return Number(qty) > 0;
     if (step === 4) return !!addressId;
     return true;
@@ -169,6 +207,17 @@ export default function GuidedReceiving() {
 
           {step === 2 && (
             <div className="space-y-4">
+              {/* Product rules summary */}
+              {(requiresLot || requiresExpiration || selectedProduct?.is_perishable) && (
+                <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 text-xs space-y-1">
+                  <p className="font-bold text-warning">Regras deste produto:</p>
+                  {selectedProduct?.is_perishable && <p>• Produto perecível — validade obrigatória.</p>}
+                  {requiresLot && <p>• Código de lote obrigatório.</p>}
+                  {requiresExpiration && <p>• Data de validade obrigatória.</p>}
+                  {selectedProduct?.shelf_life_days && <p>• Vida útil sugerida: {selectedProduct.shelf_life_days} dias.</p>}
+                </div>
+              )}
+
               <div className="flex gap-2 mb-3">
                 <button onClick={() => setLotMode("new")}
                   className={`flex-1 py-2 rounded-lg text-sm font-medium border-2 transition-all ${lotMode === "new" ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground"}`}>
@@ -181,8 +230,34 @@ export default function GuidedReceiving() {
               </div>
               {lotMode === "new" ? (
                 <div className="space-y-3">
-                  <div><Label className="text-xs font-semibold">Código do Lote *</Label><Input value={lotCode} onChange={e => setLotCode(e.target.value)} placeholder="Ex: LT-2026-001" className="mt-1" /></div>
-                  <div><Label className="text-xs font-semibold">Validade (opcional)</Label><Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" /></div>
+                  <div>
+                    <Label className="text-xs font-semibold">Código do Lote {requiresLot && "*"}</Label>
+                    <Input value={lotCode} onChange={e => setLotCode(e.target.value)} placeholder={requiresLot ? "Obrigatório" : "Opcional — gerado automaticamente se vazio"} className="mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Fabricação</Label>
+                      <Input type="date" value={manufacturingDate} onChange={e => setManufacturingDate(e.target.value)} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Validade {requiresExpiration && "*"}</Label>
+                      <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold">Fornecedor</Label>
+                      <Input value={supplier} onChange={e => setSupplier(e.target.value)} maxLength={120} className="mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-xs font-semibold">Nota fiscal</Label>
+                      <Input value={invoiceNumber} onChange={e => setInvoiceNumber(e.target.value)} maxLength={50} className="mt-1" />
+                    </div>
+                  </div>
+
+                  {manufAfterExpiry && <p className="text-xs font-bold text-destructive">⚠ Fabricação não pode ser posterior à validade.</p>}
+                  {isExpired && <p className="text-xs font-bold text-destructive">⚠ Lote já vencido — não é permitido receber.</p>}
+                  {isNearExpiry && !isExpired && <p className="text-xs font-bold text-warning">⚠ Vencimento em ≤30 dias.</p>}
                 </div>
               ) : (
                 <Select value={lotId} onValueChange={setLotId}>
