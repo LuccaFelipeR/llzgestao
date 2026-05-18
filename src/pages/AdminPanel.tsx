@@ -494,51 +494,86 @@ export default function AdminPanel() {
       {/* Companies Tab */}
       {tab === "companies" && (
         <div className="space-y-3">
-          {companiesList?.map((c: any) => (
-            <div key={c.id} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm">{c.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Membros: {c.company_members?.length ?? 0} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                  </p>
+          {/* Companies without focal point card */}
+          {(() => {
+            const without = companiesList?.filter((c: any) => !c.main_focal_user_id) ?? [];
+            if (without.length === 0) return null;
+            return (
+              <div className="bg-warning/10 border border-warning/30 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle size={16} className="text-warning" />
+                  <h3 className="font-semibold text-sm">Empresas sem focal point ({without.length})</h3>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="bg-secondary rounded-lg px-3 py-2 flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground">Código:</span>
-                    <span className="font-mono font-bold text-sm text-primary">{c.invite_code || "—"}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {without.map((c: any) => (
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(c.invite_code || "");
-                        toast({ title: "Código copiado!" });
-                      }}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Copy size={14} />
-                    </button>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1"
-                    onClick={() => regenerateCodeMutation.mutate(c.id)}
-                    disabled={regenerateCodeMutation.isPending}
-                  >
-                    <RefreshCw size={14} /> Novo Código
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
-                    <Pencil size={14} /> Editar
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
-                    <Trash2 size={14} />
-                  </Button>
+                      key={c.id}
+                      onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}
+                      className="text-xs px-2 py-1 rounded-md bg-card border border-border hover:border-warning"
+                    >{c.name}</button>
+                  ))}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })()}
+
+          {companiesList?.map((c: any) => {
+            const memberCount = c.company_members?.length ?? 0;
+            const hasFocal = !!c.main_focal_user_id;
+            return (
+              <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm">{c.name}</h3>
+                      {c.status && c.status !== "active" && (
+                        <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
+                      )}
+                      {!hasFocal && (
+                        <Badge variant="outline" className="text-[10px] border-warning text-warning">Sem focal point</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Membros: {memberCount} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    <div className="bg-secondary rounded-lg px-3 py-2 flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">Código:</span>
+                      <span className="font-mono font-bold text-sm text-primary">{c.invite_code || "—"}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(c.invite_code || "");
+                          toast({ title: "Código copiado!" });
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs gap-1"
+                      onClick={() => regenerateCodeMutation.mutate(c.id)}
+                      disabled={regenerateCodeMutation.isPending}
+                    >
+                      <RefreshCw size={14} /> Novo Código
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
+                      <Pencil size={14} /> Detalhes
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
           {(!companiesList || companiesList.length === 0) && (
             <p className="text-center text-muted-foreground py-8">Nenhuma empresa cadastrada.</p>
           )}
