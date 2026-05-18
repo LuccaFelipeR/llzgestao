@@ -88,10 +88,76 @@ export default function AdminPanel() {
     queryKey: ["admin-companies"],
     enabled: tab === "companies",
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from("companies").select("*, company_members(user_id, role)").order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any)
+        .from("companies")
+        .select("*, company_members(id, user_id, role, is_main_focal_point, is_active, approved_at, blocked_at)")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+  });
+
+  // Load company details + members + profiles when a company is opened
+  const { data: companyMembers } = useQuery({
+    queryKey: ["admin-company-members", editCompany?.id],
+    enabled: !!editCompany?.id,
+    queryFn: async () => {
+      const { data: members } = await (supabase as any)
+        .from("company_members")
+        .select("*")
+        .eq("company_id", editCompany.id);
+      const ids = (members ?? []).map((m: any) => m.user_id);
+      if (ids.length === 0) return [];
+      const { data: profs } = await supabase.from("profiles").select("id,email,full_name,is_approved").in("id", ids);
+      return (members ?? []).map((m: any) => ({ ...m, profile: profs?.find((p) => p.id === m.user_id) }));
+    },
+  });
+
+  const setFocalPointMutation = useMutation({
+    mutationFn: async ({ memberId, companyId }: { memberId: string; companyId: string }) => {
+      // Trigger handles uniqueness; just flag this one as main
+      const { error } = await (supabase as any)
+        .from("company_members")
+        .update({ is_main_focal_point: true })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Focal point definido" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const toggleMemberActiveMutation = useMutation({
+    mutationFn: async ({ memberId, active }: { memberId: string; active: boolean }) => {
+      const { error } = await (supabase as any)
+        .from("company_members")
+        .update({ is_active: active, blocked_at: active ? null : new Date().toISOString() })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      toast({ title: "Membro atualizado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const updateCompanyDetailsMutation = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
+      const { error } = await (supabase as any)
+        .from("companies")
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Empresa atualizada" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
   const regenerateCodeMutation = useMutation({
