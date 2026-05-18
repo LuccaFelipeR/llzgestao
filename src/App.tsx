@@ -44,7 +44,8 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
 }
 
 function CompanyGate({ children }: { children: React.ReactNode }) {
-  const { company, loading } = useCompany();
+  const { company, loading, currentCompanyId, isSuperAdmin } = useCompany();
+  const { isAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -56,6 +57,20 @@ function CompanyGate({ children }: { children: React.ReactNode }) {
 
   if (company && !company.onboarding_completed) {
     return <CompanyOnboarding />;
+  }
+
+  // Block when there's no company selected, unless super admin (who can still reach /admin)
+  if (!currentCompanyId && !isSuperAdmin && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-md text-center space-y-3">
+          <h2 className="text-lg font-semibold">Sem empresa vinculada</h2>
+          <p className="text-sm text-muted-foreground">
+            Sua conta ainda não está vinculada a nenhuma empresa. Contate um administrador.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return <>{children}</>;
