@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { user, profile, isAdmin, role, signOut } = useAuth();
-  const { company } = useCompany();
+  const { company, availableCompanies, switchCompany, isSuperAdmin, currentCompanyId } = useCompany();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch user's tab permissions
