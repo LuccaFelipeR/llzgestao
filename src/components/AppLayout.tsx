@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Menu, X } from "lucide-react";
+import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Menu, X, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThemeToggle from "@/components/ThemeToggle";
 import ConversationalSearch from "@/components/ConversationalSearch";
 import { useState } from "react";
