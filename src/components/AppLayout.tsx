@@ -71,6 +71,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {(isSuperAdmin || availableCompanies.length > 1) && currentCompanyId && (
+              <Select value={currentCompanyId} onValueChange={(v) => switchCompany(v)}>
+                <SelectTrigger className="h-8 w-[160px] text-xs">
+                  <Building2 size={14} className="text-primary mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCompanies.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      {c.name}{c.role === "super_admin" ? " ★" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <ThemeToggle />
             <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
