@@ -88,10 +88,76 @@ export default function AdminPanel() {
     queryKey: ["admin-companies"],
     enabled: tab === "companies",
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from("companies").select("*, company_members(user_id, role)").order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any)
+        .from("companies")
+        .select("*, company_members(id, user_id, role, is_main_focal_point, is_active, approved_at, blocked_at)")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+  });
+
+  // Load company details + members + profiles when a company is opened
+  const { data: companyMembers } = useQuery({
+    queryKey: ["admin-company-members", editCompany?.id],
+    enabled: !!editCompany?.id,
+    queryFn: async () => {
+      const { data: members } = await (supabase as any)
+        .from("company_members")
+        .select("*")
+        .eq("company_id", editCompany.id);
+      const ids = (members ?? []).map((m: any) => m.user_id);
+      if (ids.length === 0) return [];
+      const { data: profs } = await supabase.from("profiles").select("id,email,full_name,is_approved").in("id", ids);
+      return (members ?? []).map((m: any) => ({ ...m, profile: profs?.find((p) => p.id === m.user_id) }));
+    },
+  });
+
+  const setFocalPointMutation = useMutation({
+    mutationFn: async ({ memberId, companyId }: { memberId: string; companyId: string }) => {
+      // Trigger handles uniqueness; just flag this one as main
+      const { error } = await (supabase as any)
+        .from("company_members")
+        .update({ is_main_focal_point: true })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Focal point definido" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const toggleMemberActiveMutation = useMutation({
+    mutationFn: async ({ memberId, active }: { memberId: string; active: boolean }) => {
+      const { error } = await (supabase as any)
+        .from("company_members")
+        .update({ is_active: active, blocked_at: active ? null : new Date().toISOString() })
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      toast({ title: "Membro atualizado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const updateCompanyDetailsMutation = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
+      const { error } = await (supabase as any)
+        .from("companies")
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Empresa atualizada" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
   const regenerateCodeMutation = useMutation({
@@ -428,51 +494,86 @@ export default function AdminPanel() {
       {/* Companies Tab */}
       {tab === "companies" && (
         <div className="space-y-3">
-          {companiesList?.map((c: any) => (
-            <div key={c.id} className="bg-card border border-border rounded-xl p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm">{c.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Membros: {c.company_members?.length ?? 0} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
-                  </p>
+          {/* Companies without focal point card */}
+          {(() => {
+            const without = companiesList?.filter((c: any) => !c.main_focal_user_id) ?? [];
+            if (without.length === 0) return null;
+            return (
+              <div className="bg-warning/10 border border-warning/30 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle size={16} className="text-warning" />
+                  <h3 className="font-semibold text-sm">Empresas sem focal point ({without.length})</h3>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="bg-secondary rounded-lg px-3 py-2 flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground">Código:</span>
-                    <span className="font-mono font-bold text-sm text-primary">{c.invite_code || "—"}</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {without.map((c: any) => (
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(c.invite_code || "");
-                        toast({ title: "Código copiado!" });
-                      }}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Copy size={14} />
-                    </button>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1"
-                    onClick={() => regenerateCodeMutation.mutate(c.id)}
-                    disabled={regenerateCodeMutation.isPending}
-                  >
-                    <RefreshCw size={14} /> Novo Código
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
-                    <Pencil size={14} /> Editar
-                  </Button>
-                  <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
-                    <Trash2 size={14} />
-                  </Button>
+                      key={c.id}
+                      onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}
+                      className="text-xs px-2 py-1 rounded-md bg-card border border-border hover:border-warning"
+                    >{c.name}</button>
+                  ))}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })()}
+
+          {companiesList?.map((c: any) => {
+            const memberCount = c.company_members?.length ?? 0;
+            const hasFocal = !!c.main_focal_user_id;
+            return (
+              <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-semibold text-sm">{c.name}</h3>
+                      {c.status && c.status !== "active" && (
+                        <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
+                      )}
+                      {!hasFocal && (
+                        <Badge variant="outline" className="text-[10px] border-warning text-warning">Sem focal point</Badge>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Membros: {memberCount} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    <div className="bg-secondary rounded-lg px-3 py-2 flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">Código:</span>
+                      <span className="font-mono font-bold text-sm text-primary">{c.invite_code || "—"}</span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(c.invite_code || "");
+                          toast({ title: "Código copiado!" });
+                        }}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs gap-1"
+                      onClick={() => regenerateCodeMutation.mutate(c.id)}
+                      disabled={regenerateCodeMutation.isPending}
+                    >
+                      <RefreshCw size={14} /> Novo Código
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
+                      <Pencil size={14} /> Detalhes
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
           {(!companiesList || companiesList.length === 0) && (
             <p className="text-center text-muted-foreground py-8">Nenhuma empresa cadastrada.</p>
           )}
@@ -581,22 +682,123 @@ export default function AdminPanel() {
 
       {/* Edit Company Dialog */}
       <Dialog open={!!editCompany} onOpenChange={(o) => !o && setEditCompany(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil size={18} className="text-primary" /> Editar Empresa</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Nome da empresa</Label>
-              <Input value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} />
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 size={18} className="text-primary" /> {editCompany?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          {editCompany && (
+            <div className="space-y-6">
+              {/* Identification */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Identificação</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Nome</Label>
+                    <Input value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Razão social</Label>
+                    <Input defaultValue={editCompany.legal_name ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { legal_name: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">CNPJ / Documento</Label>
+                    <Input defaultValue={editCompany.document_number ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { document_number: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Email</Label>
+                    <Input type="email" defaultValue={editCompany.email ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { email: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Telefone</Label>
+                    <Input defaultValue={editCompany.phone ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { phone: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Status</Label>
+                    <Select defaultValue={editCompany.status ?? "active"} onValueChange={(v) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { status: v } })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Ativa</SelectItem>
+                        <SelectItem value="inactive">Inativa</SelectItem>
+                        <SelectItem value="blocked">Bloqueada</SelectItem>
+                        <SelectItem value="trial">Trial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Focal Point */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Focal Point principal</h4>
+                {(() => {
+                  const current = companyMembers?.find((m: any) => m.is_main_focal_point);
+                  return (
+                    <div className="bg-secondary rounded-lg p-3 text-xs">
+                      {current ? (
+                        <span><strong>{current.profile?.full_name || current.profile?.email}</strong> ({current.role})</span>
+                      ) : (
+                        <span className="text-warning">Nenhum focal point definido</span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Linked users */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Usuários vinculados ({companyMembers?.length ?? 0})</h4>
+                {(!companyMembers || companyMembers.length === 0) && (
+                  <p className="text-xs text-muted-foreground">Nenhum membro vinculado.</p>
+                )}
+                <div className="space-y-1.5">
+                  {companyMembers?.map((m: any) => {
+                    const approved = m.profile?.is_approved;
+                    const active = m.is_active !== false;
+                    return (
+                      <div key={m.id} className="flex flex-wrap items-center gap-2 bg-card border border-border rounded-lg p-2 text-xs">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{m.profile?.full_name || m.profile?.email || m.user_id.slice(0, 8)}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{m.profile?.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">{m.role}</Badge>
+                        {m.is_main_focal_point && <Badge className="text-[10px] bg-primary/15 text-primary border-0">Focal</Badge>}
+                        {approved
+                          ? <Badge className="text-[10px] bg-accent/15 text-accent border-0">Aprovado</Badge>
+                          : <Badge variant="destructive" className="text-[10px]">Pendente</Badge>}
+                        {!active && <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>}
+                        {!m.is_main_focal_point && (
+                          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setFocalPointMutation.mutate({ memberId: m.id, companyId: editCompany.id })}>
+                            Tornar focal
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[10px]"
+                          onClick={() => toggleMemberActiveMutation.mutate({ memberId: m.id, active: !active })}
+                        >
+                          {active ? "Bloquear" : "Reativar"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setEditCompany(null)}>Fechar</Button>
+                <Button className="flex-1" disabled={!editCompanyName.trim() || updateCompanyMutation.isPending}
+                  onClick={() => updateCompanyMutation.mutate({ id: editCompany.id, name: editCompanyName.trim() })}>
+                  {updateCompanyMutation.isPending ? "Salvando..." : "Salvar nome"}
+                </Button>
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
-          </div>
-          <div className="flex gap-3 mt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setEditCompany(null)}>Cancelar</Button>
-            <Button className="flex-1" disabled={!editCompanyName.trim() || updateCompanyMutation.isPending}
-              onClick={() => updateCompanyMutation.mutate({ id: editCompany.id, name: editCompanyName.trim() })}>
-              {updateCompanyMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 

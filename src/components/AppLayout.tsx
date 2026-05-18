@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Menu, X } from "lucide-react";
+import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Menu, X, Building2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ThemeToggle from "@/components/ThemeToggle";
 import ConversationalSearch from "@/components/ConversationalSearch";
 import { useState } from "react";
@@ -12,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { user, profile, isAdmin, role, signOut } = useAuth();
-  const { company } = useCompany();
+  const { company, availableCompanies, switchCompany, isSuperAdmin, currentCompanyId } = useCompany();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Fetch user's tab permissions
@@ -70,6 +71,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="ml-auto flex items-center gap-2">
+            {(isSuperAdmin || availableCompanies.length > 1) && currentCompanyId && (
+              <Select value={currentCompanyId} onValueChange={(v) => switchCompany(v)}>
+                <SelectTrigger className="h-8 w-[160px] text-xs">
+                  <Building2 size={14} className="text-primary mr-1" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCompanies.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      {c.name}{c.role === "super_admin" ? " ★" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <ThemeToggle />
             <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
