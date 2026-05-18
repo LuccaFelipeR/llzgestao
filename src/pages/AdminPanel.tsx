@@ -682,22 +682,123 @@ export default function AdminPanel() {
 
       {/* Edit Company Dialog */}
       <Dialog open={!!editCompany} onOpenChange={(o) => !o && setEditCompany(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle className="flex items-center gap-2"><Pencil size={18} className="text-primary" /> Editar Empresa</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Nome da empresa</Label>
-              <Input value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} />
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 size={18} className="text-primary" /> {editCompany?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          {editCompany && (
+            <div className="space-y-6">
+              {/* Identification */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Identificação</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Nome</Label>
+                    <Input value={editCompanyName} onChange={(e) => setEditCompanyName(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Razão social</Label>
+                    <Input defaultValue={editCompany.legal_name ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { legal_name: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">CNPJ / Documento</Label>
+                    <Input defaultValue={editCompany.document_number ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { document_number: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Email</Label>
+                    <Input type="email" defaultValue={editCompany.email ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { email: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Telefone</Label>
+                    <Input defaultValue={editCompany.phone ?? ""} onBlur={(e) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { phone: e.target.value } })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Status</Label>
+                    <Select defaultValue={editCompany.status ?? "active"} onValueChange={(v) => updateCompanyDetailsMutation.mutate({ id: editCompany.id, patch: { status: v } })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Ativa</SelectItem>
+                        <SelectItem value="inactive">Inativa</SelectItem>
+                        <SelectItem value="blocked">Bloqueada</SelectItem>
+                        <SelectItem value="trial">Trial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Focal Point */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Focal Point principal</h4>
+                {(() => {
+                  const current = companyMembers?.find((m: any) => m.is_main_focal_point);
+                  return (
+                    <div className="bg-secondary rounded-lg p-3 text-xs">
+                      {current ? (
+                        <span><strong>{current.profile?.full_name || current.profile?.email}</strong> ({current.role})</span>
+                      ) : (
+                        <span className="text-warning">Nenhum focal point definido</span>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Linked users */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Usuários vinculados ({companyMembers?.length ?? 0})</h4>
+                {(!companyMembers || companyMembers.length === 0) && (
+                  <p className="text-xs text-muted-foreground">Nenhum membro vinculado.</p>
+                )}
+                <div className="space-y-1.5">
+                  {companyMembers?.map((m: any) => {
+                    const approved = m.profile?.is_approved;
+                    const active = m.is_active !== false;
+                    return (
+                      <div key={m.id} className="flex flex-wrap items-center gap-2 bg-card border border-border rounded-lg p-2 text-xs">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{m.profile?.full_name || m.profile?.email || m.user_id.slice(0, 8)}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{m.profile?.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">{m.role}</Badge>
+                        {m.is_main_focal_point && <Badge className="text-[10px] bg-primary/15 text-primary border-0">Focal</Badge>}
+                        {approved
+                          ? <Badge className="text-[10px] bg-accent/15 text-accent border-0">Aprovado</Badge>
+                          : <Badge variant="destructive" className="text-[10px]">Pendente</Badge>}
+                        {!active && <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>}
+                        {!m.is_main_focal_point && (
+                          <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setFocalPointMutation.mutate({ memberId: m.id, companyId: editCompany.id })}>
+                            Tornar focal
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[10px]"
+                          onClick={() => toggleMemberActiveMutation.mutate({ memberId: m.id, active: !active })}
+                        >
+                          {active ? "Bloquear" : "Reativar"}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setEditCompany(null)}>Fechar</Button>
+                <Button className="flex-1" disabled={!editCompanyName.trim() || updateCompanyMutation.isPending}
+                  onClick={() => updateCompanyMutation.mutate({ id: editCompany.id, name: editCompanyName.trim() })}>
+                  {updateCompanyMutation.isPending ? "Salvando..." : "Salvar nome"}
+                </Button>
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
-          </div>
-          <div className="flex gap-3 mt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setEditCompany(null)}>Cancelar</Button>
-            <Button className="flex-1" disabled={!editCompanyName.trim() || updateCompanyMutation.isPending}
-              onClick={() => updateCompanyMutation.mutate({ id: editCompany.id, name: editCompanyName.trim() })}>
-              {updateCompanyMutation.isPending ? "Salvando..." : "Salvar"}
-            </Button>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
 
