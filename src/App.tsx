@@ -21,6 +21,9 @@ import AIInsights from "@/pages/AIInsights";
 import CompanyOnboarding from "@/pages/CompanyOnboarding";
 import Documentation from "@/pages/Documentation";
 import GuidedReceiving from "@/pages/GuidedReceiving";
+import Changelog from "@/pages/Changelog";
+import DataQuality from "@/pages/DataQuality";
+import AuditLogs from "@/pages/AuditLogs";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -110,6 +113,9 @@ function AppRoutes() {
                   <Route path="/recebimento" element={<GuidedReceiving />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
+                  <Route path="/admin/changelog" element={<ProtectedRoute adminOnly><Changelog /></ProtectedRoute>} />
+                  <Route path="/admin/data-quality" element={<ProtectedRoute adminOnly><DataQuality /></ProtectedRoute>} />
+                  <Route path="/admin/audit-logs" element={<ProtectedRoute adminOnly><AuditLogs /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppLayout>
