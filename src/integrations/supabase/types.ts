@@ -23,6 +23,9 @@ export type Database = {
           entity_id: string | null
           entity_type: string | null
           id: string
+          metadata: Json | null
+          new_data: Json | null
+          previous_data: Json | null
           user_id: string | null
         }
         Insert: {
@@ -33,6 +36,9 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string | null
           id?: string
+          metadata?: Json | null
+          new_data?: Json | null
+          previous_data?: Json | null
           user_id?: string | null
         }
         Update: {
@@ -43,6 +49,9 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string | null
           id?: string
+          metadata?: Json | null
+          new_data?: Json | null
+          previous_data?: Json | null
           user_id?: string | null
         }
         Relationships: [
@@ -585,6 +594,39 @@ export type Database = {
           },
         ]
       }
+      system_changelog: {
+        Row: {
+          affected_modules: string[]
+          change_type: Database["public"]["Enums"]["changelog_change_type"]
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          title: string
+          version: string | null
+        }
+        Insert: {
+          affected_modules?: string[]
+          change_type?: Database["public"]["Enums"]["changelog_change_type"]
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          title: string
+          version?: string | null
+        }
+        Update: {
+          affected_modules?: string[]
+          change_type?: Database["public"]["Enums"]["changelog_change_type"]
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          title?: string
+          version?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -651,6 +693,14 @@ export type Database = {
         | "warehouse"
         | "logistics_center"
         | "other"
+      changelog_change_type:
+        | "feature"
+        | "fix"
+        | "security"
+        | "database"
+        | "ui"
+        | "performance"
+        | "refactor"
       company_status: "active" | "inactive" | "blocked" | "trial"
       lot_status: "active" | "blocked" | "expired" | "consumed" | "quarantined"
       movement_type: "IN" | "OUT" | "TRANSFER"
@@ -812,6 +862,15 @@ export const Constants = {
         "warehouse",
         "logistics_center",
         "other",
+      ],
+      changelog_change_type: [
+        "feature",
+        "fix",
+        "security",
+        "database",
+        "ui",
+        "performance",
+        "refactor",
       ],
       company_status: ["active", "inactive", "blocked", "trial"],
       lot_status: ["active", "blocked", "expired", "consumed", "quarantined"],
