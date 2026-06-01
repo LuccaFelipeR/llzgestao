@@ -392,6 +392,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          category: string
+          company_id: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string | null
+          metadata: Json
+          severity: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          metadata?: Json
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string | null
+          metadata?: Json
+          severity?: Database["public"]["Enums"]["notification_severity"]
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
@@ -602,6 +641,7 @@ export type Database = {
           created_by: string | null
           description: string
           id: string
+          is_public: boolean
           title: string
           version: string | null
         }
@@ -612,6 +652,7 @@ export type Database = {
           created_by?: string | null
           description: string
           id?: string
+          is_public?: boolean
           title: string
           version?: string | null
         }
@@ -622,6 +663,7 @@ export type Database = {
           created_by?: string | null
           description?: string
           id?: string
+          is_public?: boolean
           title?: string
           version?: string | null
         }
@@ -704,6 +746,7 @@ export type Database = {
       company_status: "active" | "inactive" | "blocked" | "trial"
       lot_status: "active" | "blocked" | "expired" | "consumed" | "quarantined"
       movement_type: "IN" | "OUT" | "TRANSFER"
+      notification_severity: "info" | "warning" | "critical"
       operation_mode: "essential" | "operations" | "wms"
       product_classification:
         | "perishable"
@@ -875,6 +918,7 @@ export const Constants = {
       company_status: ["active", "inactive", "blocked", "trial"],
       lot_status: ["active", "blocked", "expired", "consumed", "quarantined"],
       movement_type: ["IN", "OUT", "TRANSFER"],
+      notification_severity: ["info", "warning", "critical"],
       operation_mode: ["essential", "operations", "wms"],
       product_classification: [
         "perishable",
