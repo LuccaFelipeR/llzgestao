@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Menu, X, Building2, FileClock, ShieldAlert, Activity } from "lucide-react";
+import { Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User, ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Menu, X, Building2, FileClock, ShieldAlert, Activity, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     { to: "/onboarding", key: "onboarding", icon: Upload, label: "Importar" },
     { to: "/notificacoes", key: "notificacoes", icon: Bell, label: "Alertas" },
     ...(isAdmin ? [
+      { to: "/admin/global", key: "global", icon: Crown, label: "Painel Global" },
       { to: "/admin", key: "admin", icon: Shield, label: "Admin" },
       { to: "/admin/data-quality", key: "data-quality", icon: ShieldAlert, label: "Data Quality" },
       { to: "/admin/audit-logs", key: "audit-logs", icon: Activity, label: "Auditoria" },

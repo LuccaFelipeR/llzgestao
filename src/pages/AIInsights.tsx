@@ -1,64 +1,66 @@
 import { useState } from "react";
-import { Sparkles, BarChart3, ShoppingCart, MapPin, Loader2, Bot } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Sparkles, BarChart3, ShoppingCart, MapPin, Loader2, Bot, CalendarClock, Skull, ShieldCheck, Building2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { useCompany } from "@/contexts/CompanyContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-type InsightType = "overview" | "restock" | "layout";
+type InsightType = "overview" | "restock" | "layout" | "fefo" | "dead-stock" | "data-quality" | "global-companies";
 
-const INSIGHTS: { type: InsightType; label: string; desc: string; icon: any; color: string }[] = [
-  { type: "overview", label: "Análise Geral", desc: "Resumo executivo, alertas e previsões", icon: BarChart3, color: "from-primary to-primary/70" },
-  { type: "restock", label: "Lista de Compras IA", desc: "Reabastecimento inteligente por prioridade", icon: ShoppingCart, color: "from-accent to-accent/70" },
-  { type: "layout", label: "Otimizar Layout", desc: "Reorganização de armazém por movimentação", icon: MapPin, color: "from-success to-success/70" },
+const INSIGHTS: { type: InsightType; label: string; desc: string; icon: any; color: string; superOnly?: boolean }[] = [
+  { type: "overview", label: "Análise Geral", desc: "Resumo executivo e previsões", icon: BarChart3, color: "from-primary to-primary/70" },
+  { type: "restock", label: "Lista de Compras IA", desc: "Reabastecimento priorizado", icon: ShoppingCart, color: "from-accent to-accent/70" },
+  { type: "layout", label: "Otimizar Layout", desc: "Slotting por ABC e movimentação", icon: MapPin, color: "from-success to-success/70" },
+  { type: "fefo", label: "Sugestões FEFO", desc: "Ordem de saída por validade", icon: CalendarClock, color: "from-accent to-primary" },
+  { type: "dead-stock", label: "Estoque Parado", desc: "Liquide capital de giro", icon: Skull, color: "from-destructive to-destructive/70" },
+  { type: "data-quality", label: "Qualidade de Dados", desc: "Classificação, preço, perecíveis", icon: ShieldCheck, color: "from-primary to-accent" },
+  { type: "global-companies", label: "Visão Global", desc: "Empresas com setup incompleto", icon: Building2, color: "from-primary to-success", superOnly: true },
 ];
 
 export default function AIInsights() {
+  const { isSuperAdmin, currentCompanyId, availableCompanies } = useCompany();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [activeType, setActiveType] = useState<InsightType | null>(null);
+  const [scope, setScope] = useState<string>("current"); // "current" | "global" | companyId
 
   async function runInsight(type: InsightType) {
-    setLoading(true);
-    setActiveType(type);
-    setResult("");
-
+    setLoading(true); setActiveType(type); setResult("");
     try {
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-insights`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ type }),
-        }
-      );
+      // Use user JWT so the edge function can resolve company isolation
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      const body: any = { type };
+      if (isSuperAdmin) {
+        if (scope === "global") body.scope = "global";
+        else if (scope !== "current") body.companyId = scope;
+      }
+
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-insights`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },
+        body: JSON.stringify(body),
+      });
 
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({ error: "Erro desconhecido" }));
-        if (resp.status === 429) toast({ title: "Limite excedido", description: "Aguarde alguns segundos e tente novamente.", variant: "destructive" });
-        else if (resp.status === 402) toast({ title: "Créditos insuficientes", description: "Adicione créditos ao workspace.", variant: "destructive" });
+        if (resp.status === 429) toast({ title: "Limite excedido", description: "Aguarde alguns segundos.", variant: "destructive" });
+        else if (resp.status === 402) toast({ title: "Créditos insuficientes", description: "Adicione créditos.", variant: "destructive" });
         else toast({ title: "Erro", description: err.error, variant: "destructive" });
-        setLoading(false);
-        return;
+        setLoading(false); return;
       }
 
-      const reader = resp.body?.getReader();
-      if (!reader) throw new Error("No reader");
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let fullText = "";
-
+      const reader = resp.body?.getReader(); if (!reader) throw new Error("No reader");
+      const decoder = new TextDecoder(); let buffer = ""; let fullText = "";
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
+        let nl: number;
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          let line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
           if (!line.startsWith("data: ")) continue;
           const jsonStr = line.slice(6).trim();
@@ -66,14 +68,8 @@ export default function AIInsights() {
           try {
             const parsed = JSON.parse(jsonStr);
             const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              fullText += content;
-              setResult(fullText);
-            }
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
+            if (content) { fullText += content; setResult(fullText); }
+          } catch { buffer = line + "\n" + buffer; break; }
         }
       }
     } catch (e: any) {
@@ -82,66 +78,69 @@ export default function AIInsights() {
     setLoading(false);
   }
 
+  const visibleInsights = INSIGHTS.filter((i) => !i.superOnly || isSuperAdmin);
+
   return (
     <div className="page-container">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <Sparkles size={20} className="text-primary-foreground" />
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <Sparkles size={20} className="text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="page-title mb-0">IA Insights</h1>
+              <p className="text-xs text-muted-foreground">Análise isolada por empresa</p>
+            </div>
           </div>
-          <div>
-            <h1 className="page-title mb-0">IA Insights</h1>
-            <p className="text-xs text-muted-foreground">Inteligência artificial aplicada ao seu estoque</p>
-          </div>
+          {isSuperAdmin && (
+            <Select value={scope} onValueChange={setScope}>
+              <SelectTrigger className="w-[200px] h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="current">Empresa atual ({currentCompanyId?.slice(0, 6)})</SelectItem>
+                <SelectItem value="global">★ Visão Global</SelectItem>
+                {availableCompanies.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </motion.div>
 
-      {/* Insight Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 mb-6">
-        {INSIGHTS.map((insight, i) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6 mb-6">
+        {visibleInsights.map((insight, i) => (
           <motion.button
             key={insight.type}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             onClick={() => runInsight(insight.type)}
             disabled={loading}
-            className={`group relative overflow-hidden rounded-2xl border-2 p-5 text-left transition-all ${
-              activeType === insight.type
-                ? "border-primary bg-primary/5 shadow-lg"
-                : "border-border hover:border-primary/30 hover:shadow-md bg-card"
+            className={`group relative overflow-hidden rounded-2xl border-2 p-4 text-left transition-all ${
+              activeType === insight.type ? "border-primary bg-primary/5 shadow-lg" : "border-border hover:border-primary/30 hover:shadow-md bg-card"
             } disabled:opacity-60`}
           >
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${insight.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-              <insight.icon size={20} className="text-primary-foreground" />
+            <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${insight.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+              <insight.icon size={18} className="text-primary-foreground" />
             </div>
             <h3 className="font-bold text-sm text-foreground">{insight.label}</h3>
-            <p className="text-xs text-muted-foreground mt-1">{insight.desc}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{insight.desc}</p>
             {loading && activeType === insight.type && (
-              <div className="absolute top-3 right-3">
-                <Loader2 size={16} className="animate-spin text-primary" />
-              </div>
+              <div className="absolute top-3 right-3"><Loader2 size={16} className="animate-spin text-primary" /></div>
             )}
           </motion.button>
         ))}
       </div>
 
-      {/* Result */}
       <AnimatePresence>
         {(result || loading) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="glass-card p-6"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="glass-card p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Bot size={16} className="text-primary-foreground" />
               </div>
               <div>
                 <h3 className="font-bold text-sm text-foreground">Análise da IA</h3>
-                <p className="text-[10px] text-muted-foreground">Baseado nos dados reais do seu estoque</p>
+                <p className="text-[10px] text-muted-foreground">Dados reais isolados por empresa</p>
               </div>
               {loading && <Loader2 size={14} className="animate-spin text-primary ml-auto" />}
             </div>
@@ -162,19 +161,12 @@ export default function AIInsights() {
       </AnimatePresence>
 
       {!result && !loading && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-center py-16"
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="text-center py-16">
           <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center mx-auto mb-4">
             <Sparkles size={28} className="text-primary" />
           </div>
           <h3 className="font-bold text-foreground mb-1">Selecione uma análise</h3>
-          <p className="text-sm text-muted-foreground max-w-md mx-auto">
-            A IA vai analisar seus dados reais de estoque e gerar insights personalizados em tempo real.
-          </p>
+          <p className="text-sm text-muted-foreground max-w-md mx-auto">A IA vai analisar os dados da empresa atual e gerar insights em tempo real.</p>
         </motion.div>
       )}
     </div>
@@ -183,10 +175,7 @@ export default function AIInsights() {
 
 function renderBold(text: string) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
-    }
-    return part;
-  });
+  return parts.map((part, i) => part.startsWith("**") && part.endsWith("**")
+    ? <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+    : part);
 }
