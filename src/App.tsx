@@ -24,6 +24,8 @@ import GuidedReceiving from "@/pages/GuidedReceiving";
 import Changelog from "@/pages/Changelog";
 import DataQuality from "@/pages/DataQuality";
 import AuditLogs from "@/pages/AuditLogs";
+import GlobalDashboard from "@/pages/GlobalDashboard";
+import Notifications from "@/pages/Notifications";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -108,11 +110,13 @@ function AppRoutes() {
                   <Route path="/estoque" element={<StockQuery />} />
                   <Route path="/scanner" element={<Scanner />} />
                   <Route path="/onboarding" element={<Onboarding />} />
-                  <Route path="/notificacoes" element={<NotificationSettings />} />
+                  <Route path="/notificacoes" element={<Notifications />} />
+                  <Route path="/notificacoes/config" element={<NotificationSettings />} />
                   <Route path="/ai-insights" element={<AIInsights />} />
                   <Route path="/recebimento" element={<GuidedReceiving />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
+                  <Route path="/admin/global" element={<ProtectedRoute adminOnly><GlobalDashboard /></ProtectedRoute>} />
                   <Route path="/admin/changelog" element={<ProtectedRoute adminOnly><Changelog /></ProtectedRoute>} />
                   <Route path="/admin/data-quality" element={<ProtectedRoute adminOnly><DataQuality /></ProtectedRoute>} />
                   <Route path="/admin/audit-logs" element={<ProtectedRoute adminOnly><AuditLogs /></ProtectedRoute>} />
