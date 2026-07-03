@@ -129,6 +129,19 @@ export default function Products() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (p: Product) => {
+      const { error } = await supabase.from("products").delete().eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast({ title: "Produto excluído" });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
+  });
+
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
 
   function openEdit(p: Product) {
