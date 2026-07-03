@@ -148,16 +148,8 @@ export default function AIInsights() {
               </div>
               {loading && <Loader2 size={14} className="animate-spin text-primary ml-auto" />}
             </div>
-            <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed">
-              {result.split("\n").map((line, i) => {
-                if (line.startsWith("# ")) return <h2 key={i} className="text-lg font-bold text-foreground mt-4 mb-2">{line.slice(2)}</h2>;
-                if (line.startsWith("## ")) return <h3 key={i} className="text-base font-bold text-foreground mt-3 mb-1">{line.slice(3)}</h3>;
-                if (line.startsWith("### ")) return <h4 key={i} className="text-sm font-bold text-foreground mt-2 mb-1">{line.slice(4)}</h4>;
-                if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-bold text-foreground mt-2">{line.slice(2, -2)}</p>;
-                if (line.startsWith("- ") || line.startsWith("* ")) return <li key={i} className="ml-4 text-foreground/90">{renderBold(line.slice(2))}</li>;
-                if (line.trim() === "") return <br key={i} />;
-                return <p key={i} className="text-foreground/90">{renderBold(line)}</p>;
-              })}
+            <div className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed prose-headings:text-foreground prose-strong:text-foreground prose-p:text-foreground/90 prose-li:text-foreground/90 prose-table:text-xs prose-th:text-foreground prose-td:text-foreground/90">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{result || ""}</ReactMarkdown>
               {loading && <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse ml-0.5" />}
             </div>
           </motion.div>
@@ -177,9 +169,3 @@ export default function AIInsights() {
   );
 }
 
-function renderBold(text: string) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => part.startsWith("**") && part.endsWith("**")
-    ? <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
-    : part);
-}
