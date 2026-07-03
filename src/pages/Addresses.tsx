@@ -126,8 +126,9 @@ export default function Addresses() {
                         {a.is_active ? "Ativo" : "Inativo"}
                       </button>
                     </td>
-                    <td>
+                    <td className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => openEdit(a)}><Pencil size={16} /></Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(a)}><Trash2 size={16} /></Button>
                     </td>
                   </tr>
                 ))}
