@@ -16,6 +16,7 @@ export default function Addresses() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [deleting, setDeleting] = useState<any>(null);
   const [form, setForm] = useState({ code: "", type: "ARMAZENAGEM" as "ARMAZENAGEM" | "TECNICO" });
 
   const { data: addresses, isLoading } = useQuery({
