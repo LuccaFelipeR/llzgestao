@@ -70,6 +70,19 @@ export default function Addresses() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["addresses"] }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (a: any) => {
+      const { error } = await supabase.from("addresses").delete().eq("id", a.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      toast({ title: "Endereço excluído" });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
+  });
+
   function openNew() {
     setEditing(null);
     setForm({ code: "", type: "ARMAZENAGEM" });
