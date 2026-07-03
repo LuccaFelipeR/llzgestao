@@ -33,9 +33,11 @@ export default function AIInsights() {
       const token = session?.session?.access_token ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       const body: any = { type };
+      // "global-companies" is only valid in global scope
+      const effectiveScope = type === "global-companies" ? "global" : scope;
       if (isSuperAdmin) {
-        if (scope === "global") body.scope = "global";
-        else if (scope !== "current") body.companyId = scope;
+        if (effectiveScope === "global") body.scope = "global";
+        else if (effectiveScope !== "current") body.companyId = effectiveScope;
       }
 
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-insights`, {
