@@ -145,6 +145,50 @@ export default function AdminPanel() {
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
+  const addMemberByEmailMutation = useMutation({
+    mutationFn: async ({ companyId, email, role }: { companyId: string; email: string; role: string }) => {
+      const clean = email.trim().toLowerCase();
+      if (!clean) throw new Error("Informe o e-mail.");
+      const { data: prof } = await supabase.from("profiles").select("id,email").eq("email", clean).maybeSingle();
+      if (!prof) throw new Error("Nenhum usuário com este e-mail encontrado.");
+      const { data: existing } = await (supabase as any).from("company_members").select("id").eq("company_id", companyId).eq("user_id", prof.id).maybeSingle();
+      if (existing) throw new Error("Usuário já vinculado a esta empresa.");
+      const { error } = await (supabase as any).from("company_members").insert({ company_id: companyId, user_id: prof.id, role });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Usuário vinculado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await (supabase as any).from("company_members").delete().eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Vínculo removido" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const changeMemberRoleMutation = useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
+      const { error } = await (supabase as any).from("company_members").update({ role }).eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      toast({ title: "Papel atualizado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
   const updateCompanyDetailsMutation = useMutation({
     mutationFn: async ({ id, patch }: { id: string; patch: any }) => {
       const { error } = await (supabase as any)
