@@ -253,6 +253,9 @@ export default function Products() {
                   <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => openEdit(p)}>
                     <Pencil size={14} className="mr-1" /> Editar
                   </Button>
+                  <Button variant="outline" size="sm" className="text-xs h-7 text-destructive border-destructive/30" onClick={() => setDeleting(p)}>
+                    <Trash2 size={14} />
+                  </Button>
                 </div>
               </div>
             ))}
