@@ -55,6 +55,7 @@ export default function Products() {
   const [stockOpen, setStockOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
