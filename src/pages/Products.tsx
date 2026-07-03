@@ -216,6 +216,7 @@ export default function Products() {
                     <td className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(p); setStockOpen(true); }}><Boxes size={16} /></Button>
                       <Button variant="ghost" size="sm" onClick={() => openEdit(p)}><Pencil size={16} /></Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(p)}><Trash2 size={16} /></Button>
                     </td>
                   </tr>
                 ))}
