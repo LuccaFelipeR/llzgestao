@@ -196,6 +196,24 @@ export default function Addresses() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir endereço</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir o endereço <strong>{deleting?.code}</strong>?
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Só será possível excluir se o endereço <strong>não tiver estoque nem movimentos vinculados</strong>. Caso contrário, use "Desativar".
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => deleting && deleteMutation.mutate(deleting)} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir permanentemente"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
