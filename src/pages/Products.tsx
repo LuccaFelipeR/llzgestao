@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Boxes, Snowflake, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Boxes, Snowflake, AlertTriangle, Trash2 } from "lucide-react";
 
 type Product = any;
 
@@ -55,6 +55,7 @@ export default function Products() {
   const [stockOpen, setStockOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [deleting, setDeleting] = useState<Product | null>(null);
   const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
@@ -126,6 +127,19 @@ export default function Products() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (p: Product) => {
+      const { error } = await supabase.from("products").delete().eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      toast({ title: "Produto excluído" });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
   });
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
@@ -202,6 +216,7 @@ export default function Products() {
                     <td className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => { setSelectedProduct(p); setStockOpen(true); }}><Boxes size={16} /></Button>
                       <Button variant="ghost" size="sm" onClick={() => openEdit(p)}><Pencil size={16} /></Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(p)}><Trash2 size={16} /></Button>
                     </td>
                   </tr>
                 ))}
@@ -237,6 +252,9 @@ export default function Products() {
                   </Button>
                   <Button variant="outline" size="sm" className="text-xs h-7" onClick={() => openEdit(p)}>
                     <Pencil size={14} className="mr-1" /> Editar
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-xs h-7 text-destructive border-destructive/30" onClick={() => setDeleting(p)}>
+                    <Trash2 size={14} />
                   </Button>
                 </div>
               </div>
@@ -438,6 +456,24 @@ export default function Products() {
             {(!productStock || productStock.length === 0) && (
               <p className="text-center text-muted-foreground py-4 text-sm">Sem estoque registrado.</p>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir produto</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir <strong>{deleting?.sku}</strong> — {deleting?.description}?
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            A exclusão só será permitida se o produto <strong>não tiver estoque, movimentos ou lotes vinculados</strong>. Caso contrário, use "Desativar".
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => deleting && deleteMutation.mutate(deleting)} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir permanentemente"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

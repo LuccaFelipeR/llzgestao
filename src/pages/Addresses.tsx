@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { validateAddressCode, parseAddressCode, formatAddressDisplay } from "@/lib/address-utils";
 
 export default function Addresses() {
@@ -16,6 +16,7 @@ export default function Addresses() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
+  const [deleting, setDeleting] = useState<any>(null);
   const [form, setForm] = useState({ code: "", type: "ARMAZENAGEM" as "ARMAZENAGEM" | "TECNICO" });
 
   const { data: addresses, isLoading } = useQuery({
@@ -69,6 +70,19 @@ export default function Addresses() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["addresses"] }),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (a: any) => {
+      const { error } = await supabase.from("addresses").delete().eq("id", a.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      toast({ title: "Endereço excluído" });
+      setDeleting(null);
+    },
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
+  });
+
   function openNew() {
     setEditing(null);
     setForm({ code: "", type: "ARMAZENAGEM" });
@@ -112,8 +126,9 @@ export default function Addresses() {
                         {a.is_active ? "Ativo" : "Inativo"}
                       </button>
                     </td>
-                    <td>
+                    <td className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => openEdit(a)}><Pencil size={16} /></Button>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(a)}><Trash2 size={16} /></Button>
                     </td>
                   </tr>
                 ))}
@@ -138,6 +153,7 @@ export default function Addresses() {
                     {a.is_active ? "Ativo" : "Inativo"}
                   </button>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(a)}><Pencil size={14} /></Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(a)}><Trash2 size={14} /></Button>
                 </div>
               </div>
             ))}
@@ -178,6 +194,24 @@ export default function Addresses() {
               {saveMutation.isPending ? "Salvando..." : "Salvar"}
             </Button>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir endereço</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir o endereço <strong>{deleting?.code}</strong>?
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Só será possível excluir se o endereço <strong>não tiver estoque nem movimentos vinculados</strong>. Caso contrário, use "Desativar".
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => deleting && deleteMutation.mutate(deleting)} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir permanentemente"}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

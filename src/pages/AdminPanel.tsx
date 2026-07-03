@@ -42,6 +42,8 @@ export default function AdminPanel() {
   const [editCompanyName, setEditCompanyName] = useState("");
   const [deleteCompany, setDeleteCompany] = useState<any>(null);
   const [showAbc, setShowAbc] = useState(false);
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState("member");
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-profiles"],
@@ -141,6 +143,50 @@ export default function AdminPanel() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
       toast({ title: "Membro atualizado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const addMemberByEmailMutation = useMutation({
+    mutationFn: async ({ companyId, email, role }: { companyId: string; email: string; role: string }) => {
+      const clean = email.trim().toLowerCase();
+      if (!clean) throw new Error("Informe o e-mail.");
+      const { data: prof } = await supabase.from("profiles").select("id,email").eq("email", clean).maybeSingle();
+      if (!prof) throw new Error("Nenhum usuário com este e-mail encontrado.");
+      const { data: existing } = await (supabase as any).from("company_members").select("id").eq("company_id", companyId).eq("user_id", prof.id).maybeSingle();
+      if (existing) throw new Error("Usuário já vinculado a esta empresa.");
+      const { error } = await (supabase as any).from("company_members").insert({ company_id: companyId, user_id: prof.id, role });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Usuário vinculado" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await (supabase as any).from("company_members").delete().eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      toast({ title: "Vínculo removido" });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+  });
+
+  const changeMemberRoleMutation = useMutation({
+    mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
+      const { error } = await (supabase as any).from("company_members").update({ role }).eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
+      toast({ title: "Papel atualizado" });
     },
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -750,6 +796,34 @@ export default function AdminPanel() {
               {/* Linked users */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold uppercase text-muted-foreground">Usuários vinculados ({companyMembers?.length ?? 0})</h4>
+
+                {/* Add member by email */}
+                <div className="bg-secondary/40 border border-border rounded-lg p-3 space-y-2">
+                  <p className="text-[11px] font-medium text-muted-foreground">Vincular usuário existente por e-mail</p>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input placeholder="usuario@empresa.com" value={newMemberEmail} onChange={(e) => setNewMemberEmail(e.target.value)} className="h-8 text-xs flex-1" />
+                    <Select value={newMemberRole} onValueChange={setNewMemberRole}>
+                      <SelectTrigger className="h-8 text-xs w-full sm:w-32"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="owner">Owner</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="focal">Focal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs"
+                      disabled={addMemberByEmailMutation.isPending || !newMemberEmail.trim()}
+                      onClick={() => addMemberByEmailMutation.mutate({ companyId: editCompany.id, email: newMemberEmail, role: newMemberRole }, {
+                        onSuccess: () => { setNewMemberEmail(""); setNewMemberRole("member"); },
+                      })}
+                    >
+                      Vincular
+                    </Button>
+                  </div>
+                </div>
+
                 {(!companyMembers || companyMembers.length === 0) && (
                   <p className="text-xs text-muted-foreground">Nenhum membro vinculado.</p>
                 )}
@@ -757,13 +831,23 @@ export default function AdminPanel() {
                   {companyMembers?.map((m: any) => {
                     const approved = m.profile?.is_approved;
                     const active = m.is_active !== false;
+                    const owners = companyMembers.filter((x: any) => x.role === "owner").length;
+                    const isLastOwner = m.role === "owner" && owners <= 1;
                     return (
                       <div key={m.id} className="flex flex-wrap items-center gap-2 bg-card border border-border rounded-lg p-2 text-xs">
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{m.profile?.full_name || m.profile?.email || m.user_id.slice(0, 8)}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{m.profile?.email}</p>
                         </div>
-                        <Badge variant="outline" className="text-[10px]">{m.role}</Badge>
+                        <Select value={m.role} onValueChange={(v) => changeMemberRoleMutation.mutate({ memberId: m.id, role: v })}>
+                          <SelectTrigger className="h-7 text-[10px] w-24"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="owner">Owner</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="member">Member</SelectItem>
+                            <SelectItem value="focal">Focal</SelectItem>
+                          </SelectContent>
+                        </Select>
                         {m.is_main_focal_point && <Badge className="text-[10px] bg-primary/15 text-primary border-0">Focal</Badge>}
                         {approved
                           ? <Badge className="text-[10px] bg-accent/15 text-accent border-0">Aprovado</Badge>
@@ -782,11 +866,22 @@ export default function AdminPanel() {
                         >
                           {active ? "Bloquear" : "Reativar"}
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[10px] text-destructive border-destructive/30"
+                          disabled={isLastOwner || removeMemberMutation.isPending}
+                          title={isLastOwner ? "Não é possível remover o último owner" : "Remover vínculo"}
+                          onClick={() => { if (confirm(`Remover ${m.profile?.email || "usuário"} desta empresa?`)) removeMemberMutation.mutate(m.id); }}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
                       </div>
                     );
                   })}
                 </div>
               </div>
+
 
               <div className="text-xs text-muted-foreground">Código de convite: <span className="font-mono font-bold">{editCompany?.invite_code}</span></div>
 
