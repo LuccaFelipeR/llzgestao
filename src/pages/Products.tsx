@@ -459,6 +459,24 @@ export default function Products() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir produto</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Excluir <strong>{deleting?.sku}</strong> — {deleting?.description}?
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            A exclusão só será permitida se o produto <strong>não tiver estoque, movimentos ou lotes vinculados</strong>. Caso contrário, use "Desativar".
+          </p>
+          <div className="flex gap-3 mt-4">
+            <Button variant="outline" className="flex-1" onClick={() => setDeleting(null)}>Cancelar</Button>
+            <Button variant="destructive" className="flex-1" onClick={() => deleting && deleteMutation.mutate(deleting)} disabled={deleteMutation.isPending}>
+              {deleteMutation.isPending ? "Excluindo..." : "Excluir permanentemente"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
