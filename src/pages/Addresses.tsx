@@ -153,6 +153,7 @@ export default function Addresses() {
                     {a.is_active ? "Ativo" : "Inativo"}
                   </button>
                   <Button variant="ghost" size="sm" onClick={() => openEdit(a)}><Pencil size={14} /></Button>
+                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleting(a)}><Trash2 size={14} /></Button>
                 </div>
               </div>
             ))}
