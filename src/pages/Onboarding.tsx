@@ -353,11 +353,16 @@ export default function Onboarding() {
           <TabsTrigger value="addresses" className="gap-1"><MapPin size={14} /> Endereços</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
-          <Importer entity="products" fields={PRODUCT_FIELDS} companyId={companyId} />
+          <Importer entity="products" fields={PRODUCT_FIELDS} companyId={companyId}
+            templateUrl="/templates/produtos-exemplo.csv" templateFilename="produtos-exemplo.csv"
+            helpText={<>Campos obrigatórios: <strong>sku</strong> e <strong>description</strong>. Colunas booleanas aceitam <code>sim/nao</code> ou <code>true/false</code>. SKU é único por empresa — reimportar mesma SKU atualiza o produto. Datas no formato ISO (AAAA-MM-DD).</>} />
         </TabsContent>
         <TabsContent value="addresses">
-          <Importer entity="addresses" fields={ADDRESS_FIELDS} companyId={companyId} />
+          <Importer entity="addresses" fields={ADDRESS_FIELDS} companyId={companyId}
+            templateUrl="/templates/enderecos-exemplo.csv" templateFilename="enderecos-exemplo.csv"
+            helpText={<>Campo obrigatório: <strong>code</strong> no formato <code>R-P-A-L-F</code> (rua-posição-andar-lado-face). Tipo pode ser <code>ARMAZENAGEM</code>, <code>PICKING</code>, <code>RECEBIMENTO</code> ou <code>EXPEDICAO</code>. Se omitido, assume <code>ARMAZENAGEM</code>.</>} />
         </TabsContent>
+
       </Tabs>
     </div>
   );
