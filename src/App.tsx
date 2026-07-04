@@ -26,6 +26,8 @@ import DataQuality from "@/pages/DataQuality";
 import AuditLogs from "@/pages/AuditLogs";
 import GlobalDashboard from "@/pages/GlobalDashboard";
 import Notifications from "@/pages/Notifications";
+import Expedition from "@/pages/Expedition";
+import ExpeditionPicking from "@/pages/ExpeditionPicking";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -114,6 +116,8 @@ function AppRoutes() {
                   <Route path="/notificacoes/config" element={<NotificationSettings />} />
                   <Route path="/ai-insights" element={<AIInsights />} />
                   <Route path="/recebimento" element={<GuidedReceiving />} />
+                  <Route path="/expedicao" element={<Expedition />} />
+                  <Route path="/expedicao/:id" element={<ExpeditionPicking />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/global" element={<ProtectedRoute adminOnly><GlobalDashboard /></ProtectedRoute>} />
