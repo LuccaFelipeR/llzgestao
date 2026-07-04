@@ -49,10 +49,9 @@ function AppSidebarInner({ groups }: { groups: NavGroup[] }) {
 
       <SidebarContent>
         {groups.map((g) => {
-          const groupHasActive = g.items.some((i) => pathname === i.to);
           const GroupIcon = g.icon;
           return (
-            <SidebarGroup key={g.key} defaultOpen={groupHasActive || collapsed}>
+            <SidebarGroup key={g.key}>
               <SidebarGroupLabel className="flex items-center gap-2">
                 <GroupIcon size={12} /> {g.label}
               </SidebarGroupLabel>
