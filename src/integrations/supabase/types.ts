@@ -431,6 +431,144 @@ export type Database = {
         }
         Relationships: []
       }
+      picking_list_items: {
+        Row: {
+          company_id: string
+          created_at: string
+          from_address_id: string | null
+          id: string
+          lot_id: string | null
+          movement_id: string | null
+          picked_qty: number
+          picking_list_id: string
+          product_id: string
+          requested_qty: number
+          sort_order: number
+          status: Database["public"]["Enums"]["picking_item_status"]
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          from_address_id?: string | null
+          id?: string
+          lot_id?: string | null
+          movement_id?: string | null
+          picked_qty?: number
+          picking_list_id: string
+          product_id: string
+          requested_qty: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["picking_item_status"]
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          from_address_id?: string | null
+          id?: string
+          lot_id?: string | null
+          movement_id?: string | null
+          picked_qty?: number
+          picking_list_id?: string
+          product_id?: string
+          requested_qty?: number
+          sort_order?: number
+          status?: Database["public"]["Enums"]["picking_item_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "picking_list_items_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "picking_list_items_from_address_id_fkey"
+            columns: ["from_address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "picking_list_items_lot_id_fkey"
+            columns: ["lot_id"]
+            isOneToOne: false
+            referencedRelation: "lots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "picking_list_items_movement_id_fkey"
+            columns: ["movement_id"]
+            isOneToOne: false
+            referencedRelation: "movements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "picking_list_items_picking_list_id_fkey"
+            columns: ["picking_list_id"]
+            isOneToOne: false
+            referencedRelation: "picking_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "picking_list_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      picking_lists: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer: string | null
+          id: string
+          notes: string | null
+          reference: string
+          status: Database["public"]["Enums"]["picking_list_status"]
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer?: string | null
+          id?: string
+          notes?: string | null
+          reference: string
+          status?: Database["public"]["Enums"]["picking_list_status"]
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer?: string | null
+          id?: string
+          notes?: string | null
+          reference?: string
+          status?: Database["public"]["Enums"]["picking_list_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "picking_lists_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barcode: string | null
@@ -748,6 +886,8 @@ export type Database = {
       movement_type: "IN" | "OUT" | "TRANSFER"
       notification_severity: "info" | "warning" | "critical"
       operation_mode: "essential" | "operations" | "wms"
+      picking_item_status: "pending" | "picked" | "skipped"
+      picking_list_status: "draft" | "in_progress" | "done" | "cancelled"
       product_classification:
         | "perishable"
         | "non_perishable"
@@ -920,6 +1060,8 @@ export const Constants = {
       movement_type: ["IN", "OUT", "TRANSFER"],
       notification_severity: ["info", "warning", "critical"],
       operation_mode: ["essential", "operations", "wms"],
+      picking_item_status: ["pending", "picked", "skipped"],
+      picking_list_status: ["draft", "in_progress", "done", "cancelled"],
       product_classification: [
         "perishable",
         "non_perishable",
