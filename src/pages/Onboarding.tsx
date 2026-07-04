@@ -221,6 +221,18 @@ function Importer({
 
   return (
     <div>
+      <div className="mb-4 bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
+        <FileSpreadsheet size={20} className="text-primary shrink-0 mt-0.5" />
+        <div className="flex-1 text-xs space-y-2">
+          <p className="font-semibold text-foreground text-sm">Modelo de planilha</p>
+          <div className="text-muted-foreground">{helpText}</div>
+          <a href={templateUrl} download={templateFilename}
+            className="inline-flex items-center gap-1.5 text-primary font-semibold hover:underline">
+            <Download size={14} /> Baixar modelo CSV com exemplos
+          </a>
+        </div>
+      </div>
+
       {csvData.length === 0 && (
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -236,6 +248,7 @@ function Importer({
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
       )}
+
 
       {csvData.length > 0 && !result && (
         <div className="space-y-5">
