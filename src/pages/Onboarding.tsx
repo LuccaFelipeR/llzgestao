@@ -73,10 +73,16 @@ function Importer({
   entity,
   fields,
   companyId,
+  templateUrl,
+  templateFilename,
+  helpText,
 }: {
   entity: "products" | "addresses";
   fields: Field[];
   companyId: string | null;
+  templateUrl: string;
+  templateFilename: string;
+  helpText: React.ReactNode;
 }) {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
