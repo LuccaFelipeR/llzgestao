@@ -1,0 +1,4 @@
+sku,description,barcode,unit,price,min_stock,product_type,classification,is_perishable,controls_batch,controls_expiration,shelf_life_days,storage_condition,temperature_control_required,min_temperature,max_temperature,brand,category,subcategory,internal_code,ncm,notes
+LEITE-INT-1L,Leite Integral 1L Caixa,7891000100103,UN,5.49,50,acabado,perecivel,sim,sim,sim,120,refrigerado,sim,2,8,Marca A,Bebidas,Leites,INT-LEITE-001,04012010,Manter refrigerado apos aberto
+PARAF-6X40,Parafuso Sextavado 6x40mm,,PC,0.35,500,materia-prima,nao-perecivel,nao,nao,nao,,ambiente,nao,,,Marca B,Ferragens,Parafusos,PAR-6X40,73181500,Vendido a granel
+FARINHA-1KG,Farinha de Trigo 1kg,7891234567890,KG,4.20,80,acabado,perecivel,sim,sim,sim,365,seco,nao,,,Marca C,Alimentos,Farinhas,FAR-TRI-1KG,11010010,Armazenar em local seco

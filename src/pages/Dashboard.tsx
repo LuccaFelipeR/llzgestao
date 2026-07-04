@@ -301,21 +301,6 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Recent Activity */}
-      {stats?.recentMovements && stats.recentMovements.length > 0 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className="bg-card border border-border rounded-xl p-5">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp size={16} className="text-primary" /> Últimas Movimentações</h3>
-          <div className="space-y-2">
-            {stats.recentMovements.map((m: any) => (
-              <div key={m.id} className="flex items-center justify-between text-xs py-1.5 border-b border-border last:border-0">
-                <span className={`badge-${m.type.toLowerCase()} inline-block`}>{m.type === "IN" ? "Entrada" : m.type === "OUT" ? "Saída" : "Transferência"}</span>
-                <span className="text-muted-foreground">{new Date(m.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
-              </div>
-            ))}
-          </div>
-          <Link to="/movimentacoes" className="text-xs text-primary font-medium hover:underline mt-3 inline-block">Ver todas →</Link>
-        </motion.div>
-      )}
     </div>
   );
 }

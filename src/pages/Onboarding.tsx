@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Package, MapPin } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Package, MapPin, Download } from "lucide-react";
 
 // =====================================================
 // Field definitions
@@ -73,10 +73,16 @@ function Importer({
   entity,
   fields,
   companyId,
+  templateUrl,
+  templateFilename,
+  helpText,
 }: {
   entity: "products" | "addresses";
   fields: Field[];
   companyId: string | null;
+  templateUrl: string;
+  templateFilename: string;
+  helpText: React.ReactNode;
 }) {
   const [csvData, setCsvData] = useState<any[]>([]);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
@@ -215,6 +221,18 @@ function Importer({
 
   return (
     <div>
+      <div className="mb-4 bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
+        <FileSpreadsheet size={20} className="text-primary shrink-0 mt-0.5" />
+        <div className="flex-1 text-xs space-y-2">
+          <p className="font-semibold text-foreground text-sm">Modelo de planilha</p>
+          <div className="text-muted-foreground">{helpText}</div>
+          <a href={templateUrl} download={templateFilename}
+            className="inline-flex items-center gap-1.5 text-primary font-semibold hover:underline">
+            <Download size={14} /> Baixar modelo CSV com exemplos
+          </a>
+        </div>
+      </div>
+
       {csvData.length === 0 && (
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -230,6 +248,7 @@ function Importer({
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </div>
       )}
+
 
       {csvData.length > 0 && !result && (
         <div className="space-y-5">
@@ -334,11 +353,16 @@ export default function Onboarding() {
           <TabsTrigger value="addresses" className="gap-1"><MapPin size={14} /> Endereços</TabsTrigger>
         </TabsList>
         <TabsContent value="products">
-          <Importer entity="products" fields={PRODUCT_FIELDS} companyId={companyId} />
+          <Importer entity="products" fields={PRODUCT_FIELDS} companyId={companyId}
+            templateUrl="/templates/produtos-exemplo.csv" templateFilename="produtos-exemplo.csv"
+            helpText={<>Campos obrigatórios: <strong>sku</strong> e <strong>description</strong>. Colunas booleanas aceitam <code>sim/nao</code> ou <code>true/false</code>. SKU é único por empresa — reimportar mesma SKU atualiza o produto. Datas no formato ISO (AAAA-MM-DD).</>} />
         </TabsContent>
         <TabsContent value="addresses">
-          <Importer entity="addresses" fields={ADDRESS_FIELDS} companyId={companyId} />
+          <Importer entity="addresses" fields={ADDRESS_FIELDS} companyId={companyId}
+            templateUrl="/templates/enderecos-exemplo.csv" templateFilename="enderecos-exemplo.csv"
+            helpText={<>Campo obrigatório: <strong>code</strong> no formato <code>R-P-A-L-F</code> (rua-posição-andar-lado-face). Tipo pode ser <code>ARMAZENAGEM</code>, <code>PICKING</code>, <code>RECEBIMENTO</code> ou <code>EXPEDICAO</code>. Se omitido, assume <code>ARMAZENAGEM</code>.</>} />
         </TabsContent>
+
       </Tabs>
     </div>
   );
