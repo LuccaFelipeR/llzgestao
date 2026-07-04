@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Package, MapPin } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Package, MapPin, Download } from "lucide-react";
 
 // =====================================================
 // Field definitions
