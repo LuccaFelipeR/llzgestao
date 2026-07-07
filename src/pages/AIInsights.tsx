@@ -94,7 +94,11 @@ export default function AIInsights() {
             </div>
             <div>
               <h1 className="page-title mb-0">IA Insights</h1>
-              <p className="text-xs text-muted-foreground">Análise isolada por empresa</p>
+              <p className="text-xs text-muted-foreground">
+                {isSuperAdmin && scope === "global"
+                  ? "⚠ Visão global — dados de TODAS as empresas"
+                  : "Análise isolada por empresa"}
+              </p>
             </div>
           </div>
           {isSuperAdmin && (
