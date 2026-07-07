@@ -33,15 +33,18 @@ interface SmartResult {
   data?: any[];
 }
 
-const SMART_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => Promise<SmartResult> }[] = [
+function buildSmartPatterns(companyId: string | null): { pattern: RegExp; handler: (match: RegExpMatchArray) => Promise<SmartResult> }[] {
+  const cid = companyId;
+  return [
   {
     pattern: /onde\s+(?:est[aá]|fica)\s+(?:o\s+)?(?:produto\s+)?(.+)/i,
     handler: async (match) => {
       const term = match[1].trim();
-      const { data: products } = await supabase.from("products").select("id, sku, description").or(`sku.ilike.%${term}%,description.ilike.%${term}%`).limit(5);
+      if (!cid) return { type: "answer", icon: Package, title: "Selecione uma empresa para buscar." };
+      const { data: products } = await supabase.from("products").select("id, sku, description").eq("company_id", cid).or(`sku.ilike.%${term}%,description.ilike.%${term}%`).limit(5);
       if (!products?.length) return { type: "answer", icon: Package, title: `Produto "${term}" não encontrado` };
       const productIds = products.map(p => p.id);
-      const { data: stock } = await supabase.from("stock_balance").select("qty, product_id, addresses(code), lots(lot_code)").in("product_id", productIds).gt("qty", 0);
+      const { data: stock } = await supabase.from("stock_balance").select("qty, product_id, addresses(code), lots(lot_code)").eq("company_id", cid).in("product_id", productIds).gt("qty", 0);
       const items = (stock as any[])?.map(s => ({
         product: products.find(p => p.id === s.product_id)?.sku,
         address: s.addresses?.code,
@@ -55,9 +58,8 @@ const SMART_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => P
     pattern: /(?:o\s+que|quais?\s+(?:produtos?)?)\s+vence[mn]?\s+(?:nos?\s+pr[oó]ximos?\s+)?(\d+)\s*dias?/i,
     handler: async (match) => {
       const days = parseInt(match[1]);
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + days);
-      const { data: stock } = await supabase.from("stock_balance").select("qty, products(sku, description), lots(lot_code, expires_at)").gt("qty", 0);
+      if (!cid) return { type: "answer", icon: AlertTriangle, title: "Selecione uma empresa para buscar." };
+      const { data: stock } = await supabase.from("stock_balance").select("qty, products(sku, description), lots(lot_code, expires_at)").eq("company_id", cid).gt("qty", 0);
       const now = new Date();
       const expiring = (stock as any[])?.filter(s => {
         if (!s.lots?.expires_at) return false;
@@ -78,9 +80,10 @@ const SMART_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => P
     pattern: /(?:quais?\s+)?(?:produtos?\s+)?(?:sem\s+movimento|parados?)\s+(?:(?:h[aá]|por|nos?\s+[uú]ltimos?)\s+)?(\d+)\s*dias?/i,
     handler: async (match) => {
       const days = parseInt(match[1]);
+      if (!cid) return { type: "answer", icon: TrendingDown, title: "Selecione uma empresa para buscar." };
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
-      const { data: stock } = await supabase.from("stock_balance").select("qty, last_movement_at, products(sku, description), addresses(code)").gt("qty", 0);
+      const { data: stock } = await supabase.from("stock_balance").select("qty, last_movement_at, products(sku, description), addresses(code)").eq("company_id", cid).gt("qty", 0);
       const stale = (stock as any[])?.filter(s => new Date(s.last_movement_at) < cutoff).map(s => ({
         product: s.products?.sku,
         description: s.products?.description,
@@ -95,10 +98,11 @@ const SMART_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => P
     pattern: /quanto\s+(?:estoque|stock)\s+(?:tem|tenho|existe)\s+(?:no?\s+|em\s+)?(.+)/i,
     handler: async (match) => {
       const term = match[1].trim();
-      const { data: addresses } = await supabase.from("addresses").select("id, code").ilike("code", `%${term}%`).limit(5);
+      if (!cid) return { type: "answer", icon: MapPin, title: "Selecione uma empresa para buscar." };
+      const { data: addresses } = await supabase.from("addresses").select("id, code").eq("company_id", cid).ilike("code", `%${term}%`).limit(5);
       if (!addresses?.length) return { type: "answer", icon: MapPin, title: `Endereço "${term}" não encontrado` };
       const addrIds = addresses.map(a => a.id);
-      const { data: stock } = await supabase.from("stock_balance").select("qty, products(sku, description), lots(lot_code)").in("address_id", addrIds).gt("qty", 0);
+      const { data: stock } = await supabase.from("stock_balance").select("qty, products(sku, description), lots(lot_code)").eq("company_id", cid).in("address_id", addrIds).gt("qty", 0);
       const items = (stock as any[])?.map(s => ({
         product: s.products?.sku,
         description: s.products?.description,
@@ -112,9 +116,10 @@ const SMART_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => P
   {
     pattern: /(?:qual|quem)\s+(?:endere[cç]o|local)\s+(?:teve|tem)\s+(?:mais|maior)\s+movimenta[cç][aã]o\s+hoje/i,
     handler: async () => {
+      if (!cid) return { type: "answer", icon: ArrowRightLeft, title: "Selecione uma empresa para buscar." };
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { data: movements } = await supabase.from("movements").select("type, from_address_id, to_address_id, addresses!movements_to_address_id_fkey(code)").gte("created_at", today.toISOString());
+      const { data: movements } = await supabase.from("movements").select("type, from_address_id, to_address_id, addresses!movements_to_address_id_fkey(code)").eq("company_id", cid).gte("created_at", today.toISOString());
       if (!movements?.length) return { type: "answer", icon: ArrowRightLeft, title: "Nenhuma movimentação hoje" };
       const addrCount: Record<string, number> = {};
       movements.forEach((m: any) => {
@@ -124,7 +129,8 @@ const SMART_PATTERNS: { pattern: RegExp; handler: (match: RegExpMatchArray) => P
       return { type: "answer", icon: TrendingDown, title: "Endereços mais movimentados hoje", data: sorted.map(([addr, count]) => ({ address: addr, movements: count })) };
     },
   },
-];
+  ];
+}
 
 export default function ConversationalSearch() {
   const [open, setOpen] = useState(false);
