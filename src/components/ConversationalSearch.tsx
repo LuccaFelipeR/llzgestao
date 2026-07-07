@@ -139,6 +139,7 @@ export default function ConversationalSearch() {
   const [searching, setSearching] = useState(false);
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { companyId } = useCompany();
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -154,8 +155,9 @@ export default function ConversationalSearch() {
 
   useEffect(() => {
     if (!query) { setSmartResult(null); return; }
+    const patterns = buildSmartPatterns(companyId);
     const timer = setTimeout(async () => {
-      for (const { pattern, handler } of SMART_PATTERNS) {
+      for (const { pattern, handler } of patterns) {
         const match = query.match(pattern);
         if (match) {
           setSearching(true);
@@ -170,7 +172,7 @@ export default function ConversationalSearch() {
       setSmartResult(null);
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [query, companyId]);
 
   const filteredRoutes = ROUTES.filter(r =>
     !query || r.label.toLowerCase().includes(query.toLowerCase()) || r.keywords.includes(query.toLowerCase())
