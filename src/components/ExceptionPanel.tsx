@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { AlertTriangle, Clock, CalendarX, PackageX, ArrowRight } from "lucide-react";
+import { useCompany } from "@/contexts/CompanyContext";
 
 interface ExceptionItem {
   type: "low_stock" | "near_expiry" | "dead_stock" | "no_stock";
@@ -15,13 +16,15 @@ interface ExceptionItem {
 }
 
 export default function ExceptionPanel() {
+  const { companyId } = useCompany();
   const { data: exceptions } = useQuery({
-    queryKey: ["exceptions"],
+    queryKey: ["exceptions", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
       const [products, stock, lots] = await Promise.all([
-        supabase.from("products").select("id, sku, description, min_stock").eq("is_active", true),
-        supabase.from("stock_balance").select("product_id, qty, last_movement_at, lot_id").gt("qty", 0),
-        supabase.from("lots").select("id, lot_code, expires_at, product_id"),
+        supabase.from("products").select("id, sku, description, min_stock").eq("company_id", companyId!).eq("is_active", true),
+        supabase.from("stock_balance").select("product_id, qty, last_movement_at, lot_id").eq("company_id", companyId!).gt("qty", 0),
+        supabase.from("lots").select("id, lot_code, expires_at, product_id").eq("company_id", companyId!),
       ]);
 
       const productList = products.data ?? [];
