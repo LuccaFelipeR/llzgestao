@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import { Activity, AlertTriangle, Clock, TrendingDown, Package, ShieldAlert } from "lucide-react";
+import { useCompany } from "@/contexts/CompanyContext";
 
 interface HealthMetric {
   label: string;
@@ -12,13 +13,15 @@ interface HealthMetric {
 }
 
 export default function HealthScore() {
+  const { companyId } = useCompany();
   const { data: metrics } = useQuery({
-    queryKey: ["health-score"],
+    queryKey: ["health-score", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
       const [products, stock, lots] = await Promise.all([
-        supabase.from("products").select("id, min_stock, price").eq("is_active", true),
-        supabase.from("stock_balance").select("product_id, qty, last_movement_at, lot_id").gt("qty", 0),
-        supabase.from("lots").select("id, expires_at"),
+        supabase.from("products").select("id, min_stock, price").eq("company_id", companyId!).eq("is_active", true),
+        supabase.from("stock_balance").select("product_id, qty, last_movement_at, lot_id").eq("company_id", companyId!).gt("qty", 0),
+        supabase.from("lots").select("id, expires_at").eq("company_id", companyId!),
       ]);
 
       const productList = products.data ?? [];

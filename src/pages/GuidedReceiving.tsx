@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Package, MapPin, Hash, Tag, ArrowRight, RotateCcw, Boxes } from "lucide-react";
 import { formatAddressDisplay } from "@/lib/address-utils";
+import NoCompanySelected from "@/components/NoCompanySelected";
 
 const STEPS = [
   { id: 1, title: "Produto", description: "Selecione o produto a receber", icon: Package },
@@ -22,7 +23,7 @@ const STEPS = [
 
 export default function GuidedReceiving() {
   const { user } = useAuth();
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [productId, setProductId] = useState("");
@@ -38,26 +39,28 @@ export default function GuidedReceiving() {
   const [success, setSuccess] = useState(false);
 
   const { data: products } = useQuery({
-    queryKey: ["products-active"],
+    queryKey: ["products-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("*").eq("is_active", true).order("sku");
+      const { data } = await supabase.from("products").select("*").eq("company_id", companyId!).eq("is_active", true).order("sku");
       return data ?? [];
     },
   });
 
   const { data: addresses } = useQuery({
-    queryKey: ["addresses-active"],
+    queryKey: ["addresses-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("addresses").select("*").eq("is_active", true).order("code");
+      const { data } = await supabase.from("addresses").select("*").eq("company_id", companyId!).eq("is_active", true).order("code");
       return data ?? [];
     },
   });
 
   const { data: lots } = useQuery({
-    queryKey: ["lots", productId],
-    enabled: !!productId,
+    queryKey: ["lots", productId, companyId],
+    enabled: !!productId && !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("lots").select("*").eq("product_id", productId).order("lot_code");
+      const { data } = await supabase.from("lots").select("*").eq("company_id", companyId!).eq("product_id", productId).order("lot_code");
       return data ?? [];
     },
   });
@@ -156,6 +159,8 @@ export default function GuidedReceiving() {
       </div>
     );
   }
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container max-w-2xl mx-auto">

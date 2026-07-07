@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Boxes, Snowflake, AlertTriangle, Trash2 } from "lucide-react";
+import NoCompanySelected from "@/components/NoCompanySelected";
+
 
 type Product = any;
 
@@ -49,7 +51,7 @@ const emptyForm = {
 };
 
 export default function Products() {
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
@@ -59,9 +61,14 @@ export default function Products() {
   const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("sku");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("company_id", companyId!)
+        .order("sku");
       if (error) throw error;
       return data as Product[];
     },
@@ -171,6 +178,8 @@ export default function Products() {
   function setPerishable(v: boolean) {
     setForm(f => ({ ...f, is_perishable: v, controls_expiration: v ? true : f.controls_expiration, classification: v && !f.classification ? "perishable" : f.classification }));
   }
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container">

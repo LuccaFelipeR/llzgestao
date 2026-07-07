@@ -15,25 +15,52 @@ export default function AuditLogs() {
   const [companyFilter, setCompanyFilter] = useState<string>(isSuperAdmin ? "all" : currentCompanyId ?? "all");
 
   const { data: logs, isLoading } = useQuery({
-    queryKey: ["audit-logs", companyFilter, actionFilter],
+    queryKey: ["audit-logs", companyFilter, actionFilter, currentCompanyId, isSuperAdmin],
+    enabled: isSuperAdmin || !!currentCompanyId,
     queryFn: async () => {
       let q = supabase
         .from("activity_log")
-        .select("*, profiles:user_id(email, full_name)")
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(500);
-      if (companyFilter !== "all") q = q.eq("company_id", companyFilter);
+      // Super admin can pick "all" or a specific company; non-super admin is
+      // forced to their current company via RLS + explicit filter.
+      if (isSuperAdmin) {
+        if (companyFilter !== "all") q = q.eq("company_id", companyFilter);
+      } else if (currentCompanyId) {
+        q = q.eq("company_id", currentCompanyId);
+      }
       if (actionFilter !== "all") q = q.eq("action", actionFilter);
       const { data, error } = await q;
       if (error) throw error;
-      return data ?? [];
+      const rows = data ?? [];
+
+      // Fetch profiles separately (profiles has no FK relationship declared to
+      // activity_log.user_id, so PostgREST embedding is unreliable).
+      const userIds = Array.from(
+        new Set(rows.map((r: any) => r.user_id).filter(Boolean))
+      );
+      let profilesById: Record<string, { email: string; full_name: string | null }> = {};
+      if (userIds.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, email, full_name")
+          .in("id", userIds as string[]);
+        (profs ?? []).forEach((p: any) => {
+          profilesById[p.id] = { email: p.email, full_name: p.full_name };
+        });
+      }
+      return rows.map((r: any) => ({ ...r, profiles: r.user_id ? profilesById[r.user_id] : null }));
     },
   });
 
   const { data: actions } = useQuery({
-    queryKey: ["audit-distinct-actions"],
+    queryKey: ["audit-distinct-actions", currentCompanyId, isSuperAdmin],
+    enabled: isSuperAdmin || !!currentCompanyId,
     queryFn: async () => {
-      const { data } = await supabase.from("activity_log").select("action").limit(1000);
+      let q = supabase.from("activity_log").select("action").limit(1000);
+      if (!isSuperAdmin && currentCompanyId) q = q.eq("company_id", currentCompanyId);
+      const { data } = await q;
       return Array.from(new Set((data ?? []).map((d: any) => d.action))).sort();
     },
   });

@@ -27,9 +27,11 @@ const STATUS_COLOR: Record<string, string> = {
 
 type ItemDraft = { product_id: string; requested_qty: string };
 
+import NoCompanySelected from "@/components/NoCompanySelected";
+
 export default function Expedition() {
   const { user } = useAuth();
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -51,9 +53,10 @@ export default function Expedition() {
   });
 
   const { data: products } = useQuery({
-    queryKey: ["products-active-exp"],
+    queryKey: ["products-active-exp", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, sku, description, unit").eq("is_active", true).order("sku");
+      const { data } = await supabase.from("products").select("id, sku, description, unit").eq("company_id", companyId!).eq("is_active", true).order("sku");
       return data ?? [];
     },
   });
@@ -98,6 +101,8 @@ export default function Expedition() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["picking-lists"] }); toast({ title: "Pedido excluído" }); },
     onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container max-w-5xl mx-auto">

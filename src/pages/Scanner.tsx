@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Camera, CameraOff, Package, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import NoCompanySelected from "@/components/NoCompanySelected";
 
 export default function Scanner() {
   const { user } = useAuth();
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState("");
@@ -30,18 +31,19 @@ export default function Scanner() {
   const divId = "scanner-region";
 
   const { data: addresses } = useQuery({
-    queryKey: ["addresses-active"],
+    queryKey: ["addresses-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("addresses").select("*").eq("is_active", true).order("code");
+      const { data } = await supabase.from("addresses").select("*").eq("company_id", companyId!).eq("is_active", true).order("code");
       return data ?? [];
     },
   });
 
   const { data: lots } = useQuery({
-    queryKey: ["lots-for-product", product?.id],
-    enabled: !!product?.id,
+    queryKey: ["lots-for-product", product?.id, companyId],
+    enabled: !!product?.id && !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("lots").select("*").eq("product_id", product.id).order("lot_code");
+      const { data } = await supabase.from("lots").select("*").eq("company_id", companyId!).eq("product_id", product.id).order("lot_code");
       return data ?? [];
     },
   });
@@ -74,9 +76,14 @@ export default function Scanner() {
 
   async function handleScan(code: string) {
     setScannedCode(code);
+    if (!companyId) {
+      toast({ title: "Selecione uma empresa", description: "Nenhuma empresa ativa.", variant: "destructive" });
+      return;
+    }
     const { data } = await supabase
       .from("products")
       .select("*")
+      .eq("company_id", companyId)
       .or(`barcode.eq.${code},sku.eq.${code}`)
       .eq("is_active", true)
       .limit(1)
@@ -145,6 +152,8 @@ export default function Scanner() {
   useEffect(() => {
     return () => { stopScanner(); };
   }, []);
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container">

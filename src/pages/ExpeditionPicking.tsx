@@ -56,6 +56,7 @@ export default function ExpeditionPicking() {
       const { data: balances } = await (supabase as any)
         .from("stock_balance")
         .select("qty, lot_id, address_id, lots(id, lot_code, expires_at), addresses(id, code, type)")
+        .eq("company_id", companyId!)
         .eq("product_id", current!.product_id)
         .gt("qty", 0);
       const list = (balances ?? []).slice().sort((a: any, b: any) => {
