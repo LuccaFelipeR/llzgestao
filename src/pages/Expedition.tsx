@@ -51,9 +51,10 @@ export default function Expedition() {
   });
 
   const { data: products } = useQuery({
-    queryKey: ["products-active-exp"],
+    queryKey: ["products-active-exp", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, sku, description, unit").eq("is_active", true).order("sku");
+      const { data } = await supabase.from("products").select("id, sku, description, unit").eq("company_id", companyId!).eq("is_active", true).order("sku");
       return data ?? [];
     },
   });

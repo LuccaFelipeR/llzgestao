@@ -38,26 +38,28 @@ export default function GuidedReceiving() {
   const [success, setSuccess] = useState(false);
 
   const { data: products } = useQuery({
-    queryKey: ["products-active"],
+    queryKey: ["products-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("*").eq("is_active", true).order("sku");
+      const { data } = await supabase.from("products").select("*").eq("company_id", companyId!).eq("is_active", true).order("sku");
       return data ?? [];
     },
   });
 
   const { data: addresses } = useQuery({
-    queryKey: ["addresses-active"],
+    queryKey: ["addresses-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("addresses").select("*").eq("is_active", true).order("code");
+      const { data } = await supabase.from("addresses").select("*").eq("company_id", companyId!).eq("is_active", true).order("code");
       return data ?? [];
     },
   });
 
   const { data: lots } = useQuery({
-    queryKey: ["lots", productId],
-    enabled: !!productId,
+    queryKey: ["lots", productId, companyId],
+    enabled: !!productId && !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("lots").select("*").eq("product_id", productId).order("lot_code");
+      const { data } = await supabase.from("lots").select("*").eq("company_id", companyId!).eq("product_id", productId).order("lot_code");
       return data ?? [];
     },
   });

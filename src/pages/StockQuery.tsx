@@ -7,26 +7,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatAddressDisplay } from "@/lib/address-utils";
 import { Download } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useCompany } from "@/contexts/CompanyContext";
+import NoCompanySelected from "@/components/NoCompanySelected";
 
 const STALE_DAYS_DEFAULT = 30;
 
 export default function StockQuery() {
+  const { companyId, isSuperAdmin, loading: companyLoading } = useCompany();
   const [filterSku, setFilterSku] = useState("");
   const [filterAddress, setFilterAddress] = useState("");
   const [filterType, setFilterType] = useState("ALL");
   const [staleDays, setStaleDays] = useState(STALE_DAYS_DEFAULT);
 
   const { data: stock } = useQuery({
-    queryKey: ["stock-query"],
+    queryKey: ["stock-query", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("stock_balance")
         .select("*, products(sku, description, unit), addresses(code, type), lots(lot_code, expires_at)")
+        .eq("company_id", companyId!)
         .gt("qty", 0);
       if (error) throw error;
       return data;
     },
   });
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   const now = new Date();
 

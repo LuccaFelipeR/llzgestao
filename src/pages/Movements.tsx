@@ -60,37 +60,40 @@ export default function Movements() {
   const [filterProductId, setFilterProductId] = useState("");
 
   const { data: products } = useQuery({
-    queryKey: ["products-active"],
+    queryKey: ["products-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("products").select("*").eq("is_active", true).order("sku");
+      const { data } = await supabase.from("products").select("*").eq("company_id", companyId!).eq("is_active", true).order("sku");
       return data ?? [];
     },
   });
 
   const { data: addresses } = useQuery({
-    queryKey: ["addresses-active"],
+    queryKey: ["addresses-active", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("addresses").select("*").eq("is_active", true).order("code");
+      const { data } = await supabase.from("addresses").select("*").eq("company_id", companyId!).eq("is_active", true).order("code");
       return data ?? [];
     },
   });
 
   const { data: lots } = useQuery({
-    queryKey: ["lots", productId],
-    enabled: !!productId,
+    queryKey: ["lots", productId, companyId],
+    enabled: !!productId && !!companyId,
     queryFn: async () => {
-      const { data } = await supabase.from("lots").select("*").eq("product_id", productId).order("lot_code");
+      const { data } = await supabase.from("lots").select("*").eq("company_id", companyId!).eq("product_id", productId).order("lot_code");
       return data ?? [];
     },
   });
 
   // Check available stock for selected product+lot+address
   const { data: availableStock } = useQuery({
-    queryKey: ["available-stock", productId, lotId, fromAddressId],
-    enabled: !!productId && !!lotId && !!fromAddressId && (type === "OUT" || type === "TRANSFER"),
+    queryKey: ["available-stock", productId, lotId, fromAddressId, companyId],
+    enabled: !!productId && !!lotId && !!fromAddressId && !!companyId && (type === "OUT" || type === "TRANSFER"),
     queryFn: async () => {
       const { data } = await supabase.from("stock_balance")
         .select("qty")
+        .eq("company_id", companyId!)
         .eq("product_id", productId)
         .eq("lot_id", lotId)
         .eq("address_id", fromAddressId)
@@ -100,9 +103,10 @@ export default function Movements() {
   });
 
   const { data: movements } = useQuery({
-    queryKey: ["movements", filterType, filterProductId],
+    queryKey: ["movements", filterType, filterProductId, companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      let q = supabase.from("movements").select("*, products(sku, description), lots(lot_code), from_addr:addresses!movements_from_address_id_fkey(code), to_addr:addresses!movements_to_address_id_fkey(code)").order("created_at", { ascending: false }).limit(100);
+      let q = supabase.from("movements").select("*, products(sku, description), lots(lot_code), from_addr:addresses!movements_from_address_id_fkey(code), to_addr:addresses!movements_to_address_id_fkey(code)").eq("company_id", companyId!).order("created_at", { ascending: false }).limit(100);
       if (filterType !== "ALL") q = q.eq("type", filterType as "IN" | "OUT" | "TRANSFER");
       if (filterProductId) q = q.eq("product_id", filterProductId);
       const { data, error } = await q;

@@ -20,9 +20,14 @@ export default function Addresses() {
   const [form, setForm] = useState({ code: "", type: "ARMAZENAGEM" as "ARMAZENAGEM" | "TECNICO" });
 
   const { data: addresses, isLoading } = useQuery({
-    queryKey: ["addresses"],
+    queryKey: ["addresses", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("addresses").select("*").order("code");
+      const { data, error } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("company_id", companyId!)
+        .order("code");
       if (error) throw error;
       return data;
     },

@@ -59,9 +59,14 @@ export default function Products() {
   const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*").order("sku");
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("company_id", companyId!)
+        .order("sku");
       if (error) throw error;
       return data as Product[];
     },
