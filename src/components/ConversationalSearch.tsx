@@ -9,6 +9,7 @@ import {
   Clock, AlertTriangle, TrendingDown, Loader2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCompany } from "@/contexts/CompanyContext";
 
 const ROUTES = [
   { path: "/", label: "Painel de Controle", icon: LayoutDashboard, keywords: "dashboard inicio home painel" },
