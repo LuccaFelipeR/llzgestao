@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Camera, CameraOff, Package, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import NoCompanySelected from "@/components/NoCompanySelected";
 
 export default function Scanner() {
   const { user } = useAuth();
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [scanning, setScanning] = useState(false);
   const [scannedCode, setScannedCode] = useState("");
@@ -151,6 +152,8 @@ export default function Scanner() {
   useEffect(() => {
     return () => { stopScanner(); };
   }, []);
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container">

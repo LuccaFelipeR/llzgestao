@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { Plus, Info, AlertTriangle } from "lucide-react";
 import { formatAddressDisplay } from "@/lib/address-utils";
+import NoCompanySelected from "@/components/NoCompanySelected";
 
 type MovementType = "IN" | "OUT" | "TRANSFER";
 

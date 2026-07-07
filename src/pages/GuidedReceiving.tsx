@@ -22,7 +22,7 @@ const STEPS = [
 
 export default function GuidedReceiving() {
   const { user } = useAuth();
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [productId, setProductId] = useState("");
