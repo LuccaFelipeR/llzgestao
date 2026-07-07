@@ -11,6 +11,7 @@ import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Package, MapPin, Hash, Tag, ArrowRight, RotateCcw, Boxes } from "lucide-react";
 import { formatAddressDisplay } from "@/lib/address-utils";
+import NoCompanySelected from "@/components/NoCompanySelected";
 
 const STEPS = [
   { id: 1, title: "Produto", description: "Selecione o produto a receber", icon: Package },
@@ -158,6 +159,8 @@ export default function GuidedReceiving() {
       </div>
     );
   }
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container max-w-2xl mx-auto">
