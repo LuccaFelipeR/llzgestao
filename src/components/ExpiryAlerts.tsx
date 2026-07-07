@@ -1,17 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, Calendar } from "lucide-react";
+import { useCompany } from "@/contexts/CompanyContext";
 
 export default function ExpiryAlerts() {
+  const { companyId } = useCompany();
   const { data: expiringLots } = useQuery({
-    queryKey: ["expiring-lots"],
+    queryKey: ["expiring-lots", companyId],
+    enabled: !!companyId,
     queryFn: async () => {
-      const futureDate = new Date();
-      futureDate.setDate(futureDate.getDate() + 30);
-
       const { data } = await supabase
         .from("stock_balance")
         .select("qty, lots(lot_code, expires_at), products(sku, description)")
+        .eq("company_id", companyId!)
         .gt("qty", 0);
 
       if (!data) return [];
