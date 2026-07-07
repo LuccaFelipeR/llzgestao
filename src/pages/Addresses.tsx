@@ -11,8 +11,10 @@ import { toast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { validateAddressCode, parseAddressCode, formatAddressDisplay } from "@/lib/address-utils";
 
+import NoCompanySelected from "@/components/NoCompanySelected";
+
 export default function Addresses() {
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -99,6 +101,8 @@ export default function Addresses() {
     setForm({ code: a.code, type: a.type });
     setOpen(true);
   }
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container">

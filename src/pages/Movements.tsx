@@ -42,7 +42,7 @@ const TRANSFER_SUBTYPES = [
 
 export default function Movements() {
   const { user } = useAuth();
-  const { companyId } = useCompany();
+  const { companyId, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<MovementType>("IN");
@@ -181,6 +181,8 @@ export default function Movements() {
     setProductId(""); setLotId(""); setNewLot(false); setLotCode("");
     setExpiresAt(""); setQty(""); setFromAddressId(""); setToAddressId(""); setNote(""); setType("IN"); setSubtype("");
   }
+
+  if (!companyLoading && !companyId) return <NoCompanySelected />;
 
   return (
     <div className="page-container">
