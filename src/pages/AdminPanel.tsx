@@ -10,8 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
+import { friendlyError } from "@/lib/error-messages";
 
 const ROLE_LABELS: Record<string, string> = {
   operator: "Operador",
@@ -42,6 +43,7 @@ export default function AdminPanel() {
   const [editCompanyName, setEditCompanyName] = useState("");
   const [deleteCompany, setDeleteCompany] = useState<any>(null);
   const [showAbc, setShowAbc] = useState(false);
+  const [companyStatusFilter, setCompanyStatusFilter] = useState<string>("all");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("member");
 
@@ -129,7 +131,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Focal point definido" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const toggleMemberActiveMutation = useMutation({
@@ -144,7 +146,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
       toast({ title: "Membro atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const addMemberByEmailMutation = useMutation({
@@ -163,7 +165,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Usuário vinculado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const removeMemberMutation = useMutation({
@@ -176,7 +178,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Vínculo removido" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const changeMemberRoleMutation = useMutation({
@@ -188,7 +190,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
       toast({ title: "Papel atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const updateCompanyDetailsMutation = useMutation({
@@ -203,7 +205,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Empresa atualizada" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const regenerateCodeMutation = useMutation({
@@ -216,7 +218,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Código regenerado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const updateCompanyMutation = useMutation({
@@ -229,7 +231,23 @@ export default function AdminPanel() {
       toast({ title: "Empresa atualizada" });
       setEditCompany(null);
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
+  });
+
+  const setCompanyStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await (supabase as any)
+        .from("companies")
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      const label = v.status === "active" ? "reativada" : v.status === "blocked" ? "bloqueada" : v.status === "inactive" ? "desativada" : "atualizada";
+      toast({ title: `Empresa ${label}` });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const deleteCompanyMutation = useMutation({
@@ -242,7 +260,7 @@ export default function AdminPanel() {
       toast({ title: "Empresa excluída" });
       setDeleteCompany(null);
     },
-    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: friendlyError(e), variant: "destructive" }),
   });
 
   // ABC curve for users — based on their movement activity counts
@@ -304,7 +322,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
       toast({ title: "Usuário atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const roleMutation = useMutation({
@@ -317,7 +335,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
       toast({ title: "Papel atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -338,7 +356,7 @@ export default function AdminPanel() {
       toast({ title: "Usuário excluído" });
       setDeleteDialogUser(null);
     },
-    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro ao excluir", description: friendlyError(e), variant: "destructive" }),
   });
 
   const permMutation = useMutation({
@@ -359,7 +377,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-tab-permissions"] });
       toast({ title: "Permissão atualizada" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   function getUserRole(userId: string) {
@@ -540,6 +558,26 @@ export default function AdminPanel() {
       {/* Companies Tab */}
       {tab === "companies" && (
         <div className="space-y-3">
+          {/* Status filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-muted-foreground">Filtrar por status:</span>
+            {[
+              { key: "all", label: "Todas" },
+              { key: "active", label: "Ativas" },
+              { key: "trial", label: "Trial" },
+              { key: "blocked", label: "Bloqueadas" },
+              { key: "inactive", label: "Inativas" },
+            ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setCompanyStatusFilter(f.key)}
+                className={`text-xs px-2.5 py-1 rounded-md border ${
+                  companyStatusFilter === f.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:border-primary/40"
+                }`}
+              >{f.label}</button>
+            ))}
+          </div>
+
           {/* Companies without focal point card */}
           {(() => {
             const without = companiesList?.filter((c: any) => !c.main_focal_user_id) ?? [];
@@ -563,18 +601,27 @@ export default function AdminPanel() {
             );
           })()}
 
-          {companiesList?.map((c: any) => {
+          {companiesList
+            ?.filter((c: any) => companyStatusFilter === "all" ? true : (c.status ?? "active") === companyStatusFilter)
+            .map((c: any) => {
             const memberCount = c.company_members?.length ?? 0;
             const hasFocal = !!c.main_focal_user_id;
+            const status = c.status ?? "active";
+            const isBlocked = status === "blocked";
+            const isInactive = status === "inactive";
+            const statusColor = isBlocked ? "border-destructive text-destructive"
+              : isInactive ? "border-muted-foreground text-muted-foreground"
+              : status === "trial" ? "border-warning text-warning"
+              : "border-accent text-accent";
             return (
-              <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+              <div key={c.id} className={`bg-card border rounded-xl p-4 ${isInactive ? "opacity-70" : ""}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-sm">{c.name}</h3>
-                      {c.status && c.status !== "active" && (
-                        <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
-                      )}
+                      <Badge variant="outline" className={`text-[10px] ${statusColor}`}>
+                        {status === "active" ? "Ativa" : status === "blocked" ? "Bloqueada" : status === "inactive" ? "Inativa" : status === "trial" ? "Trial" : status}
+                      </Badge>
                       {!hasFocal && (
                         <Badge variant="outline" className="text-[10px] border-warning text-warning">Sem focal point</Badge>
                       )}
@@ -600,19 +647,44 @@ export default function AdminPanel() {
                         <Copy size={14} />
                       </button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs gap-1"
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
                       onClick={() => regenerateCodeMutation.mutate(c.id)}
-                      disabled={regenerateCodeMutation.isPending}
-                    >
+                      disabled={regenerateCodeMutation.isPending}>
                       <RefreshCw size={14} /> Novo Código
                     </Button>
-                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                      onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
                       <Pencil size={14} /> Detalhes
                     </Button>
-                    <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
+                    {/* Lifecycle actions */}
+                    {status === "active" || status === "trial" ? (
+                      <>
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1 text-warning border-warning/40"
+                          onClick={() => setCompanyStatusMutation.mutate({ id: c.id, status: "blocked" })}>
+                          <Ban size={14} /> Bloquear
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                          onClick={() => {
+                            if (confirm("Desativar esta empresa? O histórico é preservado, mas ela sai da operação normal."))
+                              setCompanyStatusMutation.mutate({ id: c.id, status: "inactive" });
+                          }}>
+                          <Archive size={14} /> Desativar
+                        </Button>
+                      </>
+                    ) : isBlocked ? (
+                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1 text-accent border-accent/40"
+                        onClick={() => setCompanyStatusMutation.mutate({ id: c.id, status: "active" })}>
+                        <PlayCircle size={14} /> Desbloquear
+                      </Button>
+                    ) : isInactive ? (
+                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1 text-accent border-accent/40"
+                        onClick={() => setCompanyStatusMutation.mutate({ id: c.id, status: "active" })}>
+                        <RotateCcw size={14} /> Restaurar
+                      </Button>
+                    ) : null}
+                    <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30"
+                      title="Só permitido para empresas totalmente vazias"
+                      onClick={() => setDeleteCompany(c)}>
                       <Trash2 size={14} />
                     </Button>
                   </div>
@@ -625,6 +697,7 @@ export default function AdminPanel() {
           )}
         </div>
       )}
+
 
       {/* System Tab */}
       {tab === "system" && systemStats && (
@@ -902,8 +975,9 @@ export default function AdminPanel() {
         <DialogContent>
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir Empresa</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja excluir <strong>{deleteCompany?.name}</strong>?
-            Todos os produtos, endereços, lotes, movimentações e estoque desta empresa serão perdidos. Esta ação não pode ser desfeita.
+            Exclusão definitiva de <strong>{deleteCompany?.name}</strong>. Isso só é permitido para empresas <strong>totalmente vazias</strong> — sem produtos, endereços, lotes, movimentações, membros, notificações, listas de separação ou logs.
+            <br /><br />
+            Para preservar o histórico, prefira <strong>Desativar</strong> ou <strong>Bloquear</strong>. Empresas com dados vinculados não podem ser excluídas.
           </p>
           <div className="flex gap-3 mt-4">
             <Button variant="outline" className="flex-1" onClick={() => setDeleteCompany(null)}>Cancelar</Button>

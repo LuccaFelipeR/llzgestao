@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { friendlyError } from "@/lib/error-messages";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,7 +126,7 @@ export default function Products() {
       toast({ title: editing ? "Produto atualizado" : "Produto cadastrado" });
       closeDialog();
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const toggleMutation = useMutation({
@@ -146,7 +147,7 @@ export default function Products() {
       toast({ title: "Produto excluído" });
       setDeleting(null);
     },
-    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: friendlyError(e), variant: "destructive" }),
   });
 
   function openNew() { setEditing(null); setForm(emptyForm); setOpen(true); }
