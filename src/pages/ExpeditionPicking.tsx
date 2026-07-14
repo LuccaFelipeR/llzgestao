@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { friendlyError } from "@/lib/error-messages";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
@@ -124,7 +125,7 @@ export default function ExpeditionPicking() {
         toast({ title: "Item separado" });
       }
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const skipMut = useMutation({
@@ -135,7 +136,7 @@ export default function ExpeditionPicking() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => { refetchItems(); toast({ title: "Item pulado" }); },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const cancelMut = useMutation({

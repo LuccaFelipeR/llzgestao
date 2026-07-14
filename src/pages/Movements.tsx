@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { friendlyError } from "@/lib/error-messages";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Button } from "@/components/ui/button";
@@ -174,7 +175,7 @@ export default function Movements() {
       setOpen(false);
     },
     onError: (e: Error) => {
-      toast({ title: "Erro", description: e.message, variant: "destructive" });
+      toast({ title: "Erro", description: friendlyError(e), variant: "destructive" });
     },
   });
 
