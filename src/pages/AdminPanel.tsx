@@ -975,8 +975,9 @@ export default function AdminPanel() {
         <DialogContent>
           <DialogHeader><DialogTitle className="flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Excluir Empresa</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja excluir <strong>{deleteCompany?.name}</strong>?
-            Todos os produtos, endereços, lotes, movimentações e estoque desta empresa serão perdidos. Esta ação não pode ser desfeita.
+            Exclusão definitiva de <strong>{deleteCompany?.name}</strong>. Isso só é permitido para empresas <strong>totalmente vazias</strong> — sem produtos, endereços, lotes, movimentações, membros, notificações, listas de separação ou logs.
+            <br /><br />
+            Para preservar o histórico, prefira <strong>Desativar</strong> ou <strong>Bloquear</strong>. Empresas com dados vinculados não podem ser excluídas.
           </p>
           <div className="flex gap-3 mt-4">
             <Button variant="outline" className="flex-1" onClick={() => setDeleteCompany(null)}>Cancelar</Button>
