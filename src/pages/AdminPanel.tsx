@@ -558,6 +558,26 @@ export default function AdminPanel() {
       {/* Companies Tab */}
       {tab === "companies" && (
         <div className="space-y-3">
+          {/* Status filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-muted-foreground">Filtrar por status:</span>
+            {[
+              { key: "all", label: "Todas" },
+              { key: "active", label: "Ativas" },
+              { key: "trial", label: "Trial" },
+              { key: "blocked", label: "Bloqueadas" },
+              { key: "inactive", label: "Inativas" },
+            ].map((f) => (
+              <button
+                key={f.key}
+                onClick={() => setCompanyStatusFilter(f.key)}
+                className={`text-xs px-2.5 py-1 rounded-md border ${
+                  companyStatusFilter === f.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border hover:border-primary/40"
+                }`}
+              >{f.label}</button>
+            ))}
+          </div>
+
           {/* Companies without focal point card */}
           {(() => {
             const without = companiesList?.filter((c: any) => !c.main_focal_user_id) ?? [];
@@ -581,18 +601,27 @@ export default function AdminPanel() {
             );
           })()}
 
-          {companiesList?.map((c: any) => {
+          {companiesList
+            ?.filter((c: any) => companyStatusFilter === "all" ? true : (c.status ?? "active") === companyStatusFilter)
+            .map((c: any) => {
             const memberCount = c.company_members?.length ?? 0;
             const hasFocal = !!c.main_focal_user_id;
+            const status = c.status ?? "active";
+            const isBlocked = status === "blocked";
+            const isInactive = status === "inactive";
+            const statusColor = isBlocked ? "border-destructive text-destructive"
+              : isInactive ? "border-muted-foreground text-muted-foreground"
+              : status === "trial" ? "border-warning text-warning"
+              : "border-accent text-accent";
             return (
-              <div key={c.id} className="bg-card border border-border rounded-xl p-4">
+              <div key={c.id} className={`bg-card border rounded-xl p-4 ${isInactive ? "opacity-70" : ""}`}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-semibold text-sm">{c.name}</h3>
-                      {c.status && c.status !== "active" && (
-                        <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
-                      )}
+                      <Badge variant="outline" className={`text-[10px] ${statusColor}`}>
+                        {status === "active" ? "Ativa" : status === "blocked" ? "Bloqueada" : status === "inactive" ? "Inativa" : status === "trial" ? "Trial" : status}
+                      </Badge>
                       {!hasFocal && (
                         <Badge variant="outline" className="text-[10px] border-warning text-warning">Sem focal point</Badge>
                       )}
@@ -618,19 +647,44 @@ export default function AdminPanel() {
                         <Copy size={14} />
                       </button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs gap-1"
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
                       onClick={() => regenerateCodeMutation.mutate(c.id)}
-                      disabled={regenerateCodeMutation.isPending}
-                    >
+                      disabled={regenerateCodeMutation.isPending}>
                       <RefreshCw size={14} /> Novo Código
                     </Button>
-                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                      onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
                       <Pencil size={14} /> Detalhes
                     </Button>
-                    <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteCompany(c)}>
+                    {/* Lifecycle actions */}
+                    {status === "active" || status === "trial" ? (
+                      <>
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1 text-warning border-warning/40"
+                          onClick={() => setCompanyStatusMutation.mutate({ id: c.id, status: "blocked" })}>
+                          <Ban size={14} /> Bloquear
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                          onClick={() => {
+                            if (confirm("Desativar esta empresa? O histórico é preservado, mas ela sai da operação normal."))
+                              setCompanyStatusMutation.mutate({ id: c.id, status: "inactive" });
+                          }}>
+                          <Archive size={14} /> Desativar
+                        </Button>
+                      </>
+                    ) : isBlocked ? (
+                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1 text-accent border-accent/40"
+                        onClick={() => setCompanyStatusMutation.mutate({ id: c.id, status: "active" })}>
+                        <PlayCircle size={14} /> Desbloquear
+                      </Button>
+                    ) : isInactive ? (
+                      <Button size="sm" variant="outline" className="h-8 text-xs gap-1 text-accent border-accent/40"
+                        onClick={() => setCompanyStatusMutation.mutate({ id: c.id, status: "active" })}>
+                        <RotateCcw size={14} /> Restaurar
+                      </Button>
+                    ) : null}
+                    <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30"
+                      title="Só permitido para empresas totalmente vazias"
+                      onClick={() => setDeleteCompany(c)}>
                       <Trash2 size={14} />
                     </Button>
                   </div>
@@ -643,6 +697,7 @@ export default function AdminPanel() {
           )}
         </div>
       )}
+
 
       {/* System Tab */}
       {tab === "system" && systemStats && (
