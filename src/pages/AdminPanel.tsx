@@ -234,6 +234,22 @@ export default function AdminPanel() {
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
+  const setCompanyStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await (supabase as any)
+        .from("companies")
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
+      const label = v.status === "active" ? "reativada" : v.status === "blocked" ? "bloqueada" : v.status === "inactive" ? "desativada" : "atualizada";
+      toast({ title: `Empresa ${label}` });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
+  });
+
   const deleteCompanyMutation = useMutation({
     mutationFn: async (companyId: string) => {
       const { error } = await (supabase as any).from("companies").delete().eq("id", companyId);
@@ -244,7 +260,7 @@ export default function AdminPanel() {
       toast({ title: "Empresa excluída" });
       setDeleteCompany(null);
     },
-    onError: (e: Error) => toast({ title: "Erro ao excluir", description: friendlyError(e), variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Não foi possível excluir", description: friendlyError(e), variant: "destructive" }),
   });
 
   // ABC curve for users — based on their movement activity counts
