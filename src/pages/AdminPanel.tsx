@@ -43,6 +43,7 @@ export default function AdminPanel() {
   const [editCompanyName, setEditCompanyName] = useState("");
   const [deleteCompany, setDeleteCompany] = useState<any>(null);
   const [showAbc, setShowAbc] = useState(false);
+  const [companyStatusFilter, setCompanyStatusFilter] = useState<string>("all");
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("member");
 
