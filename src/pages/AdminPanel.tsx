@@ -130,7 +130,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Focal point definido" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const toggleMemberActiveMutation = useMutation({
@@ -145,7 +145,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
       toast({ title: "Membro atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const addMemberByEmailMutation = useMutation({
@@ -164,7 +164,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Usuário vinculado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const removeMemberMutation = useMutation({
@@ -177,7 +177,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Vínculo removido" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const changeMemberRoleMutation = useMutation({
@@ -189,7 +189,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-company-members"] });
       toast({ title: "Papel atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const updateCompanyDetailsMutation = useMutation({
@@ -204,7 +204,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Empresa atualizada" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const regenerateCodeMutation = useMutation({
@@ -217,7 +217,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
       toast({ title: "Código regenerado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const updateCompanyMutation = useMutation({
@@ -230,7 +230,7 @@ export default function AdminPanel() {
       toast({ title: "Empresa atualizada" });
       setEditCompany(null);
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const deleteCompanyMutation = useMutation({
@@ -243,7 +243,7 @@ export default function AdminPanel() {
       toast({ title: "Empresa excluída" });
       setDeleteCompany(null);
     },
-    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro ao excluir", description: friendlyError(e), variant: "destructive" }),
   });
 
   // ABC curve for users — based on their movement activity counts
@@ -305,7 +305,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
       toast({ title: "Usuário atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const roleMutation = useMutation({
@@ -318,7 +318,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
       toast({ title: "Papel atualizado" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const deleteMutation = useMutation({
@@ -339,7 +339,7 @@ export default function AdminPanel() {
       toast({ title: "Usuário excluído" });
       setDeleteDialogUser(null);
     },
-    onError: (e: Error) => toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro ao excluir", description: friendlyError(e), variant: "destructive" }),
   });
 
   const permMutation = useMutation({
@@ -360,7 +360,7 @@ export default function AdminPanel() {
       queryClient.invalidateQueries({ queryKey: ["admin-tab-permissions"] });
       toast({ title: "Permissão atualizada" });
     },
-    onError: (e: Error) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   function getUserRole(userId: string) {
