@@ -3,7 +3,7 @@ import {
   Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User,
   ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Building2,
   FileClock, ShieldAlert, Activity, Crown, PackageCheck, Workflow, ClipboardType,
-  BrainCircuit, ShieldCheck,
+  BrainCircuit, ShieldCheck, LifeBuoy,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
@@ -123,6 +123,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { to: "/", key: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
         { to: "/ai-insights", key: "ai-insights", icon: Sparkles, label: "IA Insights" },
         { to: "/notificacoes", key: "notificacoes", icon: Bell, label: "Alertas" },
+        { to: "/suporte", key: "suporte", icon: LifeBuoy, label: "Suporte" },
       ],
     },
     {
