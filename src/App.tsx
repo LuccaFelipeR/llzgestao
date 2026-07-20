@@ -119,6 +119,7 @@ function AppRoutes() {
                   <Route path="/recebimento" element={<GuidedReceiving />} />
                   <Route path="/expedicao" element={<Expedition />} />
                   <Route path="/expedicao/:id" element={<ExpeditionPicking />} />
+                  <Route path="/suporte" element={<Support />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/global" element={<ProtectedRoute adminOnly><GlobalDashboard /></ProtectedRoute>} />
