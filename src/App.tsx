@@ -28,6 +28,7 @@ import GlobalDashboard from "@/pages/GlobalDashboard";
 import Notifications from "@/pages/Notifications";
 import Expedition from "@/pages/Expedition";
 import ExpeditionPicking from "@/pages/ExpeditionPicking";
+import Support from "@/pages/Support";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
