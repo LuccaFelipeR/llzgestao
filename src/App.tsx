@@ -29,6 +29,7 @@ import Notifications from "@/pages/Notifications";
 import Expedition from "@/pages/Expedition";
 import ExpeditionPicking from "@/pages/ExpeditionPicking";
 import Support from "@/pages/Support";
+import CompanySettings from "@/pages/CompanySettings";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
