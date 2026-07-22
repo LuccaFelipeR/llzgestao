@@ -13,6 +13,20 @@ interface Company {
   onboarding_completed: boolean;
   status?: string;
   main_focal_user_id?: string | null;
+  // Phase 6.10 - operational configuration
+  controls_batch?: boolean;
+  controls_expiration?: boolean;
+  handles_perishables?: boolean;
+  uses_addressing?: boolean;
+  uses_expedition?: boolean;
+  plans_csv_import?: boolean;
+  segment?: string | null;
+  estimated_size?: string | null;
+  estimated_users?: string | null;
+  onboarding_step?: number;
+  onboarding_status?: string;
+  onboarding_completed_at?: string | null;
+  activation_checklist_dismissed?: boolean;
 }
 
 interface AvailableCompany {
