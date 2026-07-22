@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import ExpiryAlerts from "@/components/ExpiryAlerts";
 import HealthScore from "@/components/HealthScore";
 import ExceptionPanel from "@/components/ExceptionPanel";
+import ActivationChecklist from "@/components/ActivationChecklist";
 
 const STALE_DAYS = 30;
 const EXPIRY_DAYS = 30;
