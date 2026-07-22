@@ -3,7 +3,7 @@ import {
   Package, MapPin, ArrowRightLeft, Search, LayoutDashboard, Shield, LogOut, User,
   ScanLine, Bell, Upload, Boxes, Sparkles, FileText, ClipboardList, Building2,
   FileClock, ShieldAlert, Activity, Crown, PackageCheck, Workflow, ClipboardType,
-  BrainCircuit, ShieldCheck, LifeBuoy,
+  BrainCircuit, ShieldCheck, LifeBuoy, Settings,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCompany } from "@/contexts/CompanyContext";
