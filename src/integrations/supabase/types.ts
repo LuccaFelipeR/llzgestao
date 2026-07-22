@@ -116,13 +116,19 @@ export type Database = {
       }
       companies: {
         Row: {
+          activation_checklist_dismissed: boolean
           address: string | null
           business_type: Database["public"]["Enums"]["business_type"]
           city: string | null
+          controls_batch: boolean
+          controls_expiration: boolean
           country: string | null
           created_at: string
           document_number: string | null
           email: string | null
+          estimated_size: string | null
+          estimated_users: string | null
+          handles_perishables: boolean
           id: string
           invite_code: string | null
           legal_name: string | null
@@ -134,25 +140,38 @@ export type Database = {
           name: string
           notes: string | null
           onboarding_completed: boolean
+          onboarding_completed_at: string | null
+          onboarding_status: string
+          onboarding_step: number
           operation_mode: Database["public"]["Enums"]["operation_mode"]
           phone: string | null
           plan: string
+          plans_csv_import: boolean
+          segment: string | null
           settings: Json
           state: string | null
           status: Database["public"]["Enums"]["company_status"]
           trade_name: string | null
           trial_ends_at: string | null
           updated_at: string
+          uses_addressing: boolean
+          uses_expedition: boolean
           whatsapp: string | null
         }
         Insert: {
+          activation_checklist_dismissed?: boolean
           address?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
+          controls_batch?: boolean
+          controls_expiration?: boolean
           country?: string | null
           created_at?: string
           document_number?: string | null
           email?: string | null
+          estimated_size?: string | null
+          estimated_users?: string | null
+          handles_perishables?: boolean
           id?: string
           invite_code?: string | null
           legal_name?: string | null
@@ -164,25 +183,38 @@ export type Database = {
           name: string
           notes?: string | null
           onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_status?: string
+          onboarding_step?: number
           operation_mode?: Database["public"]["Enums"]["operation_mode"]
           phone?: string | null
           plan?: string
+          plans_csv_import?: boolean
+          segment?: string | null
           settings?: Json
           state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           trade_name?: string | null
           trial_ends_at?: string | null
           updated_at?: string
+          uses_addressing?: boolean
+          uses_expedition?: boolean
           whatsapp?: string | null
         }
         Update: {
+          activation_checklist_dismissed?: boolean
           address?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
+          controls_batch?: boolean
+          controls_expiration?: boolean
           country?: string | null
           created_at?: string
           document_number?: string | null
           email?: string | null
+          estimated_size?: string | null
+          estimated_users?: string | null
+          handles_perishables?: boolean
           id?: string
           invite_code?: string | null
           legal_name?: string | null
@@ -194,15 +226,22 @@ export type Database = {
           name?: string
           notes?: string | null
           onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_status?: string
+          onboarding_step?: number
           operation_mode?: Database["public"]["Enums"]["operation_mode"]
           phone?: string | null
           plan?: string
+          plans_csv_import?: boolean
+          segment?: string | null
           settings?: Json
           state?: string | null
           status?: Database["public"]["Enums"]["company_status"]
           trade_name?: string | null
           trial_ends_at?: string | null
           updated_at?: string
+          uses_addressing?: boolean
+          uses_expedition?: boolean
           whatsapp?: string | null
         }
         Relationships: []

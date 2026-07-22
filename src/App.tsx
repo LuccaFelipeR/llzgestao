@@ -29,6 +29,7 @@ import Notifications from "@/pages/Notifications";
 import Expedition from "@/pages/Expedition";
 import ExpeditionPicking from "@/pages/ExpeditionPicking";
 import Support from "@/pages/Support";
+import CompanySettings from "@/pages/CompanySettings";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -120,6 +121,8 @@ function AppRoutes() {
                   <Route path="/expedicao" element={<Expedition />} />
                   <Route path="/expedicao/:id" element={<ExpeditionPicking />} />
                   <Route path="/suporte" element={<Support />} />
+                  <Route path="/configuracoes" element={<CompanySettings />} />
+                  <Route path="/company-onboarding" element={<CompanyOnboarding />} />
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/global" element={<ProtectedRoute adminOnly><GlobalDashboard /></ProtectedRoute>} />

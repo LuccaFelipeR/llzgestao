@@ -622,12 +622,19 @@ export default function AdminPanel() {
                       <Badge variant="outline" className={`text-[10px] ${statusColor}`}>
                         {status === "active" ? "Ativa" : status === "blocked" ? "Bloqueada" : status === "inactive" ? "Inativa" : status === "trial" ? "Trial" : status}
                       </Badge>
+                      {(() => {
+                        const os = c.onboarding_status || "not_started";
+                        const label = os === "completed" ? "Onboarding ok" : os === "in_progress" ? "Onboarding em andamento" : os === "skipped" ? "Onboarding adiado" : "Não iniciou";
+                        const cls = os === "completed" ? "border-accent text-accent" : os === "in_progress" ? "border-warning text-warning" : "border-muted-foreground text-muted-foreground";
+                        return <Badge variant="outline" className={`text-[10px] ${cls}`}>{label}</Badge>;
+                      })()}
                       {!hasFocal && (
                         <Badge variant="outline" className="text-[10px] border-warning text-warning">Sem focal point</Badge>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       Tipo: {c.business_type} • Modo: {c.operation_mode} • Plano: {c.plan}
+                      {c.segment ? ` • Segmento: ${c.segment}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Membros: {memberCount} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
