@@ -27,6 +27,8 @@ interface Company {
   onboarding_status?: string;
   onboarding_completed_at?: string | null;
   activation_checklist_dismissed?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface AvailableCompany {
