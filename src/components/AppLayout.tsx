@@ -132,7 +132,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { to: "/estoque", key: "estoque", icon: Search, label: "Estoque" },
         { to: "/movimentacoes", key: "movimentacoes", icon: ArrowRightLeft, label: "Movimentações" },
         { to: "/recebimento", key: "recebimento", icon: ClipboardList, label: "Recebimento" },
-        { to: "/expedicao", key: "expedicao", icon: PackageCheck, label: "Expedição" },
+        ...(company?.uses_expedition !== false
+          ? [{ to: "/expedicao", key: "expedicao", icon: PackageCheck, label: "Expedição" }]
+          : []),
         { to: "/scanner", key: "scanner", icon: ScanLine, label: "Scanner" },
       ],
     },
@@ -140,8 +142,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       key: "cadastros", label: "Cadastros", icon: ClipboardType,
       items: [
         { to: "/produtos", key: "produtos", icon: Package, label: "Produtos" },
-        { to: "/enderecos", key: "enderecos", icon: MapPin, label: "Endereços" },
+        ...(company?.uses_addressing !== false
+          ? [{ to: "/enderecos", key: "enderecos", icon: MapPin, label: "Endereços" }]
+          : []),
         { to: "/onboarding", key: "onboarding", icon: Upload, label: "Importar CSV" },
+        { to: "/configuracoes", key: "configuracoes", icon: Settings, label: "Configurações" },
       ],
     },
     ...(isAdmin ? [{
