@@ -99,7 +99,7 @@ function AppSidebarInner({ groups }: { groups: NavGroup[] }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, isAdmin, signOut } = useAuth();
-  const { availableCompanies, switchCompany, isSuperAdmin, currentCompanyId } = useCompany();
+  const { availableCompanies, switchCompany, isSuperAdmin, currentCompanyId, company } = useCompany();
 
   const { data: tabPermissions } = useQuery({
     queryKey: ["my-tab-permissions", user?.id],
