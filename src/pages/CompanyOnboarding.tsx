@@ -163,20 +163,25 @@ export default function CompanyOnboarding() {
   async function handleFinish() {
     const ok = await persist({}, { finish: true });
     if (ok) {
-      toast({ title: "Empresa configurada! 🎉" });
-      if (plansCsv) navigate("/onboarding");
-      else navigate("/");
+      if (plansCsv) {
+        toast({ title: "Empresa configurada! 🎉", description: "Agora importe seu primeiro CSV." });
+        navigate("/onboarding");
+      } else {
+        toast({ title: "Empresa configurada! 🎉", description: "Cadastre seu primeiro produto." });
+        navigate("/produtos");
+      }
     }
   }
 
   async function handleSkip() {
     if (!companyId) return;
+    // Skipped is distinct from completed — do NOT set onboarding_completed_at.
     await (supabase as any).from("companies").update({
       onboarding_status: "skipped",
-      onboarding_completed: true,
-      onboarding_completed_at: new Date().toISOString(),
+      onboarding_completed: true, // allow the user to leave the gate; status distinguishes intent
     }).eq("id", companyId);
     await refetch();
+    toast({ title: "Onboarding adiado", description: "Você pode retomar em Configurações." });
     navigate("/");
   }
 
