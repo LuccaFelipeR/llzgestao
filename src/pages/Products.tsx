@@ -381,13 +381,16 @@ export default function Products() {
             {/* Regras de controle */}
             <section className="space-y-3 bg-secondary/40 rounded-xl p-4">
               <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                <AlertTriangle size={14} className="text-warning" /> Regras de controle
+                <AlertTriangle size={14} className="text-warning" /> Regras de controle deste produto
               </h3>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                As configurações da empresa sugerem o padrão. Cada produto pode ter a própria regra.
+              </p>
 
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm">Produto perecível</Label>
-                  <p className="text-xs text-muted-foreground">Forçará controle de validade no recebimento.</p>
+                  <p className="text-xs text-muted-foreground">Produto que pode exigir validade, temperatura ou armazenamento específico.</p>
                 </div>
                 <Switch checked={form.is_perishable} onCheckedChange={setPerishable} />
               </div>
@@ -395,7 +398,7 @@ export default function Products() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm">Controla lote/batch</Label>
-                  <p className="text-xs text-muted-foreground">Recebimento exigirá código de lote.</p>
+                  <p className="text-xs text-muted-foreground">Permite identificar e rastrear grupos específicos deste produto. Se ativo, recebimento exigirá código de lote.</p>
                 </div>
                 <Switch checked={form.controls_batch} onCheckedChange={(v) => setForm({ ...form, controls_batch: v })} />
               </div>
@@ -403,7 +406,7 @@ export default function Products() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm">Controla validade</Label>
-                  <p className="text-xs text-muted-foreground">Recebimento exigirá data de validade.</p>
+                  <p className="text-xs text-muted-foreground">Exige a data de validade nas entradas deste produto.</p>
                 </div>
                 <Switch checked={form.controls_expiration || form.is_perishable} disabled={form.is_perishable} onCheckedChange={(v) => setForm({ ...form, controls_expiration: v })} />
               </div>
