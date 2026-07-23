@@ -26,12 +26,14 @@ export default function ActivationChecklist() {
     enabled: !!currentCompanyId && !dismissed,
     queryFn: async (): Promise<Item[]> => {
       const cid = currentCompanyId!;
-      const [products, addresses, movements, balance, members] = await Promise.all([
+      const [products, addresses, movements, balance, members, csvImports, supportTickets] = await Promise.all([
         supabase.from("products").select("id", { count: "exact", head: true }).eq("company_id", cid),
         supabase.from("addresses").select("id", { count: "exact", head: true }).eq("company_id", cid),
         supabase.from("movements").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("type", "IN"),
         supabase.from("stock_balance").select("id", { count: "exact", head: true }).eq("company_id", cid).gt("qty", 0),
         supabase.from("company_members").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("is_active", true),
+        supabase.from("activity_log").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("action", "csv_import_completed"),
+        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("company_id", cid),
       ]);
 
       const list: Item[] = [
