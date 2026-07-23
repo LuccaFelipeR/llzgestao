@@ -294,14 +294,17 @@ export default function CompanyOnboarding() {
 
             {step === 4 && (
               <div className="max-w-lg mx-auto space-y-2">
+                <p className="text-xs text-muted-foreground text-center mb-2">
+                  Essas opções orientam a interface. <strong>Cada produto ainda pode ter a própria regra</strong> de lote, validade ou perecibilidade — nada aqui apaga configurações existentes.
+                </p>
                 <ToggleRow icon={Tag} label="Controlar lote"
-                  hint="Destaca lote em cadastros, recebimentos e movimentações."
+                  hint="Padrão de novos produtos e destaque em recebimentos."
                   value={controlsBatch} onChange={setControlsBatch} />
                 <ToggleRow icon={CalendarClock} label="Controlar validade"
-                  hint="Exibe alertas de vencimento e campos de validade."
+                  hint="Alertas de vencimento e campo de validade sugerido nos novos produtos."
                   value={controlsExpiration} onChange={setControlsExpiration} />
                 <ToggleRow icon={Package} label="Trabalha com perecíveis"
-                  hint="Ativa regras específicas para produtos perecíveis."
+                  hint="Destaca a classificação de perecível ao cadastrar produtos."
                   value={handlesPerishables} onChange={setHandlesPerishables} />
                 <ToggleRow icon={MapPin} label="Usar endereçamento"
                   hint="Habilita cadastro e uso de endereços de armazenagem."
