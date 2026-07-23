@@ -217,6 +217,20 @@ function Importer({
     setResult(res);
     setImporting(false);
     toast({ title: "Importação concluída", description: `${res.created} criados • ${res.updated} atualizados • ${res.skipped} ignorados • ${res.failed} falhas` });
+
+    // Log CSV import in activity_log (evidence for activation checklist)
+    if (companyId && (res.created > 0 || res.updated > 0)) {
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        await (supabase as any).from("activity_log").insert({
+          user_id: userData?.user?.id ?? null,
+          company_id: companyId,
+          action: "csv_import_completed",
+          entity_type: entity,
+          details: { created: res.created, updated: res.updated, skipped: res.skipped, failed: res.failed },
+        });
+      } catch {}
+    }
   }
 
   return (
