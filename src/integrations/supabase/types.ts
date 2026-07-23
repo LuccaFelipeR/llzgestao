@@ -998,6 +998,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_company_admin_of: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_member_of: {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
