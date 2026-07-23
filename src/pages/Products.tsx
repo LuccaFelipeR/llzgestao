@@ -42,7 +42,7 @@ const CLASSIFICATIONS = [
   { v: "other", l: "Outro" },
 ];
 
-const emptyForm = {
+const baseEmptyForm = {
   sku: "", description: "", unit: "UN", barcode: "", min_stock: "0", price: "0",
   product_type: "other", classification: "" as string,
   controls_batch: false, controls_expiration: false, is_perishable: false,
@@ -52,13 +52,22 @@ const emptyForm = {
 };
 
 export default function Products() {
-  const { companyId, loading: companyLoading } = useCompany();
+  const { companyId, company, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+
+  // Company operational settings act as UX defaults for NEW products.
+  // Existing products always keep their own values (never overwritten silently).
+  const companyDefaults = {
+    controls_batch: !!company?.controls_batch,
+    controls_expiration: !!company?.controls_expiration || !!company?.handles_perishables,
+    is_perishable: false, // never default a product to perishable — user opts in
+  };
+  const emptyForm = { ...baseEmptyForm, ...companyDefaults };
   const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
@@ -372,13 +381,16 @@ export default function Products() {
             {/* Regras de controle */}
             <section className="space-y-3 bg-secondary/40 rounded-xl p-4">
               <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider flex items-center gap-2">
-                <AlertTriangle size={14} className="text-warning" /> Regras de controle
+                <AlertTriangle size={14} className="text-warning" /> Regras de controle deste produto
               </h3>
+              <p className="text-[11px] text-muted-foreground -mt-1">
+                As configurações da empresa sugerem o padrão. Cada produto pode ter a própria regra.
+              </p>
 
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm">Produto perecível</Label>
-                  <p className="text-xs text-muted-foreground">Forçará controle de validade no recebimento.</p>
+                  <p className="text-xs text-muted-foreground">Produto que pode exigir validade, temperatura ou armazenamento específico.</p>
                 </div>
                 <Switch checked={form.is_perishable} onCheckedChange={setPerishable} />
               </div>
@@ -386,7 +398,7 @@ export default function Products() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm">Controla lote/batch</Label>
-                  <p className="text-xs text-muted-foreground">Recebimento exigirá código de lote.</p>
+                  <p className="text-xs text-muted-foreground">Permite identificar e rastrear grupos específicos deste produto. Se ativo, recebimento exigirá código de lote.</p>
                 </div>
                 <Switch checked={form.controls_batch} onCheckedChange={(v) => setForm({ ...form, controls_batch: v })} />
               </div>
@@ -394,7 +406,7 @@ export default function Products() {
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-sm">Controla validade</Label>
-                  <p className="text-xs text-muted-foreground">Recebimento exigirá data de validade.</p>
+                  <p className="text-xs text-muted-foreground">Exige a data de validade nas entradas deste produto.</p>
                 </div>
                 <Switch checked={form.controls_expiration || form.is_perishable} disabled={form.is_perishable} onCheckedChange={(v) => setForm({ ...form, controls_expiration: v })} />
               </div>

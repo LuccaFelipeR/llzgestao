@@ -163,20 +163,25 @@ export default function CompanyOnboarding() {
   async function handleFinish() {
     const ok = await persist({}, { finish: true });
     if (ok) {
-      toast({ title: "Empresa configurada! 🎉" });
-      if (plansCsv) navigate("/onboarding");
-      else navigate("/");
+      if (plansCsv) {
+        toast({ title: "Empresa configurada! 🎉", description: "Agora importe seu primeiro CSV." });
+        navigate("/onboarding");
+      } else {
+        toast({ title: "Empresa configurada! 🎉", description: "Cadastre seu primeiro produto." });
+        navigate("/produtos");
+      }
     }
   }
 
   async function handleSkip() {
     if (!companyId) return;
+    // Skipped is distinct from completed — do NOT set onboarding_completed_at.
     await (supabase as any).from("companies").update({
       onboarding_status: "skipped",
-      onboarding_completed: true,
-      onboarding_completed_at: new Date().toISOString(),
+      onboarding_completed: true, // allow the user to leave the gate; status distinguishes intent
     }).eq("id", companyId);
     await refetch();
+    toast({ title: "Onboarding adiado", description: "Você pode retomar em Configurações." });
     navigate("/");
   }
 
@@ -289,14 +294,17 @@ export default function CompanyOnboarding() {
 
             {step === 4 && (
               <div className="max-w-lg mx-auto space-y-2">
+                <p className="text-xs text-muted-foreground text-center mb-2">
+                  Essas opções orientam a interface. <strong>Cada produto ainda pode ter a própria regra</strong> de lote, validade ou perecibilidade — nada aqui apaga configurações existentes.
+                </p>
                 <ToggleRow icon={Tag} label="Controlar lote"
-                  hint="Destaca lote em cadastros, recebimentos e movimentações."
+                  hint="Padrão de novos produtos e destaque em recebimentos."
                   value={controlsBatch} onChange={setControlsBatch} />
                 <ToggleRow icon={CalendarClock} label="Controlar validade"
-                  hint="Exibe alertas de vencimento e campos de validade."
+                  hint="Alertas de vencimento e campo de validade sugerido nos novos produtos."
                   value={controlsExpiration} onChange={setControlsExpiration} />
                 <ToggleRow icon={Package} label="Trabalha com perecíveis"
-                  hint="Ativa regras específicas para produtos perecíveis."
+                  hint="Destaca a classificação de perecível ao cadastrar produtos."
                   value={handlesPerishables} onChange={setHandlesPerishables} />
                 <ToggleRow icon={MapPin} label="Usar endereçamento"
                   hint="Habilita cadastro e uso de endereços de armazenagem."
