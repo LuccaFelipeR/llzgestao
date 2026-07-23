@@ -15,6 +15,10 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - **Nunca apagar** dados nem fazer hard delete de registros com
   histórico. A regra vale para empresas, usuários, produtos, endereços,
   lotes e movimentações.
+- **Configuração da empresa = padrão de UX. Produto = fonte da verdade.**
+  Alterar configurações da empresa nunca deve reescrever produtos
+  existentes; recebimento, expedição e alertas sempre olham para o
+  produto.
 - **Nunca** implementar pagamentos, WhatsApp real ou envios simulados
   de e-mail que enganem o usuário.
 - Toda alteração relevante deve gerar entrada em `system_changelog`
