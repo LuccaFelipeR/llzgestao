@@ -239,16 +239,27 @@ export default function GuidedReceiving() {
                   <div>
                     <Label className="text-xs font-semibold">Código do Lote {requiresLot && "*"}</Label>
                     <Input value={lotCode} onChange={e => setLotCode(e.target.value)} placeholder={requiresLot ? "Obrigatório" : "Opcional — gerado automaticamente se vazio"} className="mt-1" />
+                    {!requiresLot && (
+                      <p className="text-[11px] text-muted-foreground mt-1">Este produto não exige lote. Deixe em branco para gerar automaticamente.</p>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs font-semibold">Fabricação</Label>
                       <Input type="date" value={manufacturingDate} onChange={e => setManufacturingDate(e.target.value)} className="mt-1" />
                     </div>
-                    <div>
-                      <Label className="text-xs font-semibold">Validade {requiresExpiration && "*"}</Label>
-                      <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" />
-                    </div>
+                    {requiresExpiration ? (
+                      <div>
+                        <Label className="text-xs font-semibold">Validade *</Label>
+                        <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" />
+                      </div>
+                    ) : (
+                      <div>
+                        <Label className="text-xs font-semibold text-muted-foreground">Validade</Label>
+                        <Input type="date" value={expiresAt} onChange={e => setExpiresAt(e.target.value)} className="mt-1" placeholder="Opcional" />
+                        <p className="text-[11px] text-muted-foreground mt-1">Este produto não exige validade — ajustável no cadastro.</p>
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
