@@ -99,7 +99,7 @@ export default function ActivationChecklist() {
           ? [{
               key: "import",
               label: "Importação CSV concluída",
-              done: (products.count ?? 0) >= 5 || (addresses.count ?? 0) >= 5,
+              done: (csvImports.count ?? 0) > 0,
               href: "/onboarding",
               cta: "Importar",
             } as Item]
@@ -107,7 +107,7 @@ export default function ActivationChecklist() {
         {
           key: "support",
           label: "Central de suporte conhecida",
-          done: false,
+          done: (supportTickets.count ?? 0) > 0,
           href: "/suporte",
           cta: "Abrir",
         },
