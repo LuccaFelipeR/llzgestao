@@ -42,7 +42,7 @@ const CLASSIFICATIONS = [
   { v: "other", l: "Outro" },
 ];
 
-const emptyForm = {
+const baseEmptyForm = {
   sku: "", description: "", unit: "UN", barcode: "", min_stock: "0", price: "0",
   product_type: "other", classification: "" as string,
   controls_batch: false, controls_expiration: false, is_perishable: false,
@@ -52,13 +52,22 @@ const emptyForm = {
 };
 
 export default function Products() {
-  const { companyId, loading: companyLoading } = useCompany();
+  const { companyId, company, loading: companyLoading } = useCompany();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editing, setEditing] = useState<Product | null>(null);
   const [deleting, setDeleting] = useState<Product | null>(null);
+
+  // Company operational settings act as UX defaults for NEW products.
+  // Existing products always keep their own values (never overwritten silently).
+  const companyDefaults = {
+    controls_batch: !!company?.controls_batch,
+    controls_expiration: !!company?.controls_expiration || !!company?.handles_perishables,
+    is_perishable: false, // never default a product to perishable — user opts in
+  };
+  const emptyForm = { ...baseEmptyForm, ...companyDefaults };
   const [form, setForm] = useState(emptyForm);
 
   const { data: products, isLoading } = useQuery({
