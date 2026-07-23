@@ -91,7 +91,7 @@ export default function GuidedReceiving() {
         // Reuse existing lot if same code already exists for this product/company
         const lotCodeFinal = lotCode.trim() || `AUTO-${Date.now()}`;
         const { data: existingLot } = await supabase.from("lots")
-          .select("id").eq("product_id", productId).ilike("lot_code", lotCodeFinal).maybeSingle();
+          .select("id").eq("company_id", companyId!).eq("product_id", productId).ilike("lot_code", lotCodeFinal).maybeSingle();
         if (existingLot) {
           finalLotId = existingLot.id;
         } else {
