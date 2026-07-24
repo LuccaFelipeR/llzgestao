@@ -1,6 +1,6 @@
 # Estado Atual — LLZ Gestão de Estoque
 
-_Atualizado em Fase 6.11._
+_Atualizado em Fase 6.13 (homologação final para piloto)._ Ver `HOMOLOGACAO_6_13.md`.
 
 ## Módulos entregues
 
