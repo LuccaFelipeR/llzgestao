@@ -60,3 +60,8 @@ membro ativo. Faça em ordem.
 1. Como usuário comum, abra ticket. Esperado: cria em `pending`.
 2. Como super admin, mude prioridade/atribuição/status. Esperado: auditado.
 3. Como usuário comum, tente mudar prioridade. Esperado: erro tratado.
+
+## 8. Homologação 6.13 (roteiro multiempresa completo)
+Ver `docs/HOMOLOGACAO_6_13.md` seção 3 (cenário A/B/super admin) e seção 4
+(tabelas ISO/STK/LOT/ONB/SUP/ADM). Execute com contas fictícias `pilotoA-*` e
+`pilotoB-*` e preencha os campos NOT_EXECUTED com PASS/FAIL reais.
