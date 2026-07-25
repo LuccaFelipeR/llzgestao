@@ -15,6 +15,7 @@ import {
   SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
 import ThemeToggle from "@/components/ThemeToggle";
+import MaintenanceBanner from "@/components/MaintenanceBanner";
 import ConversationalSearch from "@/components/ConversationalSearch";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,8 +99,8 @@ function AppSidebarInner({ groups }: { groups: NavGroup[] }) {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAdmin, signOut } = useAuth();
-  const { availableCompanies, switchCompany, isSuperAdmin, currentCompanyId, company } = useCompany();
+  const { user, isAdmin, isPlatformStaff, isPlatformSuperAdmin, signOut } = useAuth();
+  const { availableCompanies, switchCompany, currentCompanyId, company } = useCompany();
 
   const { data: tabPermissions } = useQuery({
     queryKey: ["my-tab-permissions", user?.id],
@@ -158,6 +159,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { to: "/admin/audit-logs", key: "audit-logs", icon: Activity, label: "Auditoria" },
         { to: "/admin/changelog", key: "changelog", icon: FileClock, label: "Changelog" },
         { to: "/docs", key: "docs", icon: FileText, label: "Documentação" },
+        ...(isPlatformSuperAdmin
+          ? [{ to: "/admin/reset", key: "reset", icon: ShieldAlert, label: "Reset de ambiente" }]
+          : []),
       ],
     } as NavGroup] : []),
   ];
@@ -181,16 +185,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="ml-auto flex items-center gap-2">
-                {(isSuperAdmin || availableCompanies.length > 1) && currentCompanyId && (
-                  <Select value={currentCompanyId} onValueChange={(v) => switchCompany(v)}>
+                {(isPlatformStaff || availableCompanies.length > 1) && (
+                  <Select value={currentCompanyId ?? ""} onValueChange={(v) => switchCompany(v)}>
                     <SelectTrigger className="h-8 w-[160px] text-xs">
                       <Building2 size={14} className="text-primary mr-1" />
-                      <SelectValue />
+                      <SelectValue placeholder="Selecionar empresa" />
                     </SelectTrigger>
                     <SelectContent>
                       {availableCompanies.map((c) => (
                         <SelectItem key={c.id} value={c.id} className="text-xs">
-                          {c.name}{c.role === "super_admin" ? " ★" : ""}
+                          {c.name}{c.role === "platform_staff" ? " ★" : ""}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -203,6 +207,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </header>
+
+          <MaintenanceBanner />
 
           <main className="flex-1 w-full px-3 sm:px-6 lg:px-10 py-4">
             {children}

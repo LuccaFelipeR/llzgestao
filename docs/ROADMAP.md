@@ -26,3 +26,12 @@
 - ERP financeiro completo (contas a pagar/receber, DRE).
 - Marketplace / e-commerce embutido.
 - BI customizável pelo cliente.
+
+## Fase 6.14 — Administração global da plataforma
+
+- Papéis globais (`super_admin`, `platform_admin`, `support_agent`, `developer`) em `user_roles`; papéis de empresa seguem em `company_members`. Ver `docs/PLATFORM_ROLES.md`.
+- Equipe LLZ entra sem empresa: painel global em `/admin/global`; telas operacionais exigem seleção explícita de empresa (`RequireCompany`).
+- Modo de manutenção com banner e auditoria (`maintenance_mode_entered/exited`).
+- Aprovação por EMPRESA: `approval_status` + `approve_company` / `reject_company` (motivo obrigatório, nada é apagado).
+- Suporte global para `support_agent`/`platform_admin`; cliente segue restrito à própria empresa e sem notas internas.
+- Reset de ambiente: preview + execução via Edge Function `admin-reset` (só `super_admin`). Ver `docs/RESET_AMBIENTE.md`. **Não executado nesta fase.**

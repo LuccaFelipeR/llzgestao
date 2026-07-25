@@ -13,6 +13,8 @@ interface Company {
   onboarding_completed: boolean;
   status?: string;
   main_focal_user_id?: string | null;
+  approval_status?: string;
+  approval_reason?: string | null;
   // Phase 6.10 - operational configuration
   controls_batch?: boolean;
   controls_expiration?: boolean;
@@ -53,6 +55,10 @@ interface CompanyContextType {
   isFocalPoint: boolean;
   availableCompanies: AvailableCompany[];
   switchCompany: (companyId: string) => Promise<void>;
+  // Phase 6.14 — modo de manutenção da equipe LLZ
+  isMaintenanceMode: boolean;
+  exitMaintenanceMode: () => Promise<void>;
+  isMemberOfCurrent: boolean;
 }
 
 const CompanyContext = createContext<CompanyContextType>({
@@ -68,22 +74,47 @@ const CompanyContext = createContext<CompanyContextType>({
   isFocalPoint: false,
   availableCompanies: [],
   switchCompany: async () => {},
+  isMaintenanceMode: false,
+  exitMaintenanceMode: async () => {},
+  isMemberOfCurrent: false,
 });
 
 const STORAGE_KEY = "llz:selected_company_id";
+const MAINT_KEY = "llz:maintenance_company_id";
 
 export function CompanyProvider({ children }: { children: ReactNode }) {
-  const { user, isAdmin: isSuperAdmin } = useAuth();
+  const { user, isPlatformStaff, isPlatformSuperAdmin } = useAuth();
+  const isSuperAdmin = isPlatformSuperAdmin;
   const [company, setCompany] = useState<Company | null>(null);
   const [availableCompanies, setAvailableCompanies] = useState<AvailableCompany[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [memberCompanyIds, setMemberCompanyIds] = useState<string[]>([]);
+  const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  async function logActivity(action: string, companyId: string, details: any) {
+    if (!user) return;
+    try {
+      await (supabase as any).from("activity_log").insert({
+        user_id: user.id,
+        action,
+        entity_type: "company",
+        entity_id: companyId,
+        details,
+        company_id: companyId,
+      });
+    } catch {
+      /* auditoria nunca deve travar a navegação */
+    }
+  }
 
   const fetchCompany = useCallback(async () => {
     if (!user) {
       setCompany(null);
       setAvailableCompanies([]);
       setCurrentUserRole(null);
+      setMemberCompanyIds([]);
+      setIsMaintenanceMode(false);
       setLoading(false);
       return;
     }
@@ -104,8 +135,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
           is_main_focal_point: m.is_main_focal_point,
         }));
 
-      // Super admin: can see all companies as available
-      if (isSuperAdmin) {
+      const memberIds = available.map((a) => a.id);
+      setMemberCompanyIds(memberIds);
+
+      // Equipe LLZ: pode listar todas as empresas para manutenção
+      if (isPlatformStaff) {
         const { data: allCompanies } = await (supabase as any)
           .from("companies")
           .select("id, name")
@@ -113,18 +147,33 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         const existingIds = new Set(available.map((a) => a.id));
         (allCompanies ?? []).forEach((c: any) => {
           if (!existingIds.has(c.id)) {
-            available.push({ id: c.id, name: c.name, role: "super_admin" });
+            available.push({ id: c.id, name: c.name, role: "platform_staff" });
           }
         });
       }
       setAvailableCompanies(available);
 
-      // Pick selected
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const pickId =
-        (stored && available.find((a) => a.id === stored)?.id) ??
-        available[0]?.id ??
-        null;
+      // Seleção da empresa atual.
+      // Equipe LLZ: NUNCA seleciona automaticamente — só via modo de manutenção
+      // explícito (ou empresa própria, quando existir membership).
+      let pickId: string | null = null;
+      let maintenance = false;
+
+      if (isPlatformStaff) {
+        const maint = sessionStorage.getItem(MAINT_KEY);
+        if (maint && available.some((a) => a.id === maint)) {
+          pickId = maint;
+          maintenance = !memberIds.includes(maint);
+        }
+      } else {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        pickId =
+          (stored && available.find((a) => a.id === stored)?.id) ??
+          available[0]?.id ??
+          null;
+      }
+
+      setIsMaintenanceMode(maintenance);
 
       if (pickId) {
         const { data: companyData } = await (supabase as any)
@@ -143,7 +192,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       console.error("CompanyContext fetch error", e);
     }
     setLoading(false);
-  }, [user?.id, isSuperAdmin]);
+  }, [user?.id, isPlatformStaff]);
 
   useEffect(() => {
     fetchCompany();
@@ -153,19 +202,42 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     async (companyId: string) => {
       const target = availableCompanies.find((a) => a.id === companyId);
       if (!target) return;
-      // Only super admin can freely switch; regular users can switch among
-      // companies they're members of.
-      localStorage.setItem(STORAGE_KEY, companyId);
+
       const { data: companyData } = await (supabase as any)
         .from("companies")
         .select("*")
         .eq("id", companyId)
         .single();
+
+      const maintenance = isPlatformStaff && !memberCompanyIds.includes(companyId);
+      if (maintenance) {
+        sessionStorage.setItem(MAINT_KEY, companyId);
+        setIsMaintenanceMode(true);
+        await logActivity("maintenance_mode_entered", companyId, {
+          company_name: (companyData as any)?.name ?? null,
+        });
+      } else {
+        if (isPlatformStaff) sessionStorage.setItem(MAINT_KEY, companyId);
+        localStorage.setItem(STORAGE_KEY, companyId);
+        setIsMaintenanceMode(false);
+      }
+
       setCompany(companyData as Company | null);
       setCurrentUserRole(target.role);
     },
-    [availableCompanies],
+    [availableCompanies, isPlatformStaff, memberCompanyIds, user?.id],
   );
+
+  const exitMaintenanceMode = useCallback(async () => {
+    const leaving = company;
+    sessionStorage.removeItem(MAINT_KEY);
+    setIsMaintenanceMode(false);
+    setCompany(null);
+    setCurrentUserRole(null);
+    if (leaving) {
+      await logActivity("maintenance_mode_exited", leaving.id, { company_name: leaving.name });
+    }
+  }, [company?.id, user?.id]);
 
   const currentCompanyId = company?.id ?? null;
   const isFocalPoint =
@@ -190,6 +262,9 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
         isFocalPoint,
         availableCompanies,
         switchCompany,
+        isMaintenanceMode,
+        exitMaintenanceMode,
+        isMemberOfCurrent: !!currentCompanyId && memberCompanyIds.includes(currentCompanyId),
       }}
     >
       {children}

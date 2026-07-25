@@ -17,6 +17,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [devCode, setDevCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -38,13 +39,13 @@ export default function Login() {
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: email.trim(), password,
-      options: { data: { full_name: fullName.trim(), invite_code: inviteCode.trim() || undefined }, emailRedirectTo: window.location.origin },
+      options: { data: { full_name: fullName.trim(), company_name: companyName.trim() || undefined, invite_code: inviteCode.trim() || undefined }, emailRedirectTo: window.location.origin },
     });
     setLoading(false);
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Conta criada! 🎉", description: "Aguarde aprovação do administrador para acessar." });
+      toast({ title: "Conta criada! 🎉", description: "Seu cadastro está em análise pela equipe LLZ." });
       setMode("login");
     }
   }
@@ -211,6 +212,11 @@ export default function Login() {
                   </div>
                 </div>
                 <div>
+                  <Label className="text-xs font-semibold">Nome da Empresa</Label>
+                  <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Razão social ou nome fantasia" className="mt-1 h-11 rounded-xl" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Usado na análise do cadastro pela equipe LLZ.</p>
+                </div>
+                <div>
                   <Label className="text-xs font-semibold">Código da Empresa (opcional)</Label>
                   <Input value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} placeholder="Ex: a1b2c3d4" autoComplete="off" className="mt-1 h-11 rounded-xl" maxLength={20} />
                   <p className="text-[10px] text-muted-foreground mt-1">Se tiver um código, você entrará na empresa existente. Caso contrário, uma nova será criada.</p>
@@ -218,7 +224,7 @@ export default function Login() {
                 <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm" disabled={loading}>
                   {loading ? "Cadastrando..." : "Cadastrar"}
                 </Button>
-                <p className="text-[10px] text-muted-foreground text-center">Após cadastro, aguarde aprovação do administrador.</p>
+                <p className="text-[10px] text-muted-foreground text-center">Após o cadastro, a equipe LLZ analisa e libera o acesso.</p>
                 <button type="button" onClick={() => setMode("login")} className="text-xs text-primary hover:underline w-full text-center font-medium">Já tenho conta</button>
               </motion.form>
             )}
