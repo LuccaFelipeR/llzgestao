@@ -118,6 +118,10 @@ export type Database = {
         Row: {
           activation_checklist_dismissed: boolean
           address: string | null
+          approval_reason: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           business_type: Database["public"]["Enums"]["business_type"]
           city: string | null
           controls_batch: boolean
@@ -161,6 +165,10 @@ export type Database = {
         Insert: {
           activation_checklist_dismissed?: boolean
           address?: string | null
+          approval_reason?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
           controls_batch?: boolean
@@ -204,6 +212,10 @@ export type Database = {
         Update: {
           activation_checklist_dismissed?: boolean
           address?: string | null
+          approval_reason?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
           controls_batch?: boolean
@@ -721,6 +733,7 @@ export type Database = {
           is_approved: boolean
           notify_daily_summary: boolean
           notify_min_stock: boolean
+          rejection_reason: string | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -732,6 +745,7 @@ export type Database = {
           is_approved?: boolean
           notify_daily_summary?: boolean
           notify_min_stock?: boolean
+          rejection_reason?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -743,6 +757,7 @@ export type Database = {
           is_approved?: boolean
           notify_daily_summary?: boolean
           notify_min_stock?: boolean
+          rejection_reason?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -990,6 +1005,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_company: { Args: { _company_id: string }; Returns: undefined }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1006,10 +1022,26 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
+      is_platform_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_platform_super_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_support_staff: { Args: { _user_id: string }; Returns: boolean }
+      platform_reset_execute: { Args: never; Returns: Json }
+      platform_reset_preview: { Args: never; Returns: Json }
+      reject_company: {
+        Args: { _company_id: string; _reason: string }
+        Returns: undefined
+      }
     }
     Enums: {
       address_type: "ARMAZENAGEM" | "TECNICO"
-      app_role: "operator" | "supervisor" | "admin"
+      app_role:
+        | "operator"
+        | "supervisor"
+        | "admin"
+        | "super_admin"
+        | "platform_admin"
+        | "support_agent"
+        | "developer"
       business_type:
         | "bakery"
         | "retail"
@@ -1188,7 +1220,15 @@ export const Constants = {
   public: {
     Enums: {
       address_type: ["ARMAZENAGEM", "TECNICO"],
-      app_role: ["operator", "supervisor", "admin"],
+      app_role: [
+        "operator",
+        "supervisor",
+        "admin",
+        "super_admin",
+        "platform_admin",
+        "support_agent",
+        "developer",
+      ],
       business_type: [
         "bakery",
         "retail",

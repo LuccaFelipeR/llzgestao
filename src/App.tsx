@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CompanyProvider, useCompany } from "@/contexts/CompanyContext";
 import AppLayout from "@/components/AppLayout";
+import RequireCompany from "@/components/RequireCompany";
 import Dashboard from "@/pages/Dashboard";
 import Products from "@/pages/Products";
 import Addresses from "@/pages/Addresses";
@@ -25,6 +26,7 @@ import Changelog from "@/pages/Changelog";
 import DataQuality from "@/pages/DataQuality";
 import AuditLogs from "@/pages/AuditLogs";
 import GlobalDashboard from "@/pages/GlobalDashboard";
+import PlatformReset from "@/pages/PlatformReset";
 import Notifications from "@/pages/Notifications";
 import Expedition from "@/pages/Expedition";
 import ExpeditionPicking from "@/pages/ExpeditionPicking";
@@ -34,8 +36,12 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
-function ProtectedRoute({ children, adminOnly = false }: { children: React.ReactNode; adminOnly?: boolean }) {
-  const { session, loading, isApproved, isAdmin } = useAuth();
+function ProtectedRoute({
+  children,
+  adminOnly = false,
+  superAdminOnly = false,
+}: { children: React.ReactNode; adminOnly?: boolean; superAdminOnly?: boolean }) {
+  const { session, loading, isApproved, isPlatformStaff, isPlatformSuperAdmin } = useAuth();
 
   if (loading) {
     return (
@@ -47,14 +53,15 @@ function ProtectedRoute({ children, adminOnly = false }: { children: React.React
 
   if (!session) return <Navigate to="/login" replace />;
   if (!isApproved) return <PendingApproval />;
-  if (adminOnly && !isAdmin) return <Navigate to="/" replace />;
+  if (superAdminOnly && !isPlatformSuperAdmin) return <Navigate to="/" replace />;
+  if (adminOnly && !isPlatformStaff) return <Navigate to="/" replace />;
 
   return <>{children}</>;
 }
 
 function CompanyGate({ children }: { children: React.ReactNode }) {
-  const { company, loading, currentCompanyId, isSuperAdmin } = useCompany();
-  const { isAdmin } = useAuth();
+  const { company, loading, currentCompanyId } = useCompany();
+  const { isPlatformStaff } = useAuth();
 
   if (loading) {
     return (
@@ -64,12 +71,14 @@ function CompanyGate({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Equipe LLZ (papel global): entra sem empresa, nunca vê onboarding de cliente.
+  if (isPlatformStaff) return <>{children}</>;
+
   if (company && !company.onboarding_completed) {
     return <CompanyOnboarding />;
   }
 
-  // Block when there's no company selected, unless super admin (who can still reach /admin)
-  if (!currentCompanyId && !isSuperAdmin && !isAdmin) {
+  if (!currentCompanyId) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-3">
@@ -83,6 +92,14 @@ function CompanyGate({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+/** Home: cliente vê o dashboard da empresa; equipe LLZ vai ao painel global. */
+function HomeRoute() {
+  const { isPlatformStaff } = useAuth();
+  const { currentCompanyId } = useCompany();
+  if (isPlatformStaff && !currentCompanyId) return <Navigate to="/admin/global" replace />;
+  return <RequireCompany><Dashboard /></RequireCompany>;
 }
 
 function AppRoutes() {
@@ -107,28 +124,32 @@ function AppRoutes() {
             <CompanyGate>
               <AppLayout>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/produtos" element={<Products />} />
-                  <Route path="/enderecos" element={<Addresses />} />
-                  <Route path="/movimentacoes" element={<Movements />} />
-                  <Route path="/estoque" element={<StockQuery />} />
-                  <Route path="/scanner" element={<Scanner />} />
-                  <Route path="/onboarding" element={<Onboarding />} />
-                  <Route path="/notificacoes" element={<Notifications />} />
-                  <Route path="/notificacoes/config" element={<NotificationSettings />} />
+                  <Route path="/" element={<HomeRoute />} />
+                  {/* Telas operacionais — exigem empresa selecionada */}
+                  <Route path="/produtos" element={<RequireCompany><Products /></RequireCompany>} />
+                  <Route path="/enderecos" element={<RequireCompany><Addresses /></RequireCompany>} />
+                  <Route path="/movimentacoes" element={<RequireCompany><Movements /></RequireCompany>} />
+                  <Route path="/estoque" element={<RequireCompany><StockQuery /></RequireCompany>} />
+                  <Route path="/scanner" element={<RequireCompany><Scanner /></RequireCompany>} />
+                  <Route path="/onboarding" element={<RequireCompany><Onboarding /></RequireCompany>} />
+                  <Route path="/recebimento" element={<RequireCompany><GuidedReceiving /></RequireCompany>} />
+                  <Route path="/expedicao" element={<RequireCompany><Expedition /></RequireCompany>} />
+                  <Route path="/expedicao/:id" element={<RequireCompany><ExpeditionPicking /></RequireCompany>} />
+                  <Route path="/configuracoes" element={<RequireCompany><CompanySettings /></RequireCompany>} />
+                  <Route path="/notificacoes" element={<RequireCompany><Notifications /></RequireCompany>} />
+                  <Route path="/notificacoes/config" element={<RequireCompany><NotificationSettings /></RequireCompany>} />
                   <Route path="/ai-insights" element={<AIInsights />} />
-                  <Route path="/recebimento" element={<GuidedReceiving />} />
-                  <Route path="/expedicao" element={<Expedition />} />
-                  <Route path="/expedicao/:id" element={<ExpeditionPicking />} />
+                  {/* Suporte: global para equipe LLZ, por empresa para clientes */}
                   <Route path="/suporte" element={<Support />} />
-                  <Route path="/configuracoes" element={<CompanySettings />} />
                   <Route path="/company-onboarding" element={<CompanyOnboarding />} />
+                  {/* Telas globais da plataforma */}
                   <Route path="/docs" element={<ProtectedRoute adminOnly><Documentation /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
                   <Route path="/admin/global" element={<ProtectedRoute adminOnly><GlobalDashboard /></ProtectedRoute>} />
                   <Route path="/admin/changelog" element={<ProtectedRoute adminOnly><Changelog /></ProtectedRoute>} />
                   <Route path="/admin/data-quality" element={<ProtectedRoute adminOnly><DataQuality /></ProtectedRoute>} />
                   <Route path="/admin/audit-logs" element={<ProtectedRoute adminOnly><AuditLogs /></ProtectedRoute>} />
+                  <Route path="/admin/reset" element={<ProtectedRoute superAdminOnly><PlatformReset /></ProtectedRoute>} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppLayout>
