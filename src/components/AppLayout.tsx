@@ -117,7 +117,29 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return !blocked;
   };
 
-  const rawGroups: NavGroup[] = [
+  // Equipe LLZ sem empresa selecionada: só módulos globais (o Admin Dev
+  // não possui estoque próprio).
+  const globalOnly = isPlatformStaff && !currentCompanyId;
+
+  const adminGroup: NavGroup = {
+    key: "admin", label: "Administração", icon: ShieldCheck,
+    items: [
+      { to: "/admin/global", key: "global", icon: Crown, label: "Painel Global" },
+      { to: "/admin", key: "admin", icon: Shield, label: "Empresas e Usuários" },
+      { to: "/suporte", key: "suporte", icon: LifeBuoy, label: "Suporte Global" },
+      { to: "/admin/data-quality", key: "data-quality", icon: ShieldAlert, label: "Data Quality" },
+      { to: "/admin/audit-logs", key: "audit-logs", icon: Activity, label: "Auditoria" },
+      { to: "/admin/changelog", key: "changelog", icon: FileClock, label: "Changelog" },
+      { to: "/docs", key: "docs", icon: FileText, label: "Documentação" },
+      ...(isPlatformSuperAdmin
+        ? [{ to: "/admin/reset", key: "reset", icon: ShieldAlert, label: "Reset de ambiente" }]
+        : []),
+    ],
+  };
+
+  const rawGroups: NavGroup[] = globalOnly
+    ? [adminGroup]
+    : [
     {
       key: "inteligencia", label: "Inteligência", icon: BrainCircuit,
       items: [
@@ -150,20 +172,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         { to: "/configuracoes", key: "configuracoes", icon: Settings, label: "Configurações" },
       ],
     },
-    ...(isAdmin ? [{
-      key: "admin", label: "Administração", icon: ShieldCheck,
-      items: [
-        { to: "/admin/global", key: "global", icon: Crown, label: "Painel Global" },
-        { to: "/admin", key: "admin", icon: Shield, label: "Admin" },
-        { to: "/admin/data-quality", key: "data-quality", icon: ShieldAlert, label: "Data Quality" },
-        { to: "/admin/audit-logs", key: "audit-logs", icon: Activity, label: "Auditoria" },
-        { to: "/admin/changelog", key: "changelog", icon: FileClock, label: "Changelog" },
-        { to: "/docs", key: "docs", icon: FileText, label: "Documentação" },
-        ...(isPlatformSuperAdmin
-          ? [{ to: "/admin/reset", key: "reset", icon: ShieldAlert, label: "Reset de ambiente" }]
-          : []),
-      ],
-    } as NavGroup] : []),
+    ...(isAdmin ? [adminGroup] : []),
   ];
 
   const groups = rawGroups
