@@ -133,3 +133,11 @@ Proprietário — LLZ.
 - Aprovação por EMPRESA: `approval_status` + `approve_company` / `reject_company` (motivo obrigatório, nada é apagado).
 - Suporte global para `support_agent`/`platform_admin`; cliente segue restrito à própria empresa e sem notas internas.
 - Reset de ambiente: preview + execução via Edge Function `admin-reset` (só `super_admin`). Ver `docs/RESET_AMBIENTE.md`. **Não executado nesta fase.**
+
+## Estado real (Fase 6.15A)
+
+A classificação oficial dos módulos vive em `docs/CURRENT_STATE.md`, separada em
+CONFIRMED_IMPLEMENTED, IMPLEMENTED_BUT_NOT_E2E_VALIDATED, NOT_IMPLEMENTED e
+KNOWN_RISKS. A homologação com usuários reais segue o roteiro
+`docs/HOMOLOGACAO_USUARIO_REAL.md`. O sistema **não** está classificado como
+pronto para produção.
