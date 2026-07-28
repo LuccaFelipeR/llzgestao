@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw, Crown } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 import { friendlyError } from "@/lib/error-messages";
 
