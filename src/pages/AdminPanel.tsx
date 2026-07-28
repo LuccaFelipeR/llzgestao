@@ -36,7 +36,7 @@ const ALL_TABS = [
 export default function AdminPanel() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "activity" | "audit" | "system" | "companies">("users");
+  const [tab, setTab] = useState<"users" | "platform" | "activity" | "audit" | "system" | "companies">("users");
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
   const [editCompany, setEditCompany] = useState<any>(null);
@@ -380,6 +380,11 @@ export default function AdminPanel() {
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
+  const PLATFORM_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
+  const platformStaff = (profiles ?? []).filter((p: any) =>
+    (allRoles ?? []).some((r) => r.user_id === p.id && PLATFORM_ROLE_KEYS.includes(r.role)),
+  );
+
   function getUserRole(userId: string) {
     return allRoles?.find((r) => r.user_id === userId)?.role ?? null;
   }
@@ -409,6 +414,7 @@ export default function AdminPanel() {
       <div className="flex gap-1 mb-6 bg-secondary rounded-xl p-1 overflow-x-auto">
         {[
           { key: "users" as const, label: "Usuários", icon: Users },
+          { key: "platform" as const, label: "Equipe LLZ", icon: Crown },
           { key: "activity" as const, label: "Atividade", icon: Activity },
           { key: "audit" as const, label: "Auditoria", icon: ClipboardCheck },
           { key: "companies" as const, label: "Empresas", icon: Building2 },
@@ -546,6 +552,38 @@ export default function AdminPanel() {
                 {a.details?.qty && (
                   <p className="text-xs text-muted-foreground mt-0.5">Quantidade: {a.details.qty}</p>
                 )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Equipe LLZ (papéis GLOBAIS da plataforma) */}
+      {tab === "platform" && (
+        <div className="space-y-3">
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h3 className="font-semibold text-sm flex items-center gap-2"><Crown size={16} className="text-primary" /> Equipe LLZ — acessos da plataforma</h3>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Somente usuários com papel GLOBAL (<code>user_roles</code>). Papéis de empresa
+              (owner, admin, supervisor, operador, ponto focal) ficam em “Usuários” e em cada empresa —
+              nunca são papéis globais.
+            </p>
+          </div>
+          {platformStaff.length === 0 && (
+            <p className="text-xs text-muted-foreground">Nenhum usuário com papel global cadastrado.</p>
+          )}
+          {platformStaff.map((p: any) => (
+            <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm truncate">{p.full_name || "Sem nome"}</p>
+                <p className="text-xs text-muted-foreground truncate">{p.email}</p>
+              </div>
+              <div className="flex gap-1 flex-wrap">
+                {(allRoles ?? []).filter((r) => r.user_id === p.id).map((r) => (
+                  <Badge key={r.id} variant="secondary" className="text-[10px]">
+                    {PLATFORM_ROLE_LABEL[r.role] ?? r.role}
+                  </Badge>
+                ))}
               </div>
             </div>
           ))}
