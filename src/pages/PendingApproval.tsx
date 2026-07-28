@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { friendlyError } from "@/lib/error-messages";
-import { Clock, LogOut, LifeBuoy, XCircle } from "lucide-react";
+import { Clock, LogOut, LifeBuoy, XCircle, MailCheck } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function PendingApproval() {
