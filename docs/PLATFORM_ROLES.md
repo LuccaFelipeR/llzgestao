@@ -87,3 +87,36 @@ Regra única: **a aprovação é da EMPRESA**; o usuário é liberado junto com 
 - Enquanto pendente, o cliente vê "Cadastro em análise", pode corrigir dados
   básicos e falar com o suporte; operações de estoque e convites ficam bloqueados.
 - Quem entra por `invite_code` de empresa já aprovada é liberado automaticamente.
+
+## Fase 6.15A — validação dos dois modelos
+
+Verificado no código, sem alteração de papéis ou contas:
+
+| Verificação | Resultado |
+|---|---|
+| Usuário global não precisa de empresa | OK (`CompanyGate` libera `isPlatformStaff`) |
+| Usuário global acessa o painel global sem `currentCompanyId` | OK (`/admin/global` sem `RequireCompany`) |
+| Usuário global só opera após selecionar empresa | OK (`RequireCompany` nas telas operacionais) |
+| Usuário empresarial não acessa administração global | OK (`ProtectedRoute adminOnly` → `isPlatformStaff`) |
+| Admin da empresa ≠ super admin | OK (modelos separados; `isPlatformSuperAdmin` só de `user_roles`) |
+| Supervisor não é papel global | OK (só existe em `company_members`) |
+| Operador não é papel global | OK (só existe em `company_members`) |
+
+Inconsistências identificadas (documentadas, **não** corrigidas por migração):
+
+1. `AuthContext.isAdmin` é hoje um alias de `isPlatformStaff`. Funciona, mas o
+   nome sugere "admin da empresa" e pode confundir manutenção futura.
+2. O papel `admin` do enum `app_role` é ambíguo: em `user_roles` significa super
+   admin legado; em `company_members` significa administrador da empresa.
+3. A tela `/admin` ainda se chama "Painel do Desenvolvedor" e concentra usuários,
+   empresas e auditoria. A partir de 6.15A a aba **Equipe LLZ** mostra somente
+   papéis globais; a aba **Usuários** e a ficha de cada empresa mostram os
+   membros de empresa. Nenhum papel foi migrado.
+
+## Menu global (6.15A)
+
+Quando a equipe LLZ está sem empresa selecionada, a barra lateral exibe somente
+módulos globais: Painel Global, Empresas e Usuários, Suporte Global, Data
+Quality, Auditoria, Changelog, Documentação e, para `super_admin`, Reset de
+ambiente. Os módulos operacionais só aparecem após entrar no modo de manutenção
+de uma empresa — o Admin Dev nunca aparenta ter estoque próprio.

@@ -21,45 +21,81 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
   produto.
 - **Nunca** implementar pagamentos, WhatsApp real ou envios simulados
   de e-mail que enganem o usuário.
+- Implementado ≠ homologado. Só marcar como homologado após execução
+  humana registrada em `docs/HOMOLOGACAO_USUARIO_REAL.md`.
 - Toda alteração relevante deve gerar entrada em `system_changelog`
   (pública e/ou interna).
 
-## Baseline atual (2026-07)
+## Baseline atual (Fase 6.15A — 2026-07)
 
 ### CONFIRMED_IMPLEMENTED
-- Isolamento multi-tenant por `company_id`.
-- RLS baseada em `is_member_of` + super admin (`has_role(admin)`).
+- Isolamento multi-tenant por `company_id` com RLS baseada em
+  `is_member_of` + bypass controlado de super admin.
 - Filtros por `currentCompanyId` nas queries operacionais do frontend.
 - Unicidade por empresa (produtos, endereços, lotes).
-- Criador da empresa vira `owner` ativo e ponto focal principal.
-- `companies.main_focal_user_id` sincronizado via trigger.
-- Movimentações imutáveis (sem UPDATE/DELETE).
+- Criador da empresa vira `owner` ativo e ponto focal principal;
+  `companies.main_focal_user_id` sincronizado por trigger.
+- Movimentações imutáveis (UPDATE/DELETE bloqueados por RLS).
 - Estoque negativo bloqueado em UI e no banco.
 - `validate_movement_cross_company` e `block_writes_for_blocked_companies`.
-- `activity_log` básico + `system_changelog` público/interno.
-- **Fase 6.8:** exclusão física de empresa com histórico é bloqueada
-  (`prevent_delete_company_if_referenced`); transições de status
-  registradas em auditoria; tabelas `support_tickets` e
-  `support_ticket_messages` criadas com RLS.
+- Exclusão física bloqueada quando há histórico (empresas, produtos,
+  endereços, lotes).
+- `activity_log` alimentado por triggers + `system_changelog`
+  público/interno.
+- **Central de Suporte com UI completa** (`/suporte`): tickets, thread de
+  mensagens, notas internas, status/prioridade/responsável e auditoria.
+- **Onboarding da empresa multi-etapas** com salvamento parcial e efeitos
+  reais na UI (endereçamento, expedição, lote, validade, perecíveis).
+- **Checklist de ativação real**, baseado em contagens e `activity_log`.
+- **Configurações da Empresa** (`/configuracoes`) restritas a
+  owner/admin/ponto focal via `is_company_admin_of`.
+- **Administração global da plataforma** (Fase 6.14): papéis globais em
+  `user_roles`, painel global `/admin/global`, `RequireCompany` nas telas
+  operacionais.
+- **Modo de manutenção** com banner persistente e auditoria
+  (`maintenance_mode_entered` / `maintenance_mode_exited`).
+- **Aprovação por EMPRESA** (`approval_status`, `approve_company`,
+  `reject_company` com motivo obrigatório).
+- **Documentação do projeto** em `docs/` (estado, regras, papéis, testes,
+  reset, roadmap, homologação).
+- Menu global: equipe LLZ sem empresa selecionada vê apenas módulos
+  globais (6.15A).
+- Estados de e-mail e de aprovação tratados de forma independente na tela
+  do cliente, com reenvio de confirmação e reverificação (6.15A).
 
-### IMPLEMENTED_BUT_UNVERIFIED
-- AdminPanel completo (bloquear/desbloquear/inativar/restaurar,
-  troca de ponto focal, edição de empresa).
-- Fluxos CSV (produtos e endereços).
-- Ações de aprovação/bloqueio/troca de papel de usuário.
-- Troca de empresa (switcher) para membros de várias companies.
-- Visualização de atividades por perfil.
+### IMPLEMENTED_BUT_NOT_E2E_VALIDATED
+- AdminPanel completo (bloquear/desbloquear/inativar/restaurar, troca de
+  ponto focal, edição de empresa, gestão de membros).
+- Aba "Equipe LLZ" separando papéis globais dos papéis de empresa.
+- Fluxos CSV (produtos e endereços) com mapeamento e deduplicação.
+- Troca de empresa para membros de várias companies.
+- Expedição guiada com FEFO.
+- Aprovação/rejeição de empresa ponta a ponta com usuários reais.
+- Reset de ambiente: mecanismo entregue e validado apenas por **preview**.
+- Isolamento multiempresa validado por leitura de policies, **não** por
+  teste E2E com duas empresas reais.
 
-### NOT_IMPLEMENTED_OR_PENDING
-- **UI da Central de Suporte** (tabelas prontas, faltam páginas).
-- Franquias completas (arquitetura só planejada; ver
-  `docs/ROADMAP.md`).
-- Documentação `docs/` completa e atualizada.
-- Refinamento visual da página IA Insights.
-- Onboarding "inteligente" — perguntas ainda são coletadas, mas nem
-  todas produzem efeito real no comportamento.
-- Envio real de e-mail transacional.
+### NOT_IMPLEMENTED
+- Franquias (matriz → filial); apenas arquitetura planejada em
+  `docs/ROADMAP.md`.
 - Cobrança / planos com limites reais aplicados.
+- Notificações WhatsApp reais.
+- E-mail transacional próprio da aplicação.
+- Template de e-mail de autenticação personalizado (ver KNOWN_RISKS).
+
+### KNOWN_RISKS
+- Os e-mails de autenticação ainda usam os textos padrão em inglês
+  ("Confirm your signup" / "Verify Email") e o remetente padrão
+  `auth.lovable.cloud`. Não afirmar ao usuário que já existe remetente
+  personalizado.
+- O painel global ainda **não** mostra badge de confirmação de e-mail dos
+  clientes: `auth.users.email_confirmed_at` não é legível pelo cliente e
+  exigiria uma Edge Function com service role (não implementada).
+- `profiles` sem leitura cruzada entre membros comuns: nomes podem
+  aparecer vazios em logs para usuários não administradores.
+- Lint com ~252 erros preexistentes (`no-explicit-any`); dívida técnica
+  conhecida, sem plano de refatoração nesta fase.
+- Reset de ambiente **nunca executado**; exige checklist prévio.
 
 ## Convenções
 
@@ -75,6 +111,15 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - **Cores/tokens**: usar tokens semânticos em `index.css`. Não usar
   `text-white`, `bg-black`, `bg-[#hex]` em componentes.
 
+## Modelos de papéis (nunca misturar)
+
+- **Globais (equipe LLZ)** em `user_roles`: `super_admin`, `admin`
+  (legado), `platform_admin`, `support_agent`, `developer`.
+- **De empresa (cliente)** em `company_members`: `owner`, `admin`,
+  `supervisor`, `member`/operador e ponto focal (`is_main_focal_point`).
+- Admin da empresa **não** é super admin. Supervisor e operador **nunca**
+  são papéis globais. Ver `docs/PLATFORM_ROLES.md`.
+
 ## Checklist antes de finalizar uma fase
 
 1. `typecheck` passa.
@@ -85,12 +130,3 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
    aplicável).
 6. `AGENTS.md`, `README.md` e/ou `docs/` atualizados se o baseline
    mudou.
-
-## Fase 6.14 — Administração global da plataforma
-
-- Papéis globais (`super_admin`, `platform_admin`, `support_agent`, `developer`) em `user_roles`; papéis de empresa seguem em `company_members`. Ver `docs/PLATFORM_ROLES.md`.
-- Equipe LLZ entra sem empresa: painel global em `/admin/global`; telas operacionais exigem seleção explícita de empresa (`RequireCompany`).
-- Modo de manutenção com banner e auditoria (`maintenance_mode_entered/exited`).
-- Aprovação por EMPRESA: `approval_status` + `approve_company` / `reject_company` (motivo obrigatório, nada é apagado).
-- Suporte global para `support_agent`/`platform_admin`; cliente segue restrito à própria empresa e sem notas internas.
-- Reset de ambiente: preview + execução via Edge Function `admin-reset` (só `super_admin`). Ver `docs/RESET_AMBIENTE.md`. **Não executado nesta fase.**

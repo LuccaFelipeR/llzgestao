@@ -74,3 +74,9 @@ Ver `docs/HOMOLOGACAO_6_13.md` seção 3 (cenário A/B/super admin) e seção 4
 - Aprovação por EMPRESA: `approval_status` + `approve_company` / `reject_company` (motivo obrigatório, nada é apagado).
 - Suporte global para `support_agent`/`platform_admin`; cliente segue restrito à própria empresa e sem notas internas.
 - Reset de ambiente: preview + execução via Edge Function `admin-reset` (só `super_admin`). Ver `docs/RESET_AMBIENTE.md`. **Não executado nesta fase.**
+
+## Fase 6.15A
+
+O roteiro oficial de homologação com contas reais passou para
+`docs/HOMOLOGACAO_USUARIO_REAL.md` (etapas A a O, com campos de evidência e
+status). Nenhum teste pode ser marcado como PASS sem execução humana.

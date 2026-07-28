@@ -28,6 +28,15 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
+      const notConfirmed = /confirm/i.test(error.message);
+      if (notConfirmed) {
+        toast({
+          title: "E-mail ainda não confirmado",
+          description: `Enviamos um link de confirmação para ${email.trim()}. Confirme o e-mail e tente novamente. Use "Reenviar confirmação" se não recebeu.`,
+          variant: "destructive",
+        });
+        return;
+      }
       toast({ title: "Erro ao entrar", description: error.message === "Invalid login credentials" ? "Email ou senha incorretos." : error.message, variant: "destructive" });
     }
   }
@@ -45,7 +54,7 @@ export default function Login() {
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Conta criada! 🎉", description: "Seu cadastro está em análise pela equipe LLZ." });
+      toast({ title: "Conta criada! 🎉", description: "Confirme o e-mail enviado para " + email.trim() + ". Depois disso, sua empresa entra em análise pela equipe LLZ." });
       setMode("login");
     }
   }

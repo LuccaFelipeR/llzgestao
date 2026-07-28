@@ -82,3 +82,19 @@ Não há undo. Antes de executar:
 1. exporte os dados relevantes (Cloud → Advanced settings → Export data);
 2. confira o preview linha por linha;
 3. confirme a lista de usuários globais.
+
+## Fase 6.15A — reset NÃO executado
+
+O mecanismo permanece intacto e continua **não executado**. Antes de qualquer
+execução é obrigatório:
+
+1. Definir os integrantes da equipe LLZ.
+2. Definir os e-mails oficiais da equipe.
+3. Atribuir os papéis globais em `user_roles`.
+4. Confirmar quais contas são de teste (e remover papéis globais indevidos,
+   como o de `retailtech@gmail.com`).
+5. Gerar o preview (`platform_reset_preview`).
+6. Criar backup.
+7. Validar que o `super_admin` será preservado.
+
+Nenhum dado foi apagado nesta fase.

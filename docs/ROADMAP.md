@@ -35,3 +35,19 @@
 - Aprovação por EMPRESA: `approval_status` + `approve_company` / `reject_company` (motivo obrigatório, nada é apagado).
 - Suporte global para `support_agent`/`platform_admin`; cliente segue restrito à própria empresa e sem notas internas.
 - Reset de ambiente: preview + execução via Edge Function `admin-reset` (só `super_admin`). Ver `docs/RESET_AMBIENTE.md`. **Não executado nesta fase.**
+
+## Fase 6.15A — consolidação do estado real (concluída)
+
+- Documentação alinhada ao código (CONFIRMED_IMPLEMENTED /
+  IMPLEMENTED_BUT_NOT_E2E_VALIDATED / NOT_IMPLEMENTED / KNOWN_RISKS).
+- Menu global separado dos módulos operacionais.
+- Separação visual entre Equipe LLZ (papéis globais) e usuários de empresa.
+- Confirmação de e-mail tratada como estado independente da aprovação.
+- Roteiro E2E criado; reset não executado.
+
+## Próximas fases
+
+- 6.15B: execução humana do roteiro E2E e correção dos FAILs.
+- 6.16: template de e-mail de autenticação em pt-BR e identidade
+  "LLZ Gestão de Estoque".
+- 6.17: preparação e execução controlada do reset com backup.
