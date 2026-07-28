@@ -198,7 +198,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <Select value={currentCompanyId ?? ""} onValueChange={(v) => switchCompany(v)}>
                     <SelectTrigger className="h-8 w-[160px] text-xs">
                       <Building2 size={14} className="text-primary mr-1" />
-                      <SelectValue placeholder="Selecionar empresa" />
+                      <SelectValue placeholder={isPlatformStaff ? "Selecionar empresa para manutenção" : "Selecionar empresa"} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableCompanies.map((c) => (
