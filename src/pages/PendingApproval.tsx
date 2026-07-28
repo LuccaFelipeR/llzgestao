@@ -37,7 +37,7 @@ export default function PendingApproval() {
   });
 
   // Estados independentes: confirmação de e-mail (Supabase Auth) x aprovação da empresa (LLZ).
-  const emailConfirmed = !!(user as any)?.email_confirmed_at || !!(user as any)?.confirmed_at;
+  const emailConfirmed = !!user?.email_confirmed_at || !!user?.confirmed_at;
   const [resending, setResending] = useState(false);
 
   const rejected = membership?.approval_status === "rejected" || !!profile?.rejection_reason;
@@ -59,7 +59,7 @@ export default function PendingApproval() {
   async function recheckConfirmation() {
     const { data, error } = await supabase.auth.refreshSession();
     if (error) return toast.error(friendlyError(error));
-    if ((data.user as any)?.email_confirmed_at) {
+    if (data.user?.email_confirmed_at) {
       toast.success("E-mail confirmado!");
       window.location.reload();
     } else {

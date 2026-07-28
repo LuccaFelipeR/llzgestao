@@ -381,7 +381,7 @@ export default function AdminPanel() {
   });
 
   const PLATFORM_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
-  const platformStaff = (profiles ?? []).filter((p: any) =>
+  const platformStaff = (profiles ?? []).filter((p) =>
     (allRoles ?? []).some((r) => r.user_id === p.id && PLATFORM_ROLE_KEYS.includes(r.role)),
   );
 
@@ -572,7 +572,7 @@ export default function AdminPanel() {
           {platformStaff.length === 0 && (
             <p className="text-xs text-muted-foreground">Nenhum usuário com papel global cadastrado.</p>
           )}
-          {platformStaff.map((p: any) => (
+          {platformStaff.map((p) => (
             <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-2">
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-sm truncate">{p.full_name || "Sem nome"}</p>
