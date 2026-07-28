@@ -97,19 +97,35 @@ export default function PendingApproval() {
       <div className="w-full max-w-md">
         <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
           <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${rejected ? "bg-destructive/15" : "bg-warning/15"}`}>
-            {rejected ? <XCircle size={32} className="text-destructive" /> : <Clock size={32} className="text-warning" />}
+            {rejected ? <XCircle size={32} className="text-destructive" /> : !emailConfirmed ? <MailCheck size={32} className="text-warning" /> : <Clock size={32} className="text-warning" />}
           </div>
           <h2 className="text-xl font-bold text-foreground mb-2 text-center">
-            {rejected ? "Cadastro não aprovado" : "Cadastro em análise"}
+            {rejected ? "Cadastro não aprovado" : !emailConfirmed ? "Confirme seu e-mail" : "Cadastro em análise"}
           </h2>
           <p className="text-sm text-muted-foreground text-center mb-1">
             {rejected
               ? "Revise as informações abaixo e solicite nova análise ao suporte."
-              : "Sua conta foi criada e está aguardando a aprovação da equipe LLZ."}
+              : !emailConfirmed
+                ? "Enviamos um link de confirmação para o endereço abaixo. Confirme o e-mail para que a equipe LLZ possa analisar sua empresa."
+                : "Seu e-mail foi confirmado. Sua empresa está aguardando a aprovação da equipe LLZ."}
           </p>
+          {!emailConfirmed && (
+            <div className="mt-3 mb-4 rounded-xl border border-border bg-secondary/50 p-3 space-y-2">
+              <p className="text-xs font-semibold text-center break-all">{user?.email}</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 h-9 text-xs" onClick={resendConfirmation} disabled={resending}>
+                  {resending ? "Enviando..." : "Reenviar confirmação"}
+                </Button>
+                <Button variant="secondary" size="sm" className="flex-1 h-9 text-xs" onClick={recheckConfirmation}>
+                  Já confirmei, verificar
+                </Button>
+              </div>
+            </div>
+          )}
           {reason && (
             <p className="text-xs text-destructive text-center mt-2 mb-2">Motivo: {reason}</p>
           )}
+
           <p className="text-[11px] text-muted-foreground text-center mb-5">
             Enquanto estiver pendente, operações de estoque e convites ficam bloqueados.
           </p>
