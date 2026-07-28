@@ -189,3 +189,13 @@ Nenhum bug novo reproduzido nesta homologação. Correções aplicadas na fase 6
 **PRONTO PARA HOMOLOGAÇÃO MANUAL.**
 
 Build limpo, RLS revisada, isolamento consistente por análise de schema. Antes de mover para "piloto assistido", executar o roteiro E2E da seção 3 com duas contas reais de teste e registrar os PASS/FAIL correspondentes nesta mesma tabela.
+
+---
+
+## Atualização Fase 6.15A
+
+Este documento cobre a homologação técnica de 6.13 (typecheck, build, policies).
+A homologação funcional com usuários reais é feita em
+`docs/HOMOLOGACAO_USUARIO_REAL.md`. Itens marcados aqui como validados por
+inspeção de código continuam classificados como
+**IMPLEMENTED_BUT_NOT_E2E_VALIDATED**.
