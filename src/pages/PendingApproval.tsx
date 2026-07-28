@@ -36,8 +36,37 @@ export default function PendingApproval() {
     },
   });
 
+  // Estados independentes: confirmação de e-mail (Supabase Auth) x aprovação da empresa (LLZ).
+  const emailConfirmed = !!(user as any)?.email_confirmed_at || !!(user as any)?.confirmed_at;
+  const [resending, setResending] = useState(false);
+
   const rejected = membership?.approval_status === "rejected" || !!profile?.rejection_reason;
   const reason = membership?.approval_reason ?? profile?.rejection_reason ?? null;
+
+  async function resendConfirmation() {
+    if (!user?.email) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: user.email,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (error) toast.error(friendlyError(error));
+    else toast.success("E-mail de confirmação reenviado. Verifique a caixa de entrada e o spam.");
+  }
+
+  async function recheckConfirmation() {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error) return toast.error(friendlyError(error));
+    if ((data.user as any)?.email_confirmed_at) {
+      toast.success("E-mail confirmado!");
+      window.location.reload();
+    } else {
+      toast.error("Ainda não identificamos a confirmação deste e-mail.");
+    }
+  }
+
 
   async function saveBasics(e: React.FormEvent) {
     e.preventDefault();
