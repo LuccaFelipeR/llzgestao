@@ -111,10 +111,8 @@ Comportamento atual observado no código, **sem alteração nesta fase**:
 | E1 | Cadastro com código da empresa | Entra na empresa existente, papel `member`, sem virar owner | AWAITING_USER_EVIDENCE |
 | E2 | Cadastro com código inválido | Cria empresa nova pendente (comportamento atual) | AWAITING_USER_EVIDENCE |
 
-## F. Produto
+## G. Produto (fases operacionais seguintes)
 
-
-## D. Produto
 
 | Código | Ação | Esperado | Status |
 |---|---|---|---|
