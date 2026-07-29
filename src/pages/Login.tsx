@@ -264,6 +264,23 @@ export default function Login() {
                   </div>
                 </div>
                 <div>
+                  <Label className="text-xs font-semibold">Confirmar senha</Label>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Repita a senha"
+                    autoComplete="new-password"
+                    className="mt-1 h-11 rounded-xl"
+                  />
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-[10px] text-destructive mt-1">As senhas não coincidem.</p>
+                  )}
+                </div>
+                <div>
+
                   <Label className="text-xs font-semibold">Nome da Empresa</Label>
                   <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Razão social ou nome fantasia" className="mt-1 h-11 rounded-xl" />
                   <p className="text-[10px] text-muted-foreground mt-1">Usado na análise do cadastro pela equipe LLZ.</p>
