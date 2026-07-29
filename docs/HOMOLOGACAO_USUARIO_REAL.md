@@ -67,20 +67,52 @@ sistema operacional.
 
 | Código | Ação | Esperado | Status |
 |---|---|---|---|
-| B1 | LLZ-1 vê empresa A em Aprovações do Painel Global | Empresa listada como `pending` | NOT_EXECUTED |
-| B2 | LLZ-1 rejeita com motivo | `approval_status=rejected`, motivo visível ao cliente, nada apagado | NOT_EXECUTED |
-| B3 | Cliente corrige dados na tela "Cadastro em análise" | Dados salvos, empresa segue pendente | NOT_EXECUTED |
-| B4 | LLZ-1 aprova empresa A | Empresa ativa, owner ativo, ponto focal definido, `activity_log` registrado | NOT_EXECUTED |
-| B5 | Cliente com empresa aprovada faz login | Vai direto ao onboarding | NOT_EXECUTED |
+| B1 | LLZ-1 vê empresa A em Aprovações do Painel Global | Empresa listada como `pending` com responsável, e-mail, data e segmento | AWAITING_USER_EVIDENCE |
+| B2 | LLZ-1 rejeita com motivo | `approval_status=rejected`, motivo visível ao cliente, nada apagado | AWAITING_USER_EVIDENCE |
+| B3 | Cliente corrige dados na tela "Cadastro em análise" | Dados salvos, empresa segue pendente | AWAITING_USER_EVIDENCE |
+| B4 | LLZ-1 aprova empresa A | Empresa ativa, owner ativo, ponto focal definido, `approved_at` e `activity_log` registrados | AWAITING_USER_EVIDENCE |
+| B5 | Conferir papel do criador após aprovação | Continua `owner`, ativo e ponto focal — nunca vira supervisor/operador/member | AWAITING_USER_EVIDENCE |
+| B6 | Cliente pendente tenta acessar `/produtos` pela URL | Permanece em "Cadastro em análise", sem loop de rotas | AWAITING_USER_EVIDENCE |
 
-## C. Onboarding
+## C. Primeiro acesso após aprovação
 
 | Código | Ação | Esperado | Status |
 |---|---|---|---|
-| C1 | Percorrer as etapas do onboarding | Salva parcial, permite retomar | NOT_EXECUTED |
-| C2 | Desmarcar "usa endereçamento" | Menu Endereços some | NOT_EXECUTED |
-| C3 | Desmarcar "usa expedição" | Menu Expedição some | NOT_EXECUTED |
-| C4 | Concluir | Vai para produtos ou importação CSV; checklist aparece | NOT_EXECUTED |
+| C1 | Cliente aprovado clica em "Verificar status da aprovação" | Entra sem precisar de logout/login manual | AWAITING_USER_EVIDENCE |
+| C2 | Login após aprovação | `currentCompanyId` correto, apenas a própria empresa disponível | AWAITING_USER_EVIDENCE |
+| C3 | Sidebar do cliente | Sem módulos globais da equipe LLZ | AWAITING_USER_EVIDENCE |
+
+## D. Onboarding
+
+| Código | Ação | Esperado | Status |
+|---|---|---|---|
+| D1 | Percorrer as etapas do onboarding | Salva parcial, permite retomar após refresh | AWAITING_USER_EVIDENCE |
+| D2 | Desmarcar "usa endereçamento" | Menu Endereços some | AWAITING_USER_EVIDENCE |
+| D3 | Desmarcar "usa expedição" | Menu Expedição some | AWAITING_USER_EVIDENCE |
+| D4 | Pular onboarding | `onboarding_status = skipped`, sem `completed_at` | AWAITING_USER_EVIDENCE |
+| D5 | Concluir | `completed`, `completed_at` preenchido, checklist aparece | AWAITING_USER_EVIDENCE |
+| D6 | Escolher importação CSV / cadastro manual | Direciona para Importar CSV / Produtos | AWAITING_USER_EVIDENCE |
+
+## E. Novo funcionário em empresa existente (apenas mapeado na 6.15B)
+
+Comportamento atual observado no código, **sem alteração nesta fase**:
+
+- O funcionário se cadastra informando o **código da empresa** (`invite_code`);
+  `handle_new_user` cria a membership como `member` **ativa**, sem nova empresa.
+- Se a empresa já estiver aprovada, o `profiles.is_approved` do funcionário é
+  liberado automaticamente — **a equipe LLZ não aprova funcionário**.
+- Papéis `supervisor`/operador e bloqueio de abas são definidos depois pelo
+  owner/admin da empresa no painel administrativo.
+- Ambiguidade documentada: não existe hoje uma fila de aprovação de funcionário
+  pelo owner. Decisão adiada para fase futura.
+
+| Código | Ação | Esperado | Status |
+|---|---|---|---|
+| E1 | Cadastro com código da empresa | Entra na empresa existente, papel `member`, sem virar owner | AWAITING_USER_EVIDENCE |
+| E2 | Cadastro com código inválido | Cria empresa nova pendente (comportamento atual) | AWAITING_USER_EVIDENCE |
+
+## F. Produto
+
 
 ## D. Produto
 
