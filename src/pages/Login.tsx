@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { LogIn, UserPlus, KeyRound, Eye, EyeOff, Shield, Boxes, Zap } from "lucide-react";
+import { friendlyError } from "@/lib/error-messages";
+import { LogIn, UserPlus, KeyRound, Eye, EyeOff, Shield, Boxes, Zap, MailCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DEV_EMAIL = "luccafelipe99@gmail.com";
@@ -12,39 +13,79 @@ const DEV_PASS = "pro99123@";
 const DEV_ACCESS_CODE = "AdminLLZ0726";
 
 export default function Login() {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "dev">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "dev" | "signup-sent">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [devCode, setDevCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [sentTo, setSentTo] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
       const notConfirmed = /confirm/i.test(error.message);
       if (notConfirmed) {
+        setSentTo(email.trim());
+        setMode("signup-sent");
         toast({
           title: "E-mail ainda não confirmado",
-          description: `Enviamos um link de confirmação para ${email.trim()}. Confirme o e-mail e tente novamente. Use "Reenviar confirmação" se não recebeu.`,
+          description: `Confirme o link enviado para ${email.trim()} para continuar.`,
           variant: "destructive",
         });
         return;
       }
-      toast({ title: "Erro ao entrar", description: error.message === "Invalid login credentials" ? "Email ou senha incorretos." : error.message, variant: "destructive" });
+      toast({ title: "Não foi possível entrar", description: friendlyError(error), variant: "destructive" });
+    }
+  }
+
+  async function resendConfirmation() {
+    const target = (sentTo || email).trim();
+    if (!target || resending) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: target,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    setResending(false);
+    if (error) toast({ title: "Erro", description: friendlyError(error), variant: "destructive" });
+    else toast({ title: "E-mail reenviado", description: "Verifique a caixa de entrada e o spam." });
+  }
+
+  async function recheckConfirmation() {
+    if (!password) {
+      toast({ title: "Informe a senha", description: "Volte ao login e entre com e-mail e senha após confirmar.", variant: "destructive" });
+      setMode("login");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: (sentTo || email).trim(), password });
+    setLoading(false);
+    if (error) {
+      toast({
+        title: /confirm/i.test(error.message) ? "Ainda não confirmado" : "Não foi possível entrar",
+        description: friendlyError(error),
+        variant: "destructive",
+      });
     }
   }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     if (!fullName.trim()) { toast({ title: "Informe seu nome", variant: "destructive" }); return; }
     if (password.length < 6) { toast({ title: "Senha: mínimo 6 caracteres", variant: "destructive" }); return; }
+    if (password !== confirmPassword) { toast({ title: "As senhas não coincidem", variant: "destructive" }); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: email.trim(), password,
@@ -52,12 +93,14 @@ export default function Login() {
     });
     setLoading(false);
     if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      // Erro nunca apaga os dados já preenchidos no formulário.
+      toast({ title: "Não foi possível criar a conta", description: friendlyError(error), variant: "destructive" });
     } else {
-      toast({ title: "Conta criada! 🎉", description: "Confirme o e-mail enviado para " + email.trim() + ". Depois disso, sua empresa entra em análise pela equipe LLZ." });
-      setMode("login");
+      setSentTo(email.trim());
+      setMode("signup-sent");
     }
   }
+
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault();
@@ -221,6 +264,23 @@ export default function Login() {
                   </div>
                 </div>
                 <div>
+                  <Label className="text-xs font-semibold">Confirmar senha</Label>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    placeholder="Repita a senha"
+                    autoComplete="new-password"
+                    className="mt-1 h-11 rounded-xl"
+                  />
+                  {confirmPassword && confirmPassword !== password && (
+                    <p className="text-[10px] text-destructive mt-1">As senhas não coincidem.</p>
+                  )}
+                </div>
+                <div>
+
                   <Label className="text-xs font-semibold">Nome da Empresa</Label>
                   <Input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Razão social ou nome fantasia" className="mt-1 h-11 rounded-xl" />
                   <p className="text-[10px] text-muted-foreground mt-1">Usado na análise do cadastro pela equipe LLZ.</p>
@@ -237,6 +297,36 @@ export default function Login() {
                 <button type="button" onClick={() => setMode("login")} className="text-xs text-primary hover:underline w-full text-center font-medium">Já tenho conta</button>
               </motion.form>
             )}
+
+            {mode === "signup-sent" && (
+              <motion.div key="sent" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                  <MailCheck size={24} className="text-primary" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground">Confirme seu e-mail</h2>
+                <p className="text-sm text-muted-foreground">
+                  Enviamos um link de confirmação para <span className="font-semibold break-all">{sentTo}</span>.
+                  Confirme seu endereço para continuar o cadastro da sua empresa.
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  A conta ainda <span className="font-semibold">não está aprovada</span>: após a confirmação do e-mail,
+                  a equipe LLZ analisa a empresa.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 h-10 rounded-xl text-xs" onClick={resendConfirmation} disabled={resending}>
+                    {resending ? "Enviando..." : "Reenviar confirmação"}
+                  </Button>
+                  <Button variant="secondary" className="flex-1 h-10 rounded-xl text-xs" onClick={recheckConfirmation} disabled={loading}>
+                    {loading ? "Verificando..." : "Já confirmei, verificar"}
+                  </Button>
+                </div>
+                <button type="button" onClick={() => setMode("login")} className="text-xs text-primary hover:underline w-full text-center font-medium">
+                  Voltar ao login
+                </button>
+              </motion.div>
+            )}
+
+
 
             {mode === "forgot" && (
               <motion.form key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} onSubmit={handleForgot} className="space-y-4">

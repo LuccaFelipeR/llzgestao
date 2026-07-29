@@ -17,9 +17,12 @@ export default function PendingApproval() {
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const { data: membership } = useQuery({
+  const { data: membership, refetch: refetchCompany, isFetching } = useQuery({
     queryKey: ["pending-company", user?.id],
     enabled: !!user?.id,
+    // Reflete a aprovação da equipe LLZ sem exigir logout/login manual.
+    refetchInterval: 20000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("company_members")
@@ -31,6 +34,10 @@ export default function PendingApproval() {
       if (c) {
         setCompanyName((prev) => prev || c.name || "");
         setPhone((prev) => prev || c.phone || "");
+        if (c.approval_status === "approved") {
+          // Sincroniza o profile: is_approved é o que libera as rotas.
+          await refreshProfile();
+        }
       }
       return c ?? null;
     },
@@ -42,6 +49,12 @@ export default function PendingApproval() {
 
   const rejected = membership?.approval_status === "rejected" || !!profile?.rejection_reason;
   const reason = membership?.approval_reason ?? profile?.rejection_reason ?? null;
+
+  async function checkApproval() {
+    await Promise.all([refetchCompany(), refreshProfile()]);
+    toast.info("Status atualizado.");
+  }
+
 
   async function resendConfirmation() {
     if (!user?.email) return;
@@ -126,9 +139,30 @@ export default function PendingApproval() {
             <p className="text-xs text-destructive text-center mt-2 mb-2">Motivo: {reason}</p>
           )}
 
+          {/* Dois estados independentes e explícitos */}
+          <div className="mt-3 mb-3 rounded-xl border border-border bg-secondary/40 p-3 space-y-1.5 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">E-mail</span>
+              <span className={emailConfirmed ? "font-semibold text-success" : "font-semibold text-warning"}>
+                {emailConfirmed ? "Confirmado" : "Pendente de confirmação"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Empresa</span>
+              <span className={rejected ? "font-semibold text-destructive" : "font-semibold text-warning"}>
+                {rejected ? "Rejeitada" : "Em análise"}
+              </span>
+            </div>
+          </div>
+
+          <Button variant="outline" size="sm" className="w-full h-9 text-xs mb-3" onClick={checkApproval} disabled={isFetching}>
+            {isFetching ? "Verificando..." : "Verificar status da aprovação"}
+          </Button>
+
           <p className="text-[11px] text-muted-foreground text-center mb-5">
             Enquanto estiver pendente, operações de estoque e convites ficam bloqueados.
           </p>
+
 
           <form onSubmit={saveBasics} className="space-y-3 text-left">
             <div>

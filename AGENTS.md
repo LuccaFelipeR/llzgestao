@@ -26,7 +26,7 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - Toda alteração relevante deve gerar entrada em `system_changelog`
   (pública e/ou interna).
 
-## Baseline atual (Fase 6.15A — 2026-07)
+## Baseline atual (Fase 6.15B — 2026-07)
 
 ### CONFIRMED_IMPLEMENTED
 - Isolamento multi-tenant por `company_id` com RLS baseada em
@@ -62,6 +62,11 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
   globais (6.15A).
 - Estados de e-mail e de aprovação tratados de forma independente na tela
   do cliente, com reenvio de confirmação e reverificação (6.15A).
+- Fluxo de ativação com estados formais separados, confirmação de senha no
+  cadastro, mensagens de Auth em pt-BR e revalidação automática da aprovação
+  sem exigir logout (6.15B).
+- `approve_company` preserva o criador como `owner` ativo e ponto focal —
+  aprovação nunca rebaixa o fundador (6.15B).
 
 ### IMPLEMENTED_BUT_NOT_E2E_VALIDATED
 - AdminPanel completo (bloquear/desbloquear/inativar/restaurar, troca de
@@ -84,6 +89,11 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - Template de e-mail de autenticação personalizado (ver KNOWN_RISKS).
 
 ### KNOWN_RISKS
+- Template de e-mail de autenticação: **não é configurável pelo repositório**.
+  Depende de um domínio de e-mail próprio do projeto (Cloud -> Emails ->
+  configurar domínio) e, só depois, dos templates gerenciados em pt-BR. Enquanto
+  isso, valem os textos padrão em inglês e o remetente padrão. Não afirmar ao
+  usuário que existe remetente personalizado.
 - Os e-mails de autenticação ainda usam os textos padrão em inglês
   ("Confirm your signup" / "Verify Email") e o remetente padrão
   `auth.lovable.cloud`. Não afirmar ao usuário que já existe remetente

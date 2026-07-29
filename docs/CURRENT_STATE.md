@@ -77,3 +77,21 @@ Roteiro de homologação: `HOMOLOGACAO_USUARIO_REAL.md`. Histórico: `HOMOLOGACA
 - `products`, `addresses`, `lots`: DELETE só para owner/admin e bloqueado por
   trigger quando há histórico.
 - Nenhuma policy foi alterada ou enfraquecida na Fase 6.15A.
+
+## Fase 6.15B — Homologação do cadastro e ativação (2026-07)
+
+- Estados do fluxo de ativação formalizados e separados: `AUTH_EMAIL_UNCONFIRMED`,
+  `AUTH_EMAIL_CONFIRMED`, `COMPANY_PENDING`, `COMPANY_APPROVED`,
+  `COMPANY_REJECTED`, `MEMBERSHIP_PENDING`, `MEMBERSHIP_ACTIVE`, `USER_BLOCKED`.
+- Cadastro: confirmação de senha, mensagens de Auth em pt-BR (`friendlyError`),
+  proteção contra duplo envio e tela pós-cadastro com o e-mail informado,
+  reenvio de confirmação e "Já confirmei, verificar".
+- `PendingApproval` mostra dois indicadores independentes (E-mail / Empresa),
+  botão "Verificar status da aprovação" e revalidação automática a cada 20s —
+  elimina a necessidade de logout/login após a aprovação da equipe LLZ.
+- Regra confirmada em `approve_company`: o criador permanece `owner`, ativo e
+  ponto focal principal; a aprovação **não** altera o papel do fundador.
+- Novo funcionário via `invite_code`: entra como `member` ativo na empresa
+  existente, sem aprovação da equipe LLZ (mapeado, não alterado).
+- Pendência: template de e-mail de autenticação segue em inglês com remetente
+  padrão — depende de domínio de e-mail próprio configurado no projeto.

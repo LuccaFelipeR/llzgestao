@@ -44,11 +44,41 @@ const RULES: Array<{ test: (m: string, code?: string) => boolean; message: strin
     test: (m, code) => code === "23503" || /violates foreign key/i.test(m),
     message: "Não é possível concluir: este registro está vinculado a outros dados.",
   },
+  // ---- Autenticação (Supabase Auth) ----
+  {
+    test: (m) => /email not confirmed|not confirmed|email_not_confirmed/i.test(m),
+    message: "E-mail ainda não confirmado. Confirme o link enviado para sua caixa de entrada e tente novamente.",
+  },
+  {
+    test: (m) => /user already registered|already been registered|user_already_exists/i.test(m),
+    message: "Já existe uma conta com este e-mail. Faça login ou use \"Esqueci minha senha\".",
+  },
+  {
+    test: (m) => /invalid login credentials/i.test(m),
+    message: "E-mail ou senha incorretos.",
+  },
+  {
+    test: (m) => /password.*(short|least|weak)|weak_password/i.test(m),
+    message: "Senha muito fraca. Use no mínimo 6 caracteres, combinando letras e números.",
+  },
+  {
+    test: (m) => /pwned|leaked|compromised password/i.test(m),
+    message: "Esta senha aparece em vazamentos públicos. Escolha outra senha.",
+  },
+  {
+    test: (m) => /rate limit|too many requests|over_email_send_rate_limit/i.test(m),
+    message: "Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.",
+  },
+  {
+    test: (m) => /(token|link).*(expired|invalid)|otp_expired/i.test(m),
+    message: "Este link de confirmação expirou ou já foi utilizado. Solicite um novo e-mail de confirmação.",
+  },
   {
     test: (m) => /jwt|not authenticated|invalid token/i.test(m),
     message: "Sua sessão expirou. Faça login novamente.",
   },
 ];
+
 
 export function friendlyError(err: AnyError, fallback = "Ocorreu um erro ao processar a operação."): string {
   const anyErr = err as any;

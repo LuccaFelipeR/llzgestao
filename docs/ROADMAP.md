@@ -51,3 +51,12 @@
 - 6.16: template de e-mail de autenticação em pt-BR e identidade
   "LLZ Gestão de Estoque".
 - 6.17: preparação e execução controlada do reset com backup.
+
+## 6.15B (entregue) — Homologação do cadastro e ativação
+
+- Correções de UX no cadastro/confirmação/aprovação, sem mudança de RLS nem do
+  motor de estoque.
+- Próxima etapa: 6.16 — homologação operacional (produto, endereço, lote,
+  entrada, saldo, saída, transferência, expedição) com empresa real aprovada.
+- Pendência dependente de infraestrutura: e-mail de autenticação em pt-BR com
+  remetente próprio (exige domínio de e-mail configurado no projeto).
