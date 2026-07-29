@@ -80,3 +80,8 @@ Ver `docs/HOMOLOGACAO_6_13.md` seção 3 (cenário A/B/super admin) e seção 4
 O roteiro oficial de homologação com contas reais passou para
 `docs/HOMOLOGACAO_USUARIO_REAL.md` (etapas A a O, com campos de evidência e
 status). Nenhum teste pode ser marcado como PASS sem execução humana.
+
+## 6.15B — Cadastro, confirmação, aprovação e onboarding
+
+Roteiro detalhado (seções A–E) em `docs/HOMOLOGACAO_USUARIO_REAL.md`. Testes
+dependentes de e-mail real ficam `AWAITING_USER_EVIDENCE` até execução humana.
