@@ -1,14 +1,20 @@
 # Homologação com Usuário Real — LLZ Gestão de Estoque (Fase 6.15A)
+# Homologação com Usuário Real — LLZ Gestão de Estoque (Fase 6.15B)
 
 Roteiro de teste ponta a ponta (E2E) com contas reais. **Nada aqui pode ser
 marcado como PASS sem execução humana registrada.** O estado inicial de todos os
-testes é `NOT_EXECUTED`.
+testes é `NOT_EXECUTED`; os testes preparados na 6.15B ficam
+`AWAITING_USER_EVIDENCE` até o usuário informar as evidências.
+
+Nunca registrar senha. Nunca publicar o e-mail completo — usar máscara
+(`lu***@gmail.com`).
 
 ## Como usar
 
-Para cada teste preencher: código, usuário, papel, empresa, ação, esperado,
-observado, resultado (PASS / FAIL / NOT_EXECUTED), evidência (print, ID do
-registro, linha do `activity_log`) e correção necessária.
+Para cada teste preencher: código, data, e-mail mascarado, papel, empresa, ação,
+esperado, observado, resultado (PASS / FAIL / AWAITING_USER_EVIDENCE /
+NOT_EXECUTED), evidência (print, ID do registro, linha do `activity_log`), bug
+relacionado e correção aplicada.
 
 Contas sugeridas (não criar antes de definir a equipe LLZ):
 
@@ -22,15 +28,40 @@ Contas sugeridas (não criar antes de definir a equipe LLZ):
 
 ---
 
+## Estados oficiais do fluxo de ativação (6.15B)
+
+Estes estados são **independentes** e nunca devem ser representados por um único
+campo ou badge:
+
+| Estado | Origem da verdade |
+|---|---|
+| `AUTH_EMAIL_UNCONFIRMED` | `auth.users.email_confirmed_at` nulo (visível só para o próprio usuário) |
+| `AUTH_EMAIL_CONFIRMED` | `auth.users.email_confirmed_at` preenchido |
+| `COMPANY_PENDING` | `companies.approval_status = 'pending'` |
+| `COMPANY_APPROVED` | `companies.approval_status = 'approved'` + `approved_at` |
+| `COMPANY_REJECTED` | `companies.approval_status = 'rejected'` + `approval_reason` |
+| `MEMBERSHIP_PENDING` | `company_members.is_active = false` |
+| `MEMBERSHIP_ACTIVE` | `company_members.is_active = true` + `approved_at` |
+| `USER_BLOCKED` | `companies.status = 'blocked'` ou `company_members.blocked_at` |
+
+Na UI: `Login` → `signup-sent` (e-mail) → `PendingApproval` (dois indicadores
+separados: **E-mail** e **Empresa**) → `CompanyGate` → `CompanyOnboarding` →
+sistema operacional.
+
 ## A. Cadastro e confirmação de e-mail
 
 | Código | Usuário | Papel | Empresa | Ação | Esperado | Observado | Status | Evidência | Correção |
 |---|---|---|---|---|---|---|---|---|---|
-| A1 | A-OWNER | — | A | Criar conta com nome, e-mail, senha e nome da empresa | Conta criada, mensagem indica confirmação de e-mail | | NOT_EXECUTED | | |
-| A2 | A-OWNER | — | A | Tentar login antes de confirmar | Mensagem "E-mail ainda não confirmado" (não erro técnico) | | NOT_EXECUTED | | |
-| A3 | A-OWNER | — | A | Usar "Reenviar confirmação" | Novo e-mail recebido | | NOT_EXECUTED | | |
-| A4 | A-OWNER | — | A | Confirmar e-mail e usar "Já confirmei, verificar" | Estado muda para EMAIL_CONFIRMED / COMPANY_PENDING | | NOT_EXECUTED | | |
-| A5 | — | — | — | Conferir remetente e idioma do e-mail | Identidade "LLZ Gestão de Estoque", texto em pt-BR | | NOT_EXECUTED | | pendência conhecida |
+| A1 | A-OWNER | — | A | Criar conta com nome, e-mail, senha, confirmação de senha e nome da empresa | Conta criada; tela "Confirme seu e-mail" mostra o endereço informado | | AWAITING_USER_EVIDENCE | | 6.15B: campo "Confirmar senha" + tela pós-cadastro |
+| A2 | A-OWNER | — | A | Tentar login antes de confirmar | Mensagem "E-mail ainda não confirmado" (não erro cru) e retorno à tela de confirmação | | AWAITING_USER_EVIDENCE | | 6.15B: `friendlyError` para erros de Auth |
+| A3 | A-OWNER | — | A | Usar "Reenviar confirmação" | Novo e-mail recebido; botão bloqueia duplo clique | | AWAITING_USER_EVIDENCE | | 6.15B: reenvio também na tela de login |
+| A4 | A-OWNER | — | A | Confirmar e-mail e usar "Já confirmei, verificar" | Login concluído; estado passa a `AUTH_EMAIL_CONFIRMED` / `COMPANY_PENDING` | | AWAITING_USER_EVIDENCE | | |
+| A5 | A-OWNER | — | A | Cadastrar novamente o mesmo e-mail | Mensagem "Já existe uma conta com este e-mail" | | AWAITING_USER_EVIDENCE | | 6.15B |
+| A6 | A-OWNER | — | A | Senha e confirmação diferentes | Bloqueado antes do envio | | AWAITING_USER_EVIDENCE | | 6.15B |
+| A7 | A-OWNER | — | A | Erro no cadastro (ex.: senha fraca) | Dados preenchidos permanecem no formulário | | AWAITING_USER_EVIDENCE | | 6.15B |
+| A8 | A-OWNER | — | A | Usar link expirado / já utilizado | Mensagem pedindo novo e-mail de confirmação | | AWAITING_USER_EVIDENCE | | 6.15B |
+| A9 | — | — | — | Conferir remetente e idioma do e-mail | Identidade "LLZ Gestão de Estoque", texto em pt-BR | | FAIL (pendência conhecida) | Textos em inglês, remetente padrão | Requer domínio de e-mail próprio — ver AGENTS.md |
+
 
 ## B. Aprovação da empresa
 
