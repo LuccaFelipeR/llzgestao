@@ -17,9 +17,12 @@ export default function PendingApproval() {
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const { data: membership } = useQuery({
+  const { data: membership, refetch: refetchCompany, isFetching } = useQuery({
     queryKey: ["pending-company", user?.id],
     enabled: !!user?.id,
+    // Reflete a aprovação da equipe LLZ sem exigir logout/login manual.
+    refetchInterval: 20000,
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("company_members")
@@ -31,6 +34,10 @@ export default function PendingApproval() {
       if (c) {
         setCompanyName((prev) => prev || c.name || "");
         setPhone((prev) => prev || c.phone || "");
+        if (c.approval_status === "approved") {
+          // Sincroniza o profile: is_approved é o que libera as rotas.
+          await refreshProfile();
+        }
       }
       return c ?? null;
     },
@@ -42,6 +49,12 @@ export default function PendingApproval() {
 
   const rejected = membership?.approval_status === "rejected" || !!profile?.rejection_reason;
   const reason = membership?.approval_reason ?? profile?.rejection_reason ?? null;
+
+  async function checkApproval() {
+    await Promise.all([refetchCompany(), refreshProfile()]);
+    toast.info("Status atualizado.");
+  }
+
 
   async function resendConfirmation() {
     if (!user?.email) return;
