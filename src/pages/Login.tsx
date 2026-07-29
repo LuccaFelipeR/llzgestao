@@ -298,6 +298,36 @@ export default function Login() {
               </motion.form>
             )}
 
+            {mode === "signup-sent" && (
+              <motion.div key="sent" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} className="space-y-4 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto">
+                  <MailCheck size={24} className="text-primary" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground">Confirme seu e-mail</h2>
+                <p className="text-sm text-muted-foreground">
+                  Enviamos um link de confirmação para <span className="font-semibold break-all">{sentTo}</span>.
+                  Confirme seu endereço para continuar o cadastro da sua empresa.
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  A conta ainda <span className="font-semibold">não está aprovada</span>: após a confirmação do e-mail,
+                  a equipe LLZ analisa a empresa.
+                </p>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 h-10 rounded-xl text-xs" onClick={resendConfirmation} disabled={resending}>
+                    {resending ? "Enviando..." : "Reenviar confirmação"}
+                  </Button>
+                  <Button variant="secondary" className="flex-1 h-10 rounded-xl text-xs" onClick={recheckConfirmation} disabled={loading}>
+                    {loading ? "Verificando..." : "Já confirmei, verificar"}
+                  </Button>
+                </div>
+                <button type="button" onClick={() => setMode("login")} className="text-xs text-primary hover:underline w-full text-center font-medium">
+                  Voltar ao login
+                </button>
+              </motion.div>
+            )}
+
+
+
             {mode === "forgot" && (
               <motion.form key="forgot" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }} onSubmit={handleForgot} className="space-y-4">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
