@@ -310,13 +310,10 @@ export default function AdminPanel() {
     mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
       const { error } = await supabase.from("profiles").update({ is_approved: approved, updated_at: new Date().toISOString() }).eq("id", userId);
       if (error) throw error;
-      if (approved) {
-        const existing = allRoles?.find((r) => r.user_id === userId);
-        if (!existing) {
-          await supabase.from("user_roles").insert({ user_id: userId, role: "operator" });
-        }
-      }
+      // Aprovar um usuário de EMPRESA nunca cria papel GLOBAL (user_roles).
+      // O vínculo operacional vive em company_members.
     },
+
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
       queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
