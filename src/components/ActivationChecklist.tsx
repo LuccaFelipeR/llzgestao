@@ -196,7 +196,7 @@ export default function ActivationChecklist() {
 
 // Helper for admin panel - synchronous calculation from a company row + counts
 export function calcActivationPct(company: any, counts: {
-  products: number; addresses: number; movements: number; balance: number; members: number;
+  products: number; addresses: number; movements: number; balance: number;
 }): number {
   const usesAddr = company?.uses_addressing !== false;
   const wantsCsv = !!company?.plans_csv_import;
@@ -208,7 +208,6 @@ export function calcActivationPct(company: any, counts: {
     ...(usesAddr ? [counts.addresses > 0] : []),
     counts.movements > 0,
     counts.balance > 0,
-    counts.members > 1,
     ...(wantsCsv ? [counts.products >= 5 || counts.addresses >= 5] : []),
   ];
   const done = items.filter(Boolean).length;
