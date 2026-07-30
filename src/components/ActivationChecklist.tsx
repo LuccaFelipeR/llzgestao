@@ -26,15 +26,15 @@ export default function ActivationChecklist() {
     enabled: !!currentCompanyId && !dismissed,
     queryFn: async (): Promise<Item[]> => {
       const cid = currentCompanyId!;
-      const [products, addresses, movements, balance, members, csvImports, supportTickets] = await Promise.all([
+      const [products, addresses, movements, balance, csvImports, supportSeen] = await Promise.all([
         supabase.from("products").select("id", { count: "exact", head: true }).eq("company_id", cid),
         supabase.from("addresses").select("id", { count: "exact", head: true }).eq("company_id", cid),
         supabase.from("movements").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("type", "IN"),
         supabase.from("stock_balance").select("id", { count: "exact", head: true }).eq("company_id", cid).gt("qty", 0),
-        supabase.from("company_members").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("is_active", true),
         supabase.from("activity_log").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("action", "csv_import_completed"),
-        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("company_id", cid),
+        supabase.from("activity_log").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("action", "support_center_viewed"),
       ]);
+
 
       const list: Item[] = [
         {
@@ -88,13 +88,6 @@ export default function ActivationChecklist() {
           href: "/estoque",
           cta: "Ver estoque",
         },
-        {
-          key: "team",
-          label: "Outro usuário vinculado à empresa",
-          done: (members.count ?? 0) > 1,
-          href: "/admin",
-          cta: "Convidar",
-        },
         ...(company?.plans_csv_import
           ? [{
               key: "import",
@@ -107,10 +100,11 @@ export default function ActivationChecklist() {
         {
           key: "support",
           label: "Central de suporte conhecida",
-          done: (supportTickets.count ?? 0) > 0,
+          done: (supportSeen.count ?? 0) > 0,
           href: "/suporte",
           cta: "Abrir",
         },
+
       ];
 
       return list;
