@@ -120,3 +120,21 @@ módulos globais: Painel Global, Empresas e Usuários, Suporte Global, Data
 Quality, Auditoria, Changelog, Documentação e, para `super_admin`, Reset de
 ambiente. Os módulos operacionais só aparecem após entrar no modo de manutenção
 de uma empresa — o Admin Dev nunca aparenta ter estoque próprio.
+
+## Fase 6.16 — lista oficial da equipe LLZ
+
+Fonte de verdade dos papéis globais:
+
+| E-mail | Papel |
+|---|---|
+| luccafelipe99@gmail.com | `super_admin` |
+
+Regras consolidadas:
+
+- Papel empresarial (`owner`, `admin` da empresa, `supervisor`, `member`/operador,
+  ponto focal) **não** torna ninguém equipe LLZ.
+- Apenas usuários com linha em `user_roles` aparecem na aba **Equipe LLZ**.
+- A aba **Usuários da Empresa** exige uma empresa selecionada.
+- O papel global legado `admin` foi removido do super admin oficial; use
+  `super_admin`.
+- Qualquer papel global fora da lista oficial deve ser removido.

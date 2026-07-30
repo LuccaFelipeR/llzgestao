@@ -98,3 +98,75 @@ execução é obrigatório:
 7. Validar que o `super_admin` será preservado.
 
 Nenhum dado foi apagado nesta fase.
+
+## Fase 6.16 — normalização da staff e novo preview (reset NÃO executado)
+
+### Lista oficial da staff preservada
+
+| E-mail | Papel global |
+|---|---|
+| luccafelipe99@gmail.com | `super_admin` |
+
+Papel empresarial (`owner`, `admin` da empresa, `supervisor`, `member`/operador,
+ponto focal) **nunca** preserva um usuário no reset.
+
+### Normalização aplicada (migration 6.16)
+
+- `luccafelipe99@gmail.com` passou a ter `super_admin` e teve o papel legado
+  `admin` removido.
+- Todos os demais registros de `user_roles` foram removidos, incluindo
+  `retailtech@gmail.com` e papéis `admin`/`supervisor` concedidos indevidamente
+  no nível da plataforma (`abel.beleleu@`, `manus2silva01@`, `alinamoretii@`,
+  `leandrom.yamasaki@`).
+- Evento registrado em `activity_log` como `platform_roles_normalized`.
+
+### Preview (leitura, pós-normalização)
+
+`PRESERVED_PLATFORM_USERS` → 1 usuário: `luccafelipe99@gmail.com` (`super_admin`).
+
+`USERS_TO_DELETE` → 5 usuários clientes/teste: `abel.beleleu@gmail.com`,
+`alinamoretii@gmail.com`, `leandrom.yamasaki@gmail.com`, `manus2silva01@gmail.com`,
+`retailtech@gmail.com`.
+
+`COMPANIES_TO_DELETE` → 10 empresas: Burtan Store, Hackaton RetailTech,
+Hospital Vascular de Londrina, Lemon Haze Floricultura (pending), LLZ,
+LUCCATESTE01, Manu Cosmético, Mario AutoPeças, Mercosu, Minha Empresa.
+
+`COUNTS_TO_DELETE` (momento do preview):
+
+| Tabela | Registros |
+|---|---|
+| support_ticket_messages | 2 |
+| support_tickets | 1 |
+| picking_list_items | 2 |
+| picking_lists | 1 |
+| notifications | 0 |
+| stock_balance | 23 |
+| movements | 47 |
+| lots | 19 |
+| addresses | 45 |
+| products | 44 |
+| activity_log (com company_id) | 168 |
+| company_members | 9 |
+| companies | 10 |
+| system_changelog | **preservado (35)** |
+
+### Por que o reset NÃO foi executado nesta fase
+
+A execução exige a Edge Function `admin-reset` chamada com o **JWT do super admin
+autenticado**. O agente não possui — e não deve possuir — sessão do super admin,
+e a service role não pode ser exposta. Trava acionada:
+
+> **6. O usuário autenticado não é o super admin preservado.**
+
+Nada foi apagado. Para concluir, o próprio `luccafelipe99@gmail.com` deve:
+
+1. Entrar no app.
+2. Abrir `/admin/reset`.
+3. Clicar em **Gerar preview** e conferir que apenas ele aparece em usuários preservados.
+4. Digitar `RESET` e executar.
+5. Conferir o relatório (contagens removidas, contas Auth removidas, falhas).
+
+Empresas criadas pelo super admin (LLZ, Hospital Vascular de Londrina, Mercosu,
+Minha Empresa, Mario AutoPeças) **também serão removidas** — só a identidade
+global dele é preservada.

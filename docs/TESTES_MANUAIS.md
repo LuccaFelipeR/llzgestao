@@ -85,3 +85,25 @@ status). Nenhum teste pode ser marcado como PASS sem execução humana.
 
 Roteiro detalhado (seções A–E) em `docs/HOMOLOGACAO_USUARIO_REAL.md`. Testes
 dependentes de e-mail real ficam `AWAITING_USER_EVIDENCE` até execução humana.
+
+## Fase 6.16 — ajustes finais, staff normalizada e preparação do piloto
+
+- **Checklist de ativação corrigido**: o item "Central de suporte conhecida" agora
+  é concluído por evidência real — a primeira visita válida do próprio cliente a
+  `/suporte` registra `support_center_viewed` em `activity_log`
+  (função `mark_support_center_viewed`, idempotente por empresa). Equipe LLZ,
+  inclusive em modo de manutenção, não marca o item.
+- **Item "Outro usuário vinculado à empresa" removido** do checklist e de
+  `calcActivationPct`. Uma empresa com apenas o owner atinge **100%**.
+  Convites e gestão de membros continuam existindo.
+- **Staff LLZ normalizada**: única conta com papel global é
+  `luccafelipe99@gmail.com` (`super_admin`). Papel legado `admin` removido;
+  todos os demais papéis globais (inclusive de `retailtech@gmail.com`) foram
+  apagados. Papel de empresa nunca torna alguém equipe LLZ.
+- **Aprovar usuário de empresa não cria mais papel global** (`operator` em
+  `user_roles`) no AdminPanel.
+- **Reset de ambiente: preview gerado, execução NÃO realizada** — exige o JWT do
+  super admin autenticado na Edge Function `admin-reset`. Detalhes e passo a
+  passo em `docs/RESET_AMBIENTE.md`.
+- **Piloto**: roteiro e checklist técnico em `docs/PILOTO_GO_LIVE.md`.
+  Ambiente ainda **não** classificado como limpo/validado.
