@@ -69,7 +69,7 @@ export default function Support() {
     if (markedRef.current === currentCompanyId) return;
     markedRef.current = currentCompanyId;
     (async () => {
-      const { data } = await (supabase as any).rpc("mark_support_center_viewed", {
+      const { data } = await supabase.rpc("mark_support_center_viewed", {
         _company_id: currentCompanyId,
       });
       if (data === true) {
