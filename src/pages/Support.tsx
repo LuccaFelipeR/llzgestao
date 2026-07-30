@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,9 +57,27 @@ function priorityVariant(p: TicketPriority): "default" | "secondary" | "outline"
 }
 
 export default function Support() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isPlatformStaff } = useAuth();
   const { currentCompanyId, company } = useCompany();
   const qc = useQueryClient();
+
+  // Marca (uma única vez por empresa) que o próprio cliente conheceu a Central de Suporte.
+  // Equipe LLZ — inclusive em modo de manutenção — nunca marca esse item.
+  const markedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!user || !currentCompanyId || isPlatformStaff) return;
+    if (markedRef.current === currentCompanyId) return;
+    markedRef.current = currentCompanyId;
+    (async () => {
+      const { data } = await (supabase as any).rpc("mark_support_center_viewed", {
+        _company_id: currentCompanyId,
+      });
+      if (data === true) {
+        qc.invalidateQueries({ queryKey: ["activation-checklist"] });
+      }
+    })();
+  }, [user, currentCompanyId, isPlatformStaff, qc]);
+
 
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
