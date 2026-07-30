@@ -1025,6 +1025,10 @@ export type Database = {
       is_platform_staff: { Args: { _user_id: string }; Returns: boolean }
       is_platform_super_admin: { Args: { _user_id: string }; Returns: boolean }
       is_support_staff: { Args: { _user_id: string }; Returns: boolean }
+      mark_support_center_viewed: {
+        Args: { _company_id: string }
+        Returns: boolean
+      }
       platform_reset_execute: { Args: never; Returns: Json }
       platform_reset_preview: { Args: never; Returns: Json }
       reject_company: {
