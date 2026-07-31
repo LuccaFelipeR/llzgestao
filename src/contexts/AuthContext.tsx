@@ -69,6 +69,7 @@ const AuthContext = createContext<AuthContextType>({
   platformRole: null,
   isPlatformStaff: false,
   isPlatformSuperAdmin: false,
+  isPlatformAdmin: false,
   isSupportStaff: false,
   isAdmin: false,
   isApproved: false,
@@ -132,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const platformRoles = roles.filter((r) => (PLATFORM_ROLES as readonly string[]).includes(r));
   const isPlatformStaff = platformRoles.length > 0;
   const isPlatformSuperAdmin = roles.some((r) => SUPER_ADMIN_ROLES.includes(r));
+  const isPlatformAdmin = roles.some((r) => CLIENT_ADMIN_ROLES.includes(r));
   const isSupportStaff = roles.some((r) => SUPPORT_ROLES.includes(r));
 
   return (
@@ -145,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         platformRole: platformRoles[0] ?? null,
         isPlatformStaff,
         isPlatformSuperAdmin,
+        isPlatformAdmin,
         isSupportStaff,
         // Equipe LLZ acessa as áreas administrativas; ações destrutivas
         // continuam protegidas por RLS (super admin) no banco.
