@@ -107,3 +107,20 @@ dependentes de e-mail real ficam `AWAITING_USER_EVIDENCE` até execução humana
   passo em `docs/RESET_AMBIENTE.md`.
 - **Piloto**: roteiro e checklist técnico em `docs/PILOTO_GO_LIVE.md`.
   Ambiente ainda **não** classificado como limpo/validado.
+
+## 6.16.1 — Testes de autorização administrativa (pendentes de execução humana)
+
+Com `luccafelipe99@gmail.com` (`super_admin` + `admin` legado):
+
+1. Login sem empresa → Painel Global.
+2. Selecionar empresa (modo de manutenção) e listar usuários.
+3. Operador → Supervisor; Supervisor → Admin da empresa.
+4. Bloquear/reativar membro; aprovar usuário; definir ponto focal.
+5. Remover vínculo (não pode remover o último owner).
+6. Bloquear/restaurar empresa; sair do modo de manutenção.
+7. Abrir `/admin/reset` **sem executar**.
+
+Cruzados: admin da empresa A não altera membros da empresa B; supervisor e
+operador não alteram cargos; `support_agent`/`developer` veem, mas não alteram.
+
+Após todos passarem, remover o papel legado `admin`, sair/entrar e repetir.

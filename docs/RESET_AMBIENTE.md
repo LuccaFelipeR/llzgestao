@@ -170,3 +170,10 @@ Nada foi apagado. Para concluir, o próprio `luccafelipe99@gmail.com` deve:
 Empresas criadas pelo super admin (LLZ, Hospital Vascular de Londrina, Mercosu,
 Minha Empresa, Mario AutoPeças) **também serão removidas** — só a identidade
 global dele é preservada.
+
+## Atualização 6.16.1
+
+O papel global legado `admin` foi **restaurado** para `luccafelipe99@gmail.com`
+como compatibilidade temporária. O reset continua **não executado** e exige o
+JWT do super admin autenticado. Só remova o papel legado após a homologação
+descrita em `docs/TESTES_MANUAIS.md` (seção 6.16.1).

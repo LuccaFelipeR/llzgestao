@@ -34,7 +34,7 @@ const ALL_TABS = [
 ];
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  const { user, isPlatformAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<"users" | "platform" | "activity" | "audit" | "system" | "companies">("users");
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
@@ -929,7 +929,7 @@ export default function AdminPanel() {
                     <Button
                       size="sm"
                       className="h-8 text-xs"
-                      disabled={addMemberByEmailMutation.isPending || !newMemberEmail.trim()}
+                      disabled={!isPlatformAdmin || addMemberByEmailMutation.isPending || !newMemberEmail.trim()}
                       onClick={() => addMemberByEmailMutation.mutate({ companyId: editCompany.id, email: newMemberEmail, role: newMemberRole }, {
                         onSuccess: () => { setNewMemberEmail(""); setNewMemberRole("member"); },
                       })}
@@ -954,7 +954,7 @@ export default function AdminPanel() {
                           <p className="font-medium truncate">{m.profile?.full_name || m.profile?.email || m.user_id.slice(0, 8)}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{m.profile?.email}</p>
                         </div>
-                        <Select value={m.role} onValueChange={(v) => changeMemberRoleMutation.mutate({ memberId: m.id, role: v })}>
+                        <Select value={m.role} disabled={!isPlatformAdmin} onValueChange={(v) => changeMemberRoleMutation.mutate({ memberId: m.id, role: v })}>
                           <SelectTrigger className="h-7 text-[10px] w-24"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="owner">Owner</SelectItem>
@@ -968,7 +968,7 @@ export default function AdminPanel() {
                           ? <Badge className="text-[10px] bg-accent/15 text-accent border-0">Aprovado</Badge>
                           : <Badge variant="destructive" className="text-[10px]">Pendente</Badge>}
                         {!active && <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>}
-                        {!m.is_main_focal_point && (
+                        {!m.is_main_focal_point && isPlatformAdmin && (
                           <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => setFocalPointMutation.mutate({ memberId: m.id, companyId: editCompany.id })}>
                             Tornar focal
                           </Button>
@@ -977,6 +977,7 @@ export default function AdminPanel() {
                           size="sm"
                           variant="outline"
                           className="h-7 text-[10px]"
+                          disabled={!isPlatformAdmin}
                           onClick={() => toggleMemberActiveMutation.mutate({ memberId: m.id, active: !active })}
                         >
                           {active ? "Bloquear" : "Reativar"}
@@ -985,7 +986,7 @@ export default function AdminPanel() {
                           size="sm"
                           variant="outline"
                           className="h-7 text-[10px] text-destructive border-destructive/30"
-                          disabled={isLastOwner || removeMemberMutation.isPending}
+                          disabled={!isPlatformAdmin || isLastOwner || removeMemberMutation.isPending}
                           title={isLastOwner ? "Não é possível remover o último owner" : "Remover vínculo"}
                           onClick={() => { if (confirm(`Remover ${m.profile?.email || "usuário"} desta empresa?`)) removeMemberMutation.mutate(m.id); }}
                         >

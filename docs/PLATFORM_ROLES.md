@@ -138,3 +138,36 @@ Regras consolidadas:
 - O papel global legado `admin` foi removido do super admin oficial; use
   `super_admin`.
 - Qualquer papel global fora da lista oficial deve ser removido.
+
+## Fase 6.16.1 — autorização real dos papéis globais
+
+Causa do bug: 53 policies usavam **somente** `has_role(auth.uid(), 'admin')` como
+bypass global. Com a conta oficial apenas como `super_admin`, a UI liberava e o
+RLS bloqueava.
+
+Correções aplicadas:
+
+- Todas as 53 policies passaram a usar `public.is_platform_super_admin(auth.uid())`
+  (aceita `super_admin` e o legado `admin`).
+- Novo helper `public.is_platform_client_admin(uuid)` = `super_admin` | `admin`
+  (legado) | `platform_admin`, com `EXECUTE` só para `authenticated`/`service_role`.
+- `company_members` UPDATE (staff) e `companies` UPDATE (staff) agora exigem
+  `is_platform_client_admin` — `support_agent` e `developer` **não** alteram
+  cargos nem cadastros de empresa.
+- Frontend: `useAuth()` expõe `isPlatformAdmin` (espelha o helper). O AdminPanel
+  desabilita vincular membro, trocar cargo, tornar focal, bloquear/reativar e
+  remover vínculo quando o papel global não pode executar.
+
+Regra final por papel global:
+
+| Papel | Pode |
+|---|---|
+| `super_admin` | tudo, incluindo papéis globais e reset |
+| `admin` (legado) | igual a `super_admin` — compatibilidade temporária |
+| `platform_admin` | aprova/administra empresas e vínculos; sem reset e sem papéis globais |
+| `support_agent` | tickets e leitura; sem alterar cargos/vínculos |
+| `developer` | auditoria/diagnóstico; sem alterar cargos/vínculos |
+| Admin de empresa | somente membros e configurações da própria empresa |
+
+O papel legado `admin` de `luccafelipe99@gmail.com` foi **restaurado** e só pode
+ser removido após homologação humana das ações administrativas.

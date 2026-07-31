@@ -16,6 +16,8 @@ export const PLATFORM_ROLES = [
 ] as const;
 
 const SUPER_ADMIN_ROLES = ["super_admin", "admin"];
+/** Administração de clientes: espelha public.is_platform_client_admin */
+const CLIENT_ADMIN_ROLES = ["super_admin", "admin", "platform_admin"];
 const SUPPORT_ROLES = ["super_admin", "admin", "platform_admin", "support_agent"];
 
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
@@ -47,8 +49,10 @@ interface AuthContextType {
   /** true para qualquer papel global da equipe LLZ */
   isPlatformStaff: boolean;
   isPlatformSuperAdmin: boolean;
+  /** super_admin/admin legado/platform_admin — pode administrar clientes e vínculos */
+  isPlatformAdmin: boolean;
   isSupportStaff: boolean;
-  /** Compat: usado em telas administrativas existentes */
+  /** Compat: "é equipe LLZ" (apenas visibilidade de áreas administrativas) */
   isAdmin: boolean;
   isApproved: boolean;
   loading: boolean;
@@ -65,6 +69,7 @@ const AuthContext = createContext<AuthContextType>({
   platformRole: null,
   isPlatformStaff: false,
   isPlatformSuperAdmin: false,
+  isPlatformAdmin: false,
   isSupportStaff: false,
   isAdmin: false,
   isApproved: false,
@@ -128,6 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const platformRoles = roles.filter((r) => (PLATFORM_ROLES as readonly string[]).includes(r));
   const isPlatformStaff = platformRoles.length > 0;
   const isPlatformSuperAdmin = roles.some((r) => SUPER_ADMIN_ROLES.includes(r));
+  const isPlatformAdmin = roles.some((r) => CLIENT_ADMIN_ROLES.includes(r));
   const isSupportStaff = roles.some((r) => SUPPORT_ROLES.includes(r));
 
   return (
@@ -141,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         platformRole: platformRoles[0] ?? null,
         isPlatformStaff,
         isPlatformSuperAdmin,
+        isPlatformAdmin,
         isSupportStaff,
         // Equipe LLZ acessa as áreas administrativas; ações destrutivas
         // continuam protegidas por RLS (super admin) no banco.
