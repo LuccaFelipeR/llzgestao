@@ -117,3 +117,13 @@ Roteiro de homologação: `HOMOLOGACAO_USUARIO_REAL.md`. Histórico: `HOMOLOGACA
   passo em `docs/RESET_AMBIENTE.md`.
 - **Piloto**: roteiro e checklist técnico em `docs/PILOTO_GO_LIVE.md`.
   Ambiente ainda **não** classificado como limpo/validado.
+
+## 6.16.1 — Autorização do super administrador (corrigida)
+
+- 53 policies migradas de `has_role(auth.uid(),'admin')` para
+  `is_platform_super_admin(auth.uid())`.
+- Helper novo `is_platform_client_admin` separando `platform_admin` de
+  `support_agent`/`developer`.
+- `AuthContext` expõe `isPlatformAdmin`; AdminPanel alinhado ao backend.
+- `luccafelipe99@gmail.com`: `super_admin` + `admin` legado (compat temporária).
+- Reset **não** executado. Typecheck e build PASS.

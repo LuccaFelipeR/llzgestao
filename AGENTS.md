@@ -162,3 +162,17 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
   passo em `docs/RESET_AMBIENTE.md`.
 - **Piloto**: roteiro e checklist técnico em `docs/PILOTO_GO_LIVE.md`.
   Ambiente ainda **não** classificado como limpo/validado.
+
+## Fase 6.16.1 — autorização do super administrador
+
+- **Causa raiz:** 53 policies dependiam exclusivamente de
+  `has_role(auth.uid(),'admin')`. Após 6.16 a conta oficial ficou só com
+  `super_admin` → UI liberava, RLS bloqueava.
+- **Correção:** todas migradas para `is_platform_super_admin(auth.uid())`.
+- **Novo helper:** `is_platform_client_admin` (`super_admin`/`admin`/`platform_admin`)
+  usado em `company_members` UPDATE e `companies` UPDATE de staff.
+- **Frontend:** `isPlatformAdmin` no `AuthContext`; AdminPanel desabilita o que o
+  papel não pode executar. `isAdmin` permanece apenas como "é equipe LLZ".
+- **Papel legado `admin`:** restaurado temporariamente para
+  `luccafelipe99@gmail.com`. Só remover após homologação humana.
+- **Reset:** não executado.
