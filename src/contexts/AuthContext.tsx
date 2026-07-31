@@ -49,8 +49,10 @@ interface AuthContextType {
   /** true para qualquer papel global da equipe LLZ */
   isPlatformStaff: boolean;
   isPlatformSuperAdmin: boolean;
+  /** super_admin/admin legado/platform_admin — pode administrar clientes e vínculos */
+  isPlatformAdmin: boolean;
   isSupportStaff: boolean;
-  /** Compat: usado em telas administrativas existentes */
+  /** Compat: "é equipe LLZ" (apenas visibilidade de áreas administrativas) */
   isAdmin: boolean;
   isApproved: boolean;
   loading: boolean;
