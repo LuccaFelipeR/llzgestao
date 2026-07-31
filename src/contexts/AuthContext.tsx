@@ -16,6 +16,8 @@ export const PLATFORM_ROLES = [
 ] as const;
 
 const SUPER_ADMIN_ROLES = ["super_admin", "admin"];
+/** Administração de clientes: espelha public.is_platform_client_admin */
+const CLIENT_ADMIN_ROLES = ["super_admin", "admin", "platform_admin"];
 const SUPPORT_ROLES = ["super_admin", "admin", "platform_admin", "support_agent"];
 
 export type PlatformRole = (typeof PLATFORM_ROLES)[number];
