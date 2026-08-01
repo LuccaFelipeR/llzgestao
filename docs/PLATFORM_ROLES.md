@@ -171,3 +171,14 @@ Regra final por papel global:
 
 O papel legado `admin` de `luccafelipe99@gmail.com` foi **restaurado** e só pode
 ser removido após homologação humana das ações administrativas.
+
+## Fase 6.16.2 — login único da equipe LLZ
+
+O atalho "Acesso Desenvolvedor" da tela de login foi **removido**, junto com as
+credenciais e o código de acesso que estavam no código do frontend. Toda a
+equipe LLZ entra pelo login normal (e-mail + senha individual, recuperação de
+senha e confirmação de e-mail quando aplicável). Após autenticar, o
+`AuthContext` lê `public.user_roles` e determina o acesso.
+
+`luccafelipe99@gmail.com` permanece com `super_admin` **e** com o papel legado
+`admin` (compatibilidade temporária), sem membership empresarial.

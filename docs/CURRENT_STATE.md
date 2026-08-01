@@ -127,3 +127,17 @@ Roteiro de homologação: `HOMOLOGACAO_USUARIO_REAL.md`. Histórico: `HOMOLOGACA
 - `AuthContext` expõe `isPlatformAdmin`; AdminPanel alinhado ao backend.
 - `luccafelipe99@gmail.com`: `super_admin` + `admin` legado (compat temporária).
 - Reset **não** executado. Typecheck e build PASS.
+
+## Fase 6.16.2 — correção do reset e remoção do acesso automático
+
+- RPCs de reset passaram a receber `_caller_id` validado pela Edge Function
+  (antes falhavam porque `auth.uid()` é nulo em chamadas via service role).
+- `EXECUTE` das RPCs revogado de `anon`/`authenticated`; somente `service_role`.
+- Edge Function `admin-reset` com status HTTP padronizados (401/403/400/500) e
+  mensagens em português, sem stack nem SQL.
+- `/admin/reset` não quebra mais em caso de erro: card de erro + "Tentar
+  novamente", preview preservado, sem execução automática.
+- "Acesso Desenvolvedor" removido do login; credenciais fixas removidas do
+  código. Equipe LLZ usa login normal.
+- Nenhum dado excluído: usuários, perfis, papéis, memberships, empresas e
+  contas Auth preservados. Reset **não executado**.

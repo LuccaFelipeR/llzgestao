@@ -177,3 +177,53 @@ O papel global legado `admin` foi **restaurado** para `luccafelipe99@gmail.com`
 como compatibilidade temporária. O reset continua **não executado** e exige o
 JWT do super admin autenticado. Só remova o papel legado após a homologação
 descrita em `docs/TESTES_MANUAIS.md` (seção 6.16.1).
+
+## Fase 6.16.2 — correção da autorização das RPCs (reset NÃO executado)
+
+### Causa do erro 400
+
+A Edge Function validava o JWT corretamente, mas chamava
+`platform_reset_preview()` com a **service role**. Dentro da função SQL a
+validação usava `auth.uid()`, que nessa chamada não representa o usuário
+autenticado original → a função rejeitava com
+"Apenas o super admin pode consultar o reset de ambiente".
+
+### Correção
+
+| Antes | Depois |
+|---|---|
+| `platform_reset_preview()` | `platform_reset_preview(_caller_id uuid)` |
+| `platform_reset_execute()` | `platform_reset_execute(_caller_id uuid)` |
+| Validação por `auth.uid()` | Validação direta em `public.user_roles` pelo `_caller_id` |
+
+O `_caller_id` é preenchido **exclusivamente** pela Edge Function, a partir do
+JWT validado com `auth.getUser()`. O frontend envia apenas
+`{ action: "preview" }` ou `{ action: "execute", confirm: "RESET" }`.
+
+`platform_reset_execute` também confirma que o chamador é staff preservada e
+que não está na lista de exclusão.
+
+### Grants
+
+`REVOKE ALL` de `PUBLIC`, `anon` e `authenticated`; `GRANT EXECUTE` apenas para
+`service_role` (e `postgres`). Chamada direta pelo navegador é negada.
+
+### Status HTTP padronizados
+
+- 401 — JWT ausente/sessão inválida
+- 403 — autenticado sem `super_admin`/`admin` legado
+- 400 — blocker, confirmação inválida ou regra de negócio
+- 500 — falha interna
+
+### Tela /admin/reset
+
+Erros não causam mais tela branca: a página permanece renderizada, mostra um
+card de erro com mensagem em português, mantém o último preview válido e
+oferece "Tentar novamente". O preview não é mais chamado recursivamente após a
+execução.
+
+### Estado
+
+Reset **NÃO executado**. Nenhum usuário, empresa, perfil, membership ou conta
+Auth foi removido nesta fase. Execução continua manual, pelo próprio super
+admin autenticado.
