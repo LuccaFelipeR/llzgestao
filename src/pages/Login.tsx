@@ -166,52 +166,10 @@ export default function Login() {
           </p>
         </div>
 
-        {/* Dev Access Button */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mb-4">
-          <button
-            onClick={() => setMode("dev")}
-            className="group flex items-center gap-2.5 p-3.5 rounded-2xl border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 hover:border-primary/40 transition-all text-left w-full disabled:opacity-60"
-          >
-            <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Shield size={18} className="text-primary" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-foreground">Acesso Desenvolvedor</p>
-              <p className="text-[10px] text-muted-foreground">Requer código de acesso</p>
-            </div>
-          </button>
-        </motion.div>
-
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">ou entre com sua conta</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
-
         {/* Auth Card */}
         <div className="glass-card p-6">
           <AnimatePresence mode="wait">
-            {mode === "dev" && (
-              <motion.form key="dev" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} onSubmit={handleDevAccess} className="space-y-4">
-                <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Shield size={20} className="text-primary" /> Acesso Desenvolvedor
-                </h2>
-                <p className="text-xs text-muted-foreground">Insira o código de acesso do desenvolvedor para entrar como admin.</p>
-                <div>
-                  <Label className="text-xs font-semibold">Código de Acesso</Label>
-                  <div className="relative mt-1">
-                    <Input type={showPassword ? "text" : "password"} value={devCode} onChange={(e) => setDevCode(e.target.value)} required placeholder="Digite o código..." className="h-11 rounded-xl pr-10" />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full h-11 rounded-xl font-bold text-sm" disabled={loading}>
-                  {loading ? "Verificando..." : "Entrar como Admin"}
-                </Button>
-                <button type="button" onClick={() => setMode("login")} className="text-xs text-primary hover:underline w-full text-center font-medium">Voltar ao login</button>
-              </motion.form>
-            )}
+
 
             {mode === "login" && (
               <motion.form key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} onSubmit={handleLogin} className="space-y-4">
