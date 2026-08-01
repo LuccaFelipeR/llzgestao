@@ -22,20 +22,24 @@ Deno.serve(async (req) => {
   const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
   try {
+    // 1. JWT obrigatório
     const authHeader = req.headers.get("Authorization") ?? "";
-    if (!authHeader.startsWith("Bearer ")) return json({ error: "Não autenticado" }, 401);
+    if (!authHeader.startsWith("Bearer ")) {
+      return json({ error: "Sua sessão expirou. Entre novamente." }, 401);
+    }
 
-    // 1. Valida o usuário autenticado
     const userClient = createClient(SUPABASE_URL, ANON_KEY, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) return json({ error: "Sessão inválida" }, 401);
+    if (userErr || !userData?.user) {
+      return json({ error: "Sua sessão expirou. Entre novamente." }, 401);
+    }
     const caller = userData.user;
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
-    // 2. Só super admin da plataforma
+    // 2. Autorização: apenas super admin (ou papel legado admin)
     const { data: callerRoles } = await admin
       .from("user_roles")
       .select("role")
@@ -43,14 +47,21 @@ Deno.serve(async (req) => {
     const isSuper = (callerRoles ?? []).some((r: { role: string }) =>
       ["super_admin", "admin"].includes(r.role)
     );
-    if (!isSuper) return json({ error: "Apenas o super admin pode executar esta operação" }, 403);
+    if (!isSuper) {
+      return json({ error: "Esta operação é exclusiva do super administrador da plataforma." }, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const action = body?.action === "execute" ? "execute" : "preview";
 
-    // 3. PREVIEW (sempre calculado, mesmo no execute)
-    const { data: preview, error: previewErr } = await admin.rpc("platform_reset_preview");
-    if (previewErr) return json({ error: previewErr.message }, 400);
+    // 3. PREVIEW — o caller_id vem SEMPRE do JWT validado, nunca do frontend
+    const { data: preview, error: previewErr } = await admin.rpc("platform_reset_preview", {
+      _caller_id: caller.id,
+    });
+    if (previewErr) {
+      console.error("platform_reset_preview error", previewErr);
+      return json({ error: "Não foi possível gerar o preview do ambiente." }, 400);
+    }
 
     const preserved = (preview as any)?.preserved_platform_users ?? [];
     const usersToDelete = (preview as any)?.users_to_delete ?? [];
@@ -75,14 +86,19 @@ Deno.serve(async (req) => {
       return json({ action: "aborted", blockers, ...(preview as any) }, 400);
     }
     if (body?.confirm !== "RESET") {
-      return json({ error: 'Confirmação obrigatória: envie confirm: "RESET"' }, 400);
+      return json({ error: 'Confirmação obrigatória: digite RESET para executar.' }, 400);
     }
 
-    // 5. Execução: dados do banco em transação controlada (função admin)
-    const { data: report, error: execErr } = await admin.rpc("platform_reset_execute");
-    if (execErr) return json({ error: execErr.message, action: "failed" }, 400);
+    // 5. Execução transacional no banco
+    const { data: report, error: execErr } = await admin.rpc("platform_reset_execute", {
+      _caller_id: caller.id,
+    });
+    if (execErr) {
+      console.error("platform_reset_execute error", execErr);
+      return json({ error: "O reset foi rejeitado pelas regras de segurança. Nenhum dado foi alterado.", action: "failed" }, 400);
+    }
 
-    // 6. Remoção dos usuários Auth clientes + revogação de sessões
+    // 6. Remoção das contas Auth dos clientes
     const deletedAuth: string[] = [];
     const authErrors: { id: string; error: string }[] = [];
     for (const u of usersToDelete) {
@@ -102,6 +118,7 @@ Deno.serve(async (req) => {
         "Tokens já emitidos podem permanecer válidos até expirar; as contas removidas não conseguem mais ler nem gravar dados.",
     });
   } catch (e) {
-    return json({ error: (e as Error).message }, 500);
+    console.error("admin-reset unexpected error", e);
+    return json({ error: "Ocorreu uma falha interna. Nenhum dado foi alterado." }, 500);
   }
 });
