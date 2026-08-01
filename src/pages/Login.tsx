@@ -8,19 +8,15 @@ import { friendlyError } from "@/lib/error-messages";
 import { LogIn, UserPlus, KeyRound, Eye, EyeOff, Shield, Boxes, Zap, MailCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const DEV_EMAIL = "luccafelipe99@gmail.com";
-const DEV_PASS = "pro99123@";
-const DEV_ACCESS_CODE = "AdminLLZ0726";
-
 export default function Login() {
-  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "dev" | "signup-sent">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot" | "signup-sent">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [devCode, setDevCode] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [sentTo, setSentTo] = useState("");
