@@ -94,11 +94,28 @@ export default function PlatformReset() {
         </p>
       </div>
 
+      {errorMsg && (
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+              <AlertTriangle size={16} /> Falha na operação
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-xs">
+            <p>{errorMsg}</p>
+            <Button size="sm" variant="outline" onClick={() => call("preview")} disabled={loading}>
+              <RefreshCw size={14} className="mr-1" /> Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => call("preview")} disabled={loading} variant="outline">
-          <RefreshCw size={14} className="mr-1" /> Gerar preview
+          <RefreshCw size={14} className="mr-1" /> {loading ? "Processando..." : "Gerar preview"}
         </Button>
       </div>
+
 
       {preview && (
         <>
