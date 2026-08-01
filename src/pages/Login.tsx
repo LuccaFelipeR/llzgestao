@@ -111,36 +111,8 @@ export default function Login() {
     else { toast({ title: "Email enviado" }); setMode("login"); }
   }
 
-  async function handleDevAccess(e: React.FormEvent) {
-    e.preventDefault();
-    if (devCode !== DEV_ACCESS_CODE) {
-      toast({ title: "Código inválido", description: "O código de acesso do desenvolvedor está incorreto.", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    // Try login first
-    let { error } = await supabase.auth.signInWithPassword({ email: DEV_EMAIL, password: DEV_PASS });
-    if (error?.message?.includes("Invalid login credentials")) {
-      const { error: signupErr } = await supabase.auth.signUp({
-        email: DEV_EMAIL, password: DEV_PASS,
-        options: { data: { full_name: "Admin Dev" }, emailRedirectTo: window.location.origin },
-      });
-      if (signupErr) {
-        toast({ title: "Erro", description: signupErr.message, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-      const { error: loginErr } = await supabase.auth.signInWithPassword({ email: DEV_EMAIL, password: DEV_PASS });
-      if (loginErr) {
-        toast({ title: "Erro ao entrar", description: loginErr.message, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-    } else if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    }
-    setLoading(false);
-  }
+
+
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
