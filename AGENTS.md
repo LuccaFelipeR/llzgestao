@@ -176,3 +176,18 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - **Papel legado `admin`:** restaurado temporariamente para
   `luccafelipe99@gmail.com`. Só remover após homologação humana.
 - **Reset:** não executado.
+
+## Fase 6.16.2 — correção do reset e remoção do acesso desenvolvedor
+
+- **Causa do 400:** as RPCs de reset validavam `auth.uid()`, mas eram chamadas
+  pela service role dentro da Edge Function. Agora recebem `_caller_id uuid`
+  preenchido pela função a partir do JWT validado; o frontend nunca envia o id.
+- `platform_reset_preview(_caller_id)` e `platform_reset_execute(_caller_id)`:
+  `SECURITY DEFINER`, `search_path` fixo, `EXECUTE` apenas para `service_role`.
+- Edge Function `admin-reset`: 401 (sessão), 403 (papel), 400 (blocker/confirm),
+  500 (falha interna), mensagens em pt-BR sem detalhes internos.
+- **"Acesso Desenvolvedor" removido** do `Login.tsx` (botão, formulário, código
+  de acesso, login/criação automáticos e credenciais fixas). Equipe LLZ usa
+  login normal. Nenhuma conta, perfil ou papel foi removido.
+- `luccafelipe99@gmail.com` mantém `super_admin` + `admin` legado temporário.
+- **Reset continua NÃO executado** e permanece manual.

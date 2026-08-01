@@ -124,3 +124,21 @@ Cruzados: admin da empresa A não altera membros da empresa B; supervisor e
 operador não alteram cargos; `support_agent`/`developer` veem, mas não alteram.
 
 Após todos passarem, remover o papel legado `admin`, sair/entrar e repetir.
+
+## 6.16.2 — reset e login normal
+
+1. Tela de login não exibe "Acesso Desenvolvedor", "Requer código de acesso",
+   "Código de Acesso" nem "Entrar como Admin".
+2. Login normal com e-mail e senha funciona (cliente e equipe LLZ).
+3. `luccafelipe99@gmail.com` entra pelo login normal, cai em `/admin/global`,
+   não recebe onboarding de cliente e acessa `/admin/reset`.
+4. Chamada da Edge Function sem sessão → 401.
+5. Usuário cliente → 403.
+6. `platform_admin`, `support_agent`, `developer` → 403.
+7. Super admin gera preview com sucesso.
+8. `supabase.rpc('platform_reset_preview', ...)` direto do navegador → negado.
+9. Preview não altera nenhum dado (conferir contagens antes/depois).
+10. Execução sem `confirm: "RESET"` → 400.
+11. Forçar erro (ex.: sessão expirada) → a tela mostra card de erro, sem tela
+    branca e sem perder o menu global.
+12. Nenhum reset executado.

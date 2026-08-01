@@ -11,20 +11,55 @@ import { toast } from "sonner";
 
 type PreviewResult = any;
 
+const STATUS_MESSAGES: Record<number, string> = {
+  401: "Sua sessão expirou. Entre novamente.",
+  403: "Esta operação é exclusiva do super administrador da plataforma.",
+  400: "Não foi possível gerar o preview. Verifique os bloqueios apresentados.",
+  500: "Ocorreu uma falha interna. Nenhum dado foi alterado.",
+};
+
 export default function PlatformReset() {
   const { isPlatformSuperAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [result, setResult] = useState<any>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [confirm, setConfirm] = useState("");
 
   async function call(action: "preview" | "execute") {
     setLoading(true);
+    setErrorMsg(null);
     try {
       const { data, error } = await supabase.functions.invoke("admin-reset", {
         body: action === "execute" ? { action, confirm: "RESET" } : { action },
       });
-      if (error) throw error;
+      if (error) {
+        // Detalhe técnico apenas no console; usuário vê mensagem tratada.
+        console.error("[admin-reset]", action, error);
+        let status = 0;
+        let serverMessage: string | null = null;
+        const ctx = (error as any)?.context;
+        if (ctx && typeof ctx.status === "number") {
+          status = ctx.status;
+          try {
+            const body = await ctx.clone().json();
+            if (typeof body?.error === "string") serverMessage = body.error;
+            if (Array.isArray(body?.blockers) && body.blockers.length > 0) {
+              serverMessage = body.blockers.join(" ");
+            }
+          } catch {
+            /* corpo não-JSON: mantém mensagem padrão */
+          }
+        }
+        const msg =
+          STATUS_MESSAGES[status] ??
+          serverMessage ??
+          "Não foi possível concluir a operação de manutenção.";
+        setErrorMsg(serverMessage && status !== 401 && status !== 403 ? `${msg} ${serverMessage}` : msg);
+        toast.error(msg);
+        setLoading(false);
+        return;
+      }
       if (action === "preview") {
         setPreview(data);
         setResult(null);
@@ -32,10 +67,12 @@ export default function PlatformReset() {
       } else {
         setResult(data);
         toast.success("Reset executado.");
-        await call("preview");
+        setConfirm("");
       }
     } catch (e: any) {
-      toast.error(e?.message ?? "Falha na operação de manutenção");
+      console.error("[admin-reset] exceção", e);
+      setErrorMsg("Ocorreu uma falha interna. Nenhum dado foi alterado.");
+      toast.error("Ocorreu uma falha interna. Nenhum dado foi alterado.");
     }
     setLoading(false);
   }
@@ -43,6 +80,7 @@ export default function PlatformReset() {
   if (!isPlatformSuperAdmin) return null;
 
   const counts: Record<string, number> = preview?.counts_to_delete ?? {};
+
 
   return (
     <div className="page-container space-y-5">
@@ -56,11 +94,28 @@ export default function PlatformReset() {
         </p>
       </div>
 
+      {errorMsg && (
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+              <AlertTriangle size={16} /> Falha na operação
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-xs">
+            <p>{errorMsg}</p>
+            <Button size="sm" variant="outline" onClick={() => call("preview")} disabled={loading}>
+              <RefreshCw size={14} className="mr-1" /> Tentar novamente
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-2">
         <Button onClick={() => call("preview")} disabled={loading} variant="outline">
-          <RefreshCw size={14} className="mr-1" /> Gerar preview
+          <RefreshCw size={14} className="mr-1" /> {loading ? "Processando..." : "Gerar preview"}
         </Button>
       </div>
+
 
       {preview && (
         <>

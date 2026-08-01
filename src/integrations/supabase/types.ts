@@ -1030,8 +1030,8 @@ export type Database = {
         Args: { _company_id: string }
         Returns: boolean
       }
-      platform_reset_execute: { Args: never; Returns: Json }
-      platform_reset_preview: { Args: never; Returns: Json }
+      platform_reset_execute: { Args: { _caller_id: string }; Returns: Json }
+      platform_reset_preview: { Args: { _caller_id: string }; Returns: Json }
       reject_company: {
         Args: { _company_id: string; _reason: string }
         Returns: undefined

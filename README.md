@@ -163,3 +163,10 @@ pronto para produção.
   passo em `docs/RESET_AMBIENTE.md`.
 - **Piloto**: roteiro e checklist técnico em `docs/PILOTO_GO_LIVE.md`.
   Ambiente ainda **não** classificado como limpo/validado.
+
+### Acesso da equipe LLZ (6.16.2)
+
+Não existe atalho de acesso administrativo na tela de login. Toda a equipe LLZ
+entra com e-mail e senha individuais; os papéis globais são lidos de
+`user_roles` após a autenticação. O reset de ambiente (`/admin/reset`) é
+exclusivo do super admin, executado manualmente e ainda **não executado**.
