@@ -53,8 +53,9 @@ Cada empresa possui seus dados completamente isolados. Todas as tabelas utilizam
 **Controle de Abas:**
 O administrador pode bloquear/desbloquear abas específicas por usuário, controlando exatamente quais funcionalidades cada pessoa acessa.
 
-**Super Admin (Desenvolvedor):**
-O email luccafelipe99@gmail.com é auto-aprovado e recebe role admin automaticamente. O acesso dev requer o código exclusivo AdminLLZ0726.
+**Equipe LLZ (papéis globais):**
+Os papéis globais (super_admin, platform_admin, support_agent, developer) são concedidos em user_roles. Toda a equipe entra pelo login normal, com e-mail e senha individuais — não existe atalho de acesso automático.
+
 
 **Segurança:**
 - Todas as tabelas possuem RLS (Row Level Security) ativo
