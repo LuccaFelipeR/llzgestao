@@ -182,3 +182,8 @@ senha e confirmação de e-mail quando aplicável). Após autenticar, o
 
 `luccafelipe99@gmail.com` permanece com `super_admin` **e** com o papel legado
 `admin` (compatibilidade temporária), sem membership empresarial.
+
+## 6.16.3
+
+Cliente preservado na limpeza seletiva **não** recebe papel global. A preservação vem do
+vínculo com empresa mantida ou da lista obrigatória em `platform_protected_user_emails()`.
