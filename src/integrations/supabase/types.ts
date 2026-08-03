@@ -1034,6 +1034,10 @@ export type Database = {
         Args: { _caller_id: string; _company_ids: string[] }
         Returns: Json
       }
+      platform_cleanup_inventory: {
+        Args: { _caller_id: string }
+        Returns: Json
+      }
       platform_cleanup_preview: {
         Args: { _caller_id: string; _company_ids: string[] }
         Returns: Json
