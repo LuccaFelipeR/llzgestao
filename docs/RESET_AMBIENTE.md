@@ -227,3 +227,87 @@ execução.
 Reset **NÃO executado**. Nenhum usuário, empresa, perfil, membership ou conta
 Auth foi removido nesta fase. Execução continua manual, pelo próprio super
 admin autenticado.
+
+## Fase 6.16.3 — Limpeza seletiva de empresas (NADA EXECUTADO)
+
+A partir desta fase a tela `/admin/reset` chama-se **Manutenção e limpeza do ambiente**
+e possui dois modos claramente separados:
+
+| Modo | Escopo | Confirmação |
+|---|---|---|
+| **Limpeza seletiva** (padrão) | Apenas as empresas escolhidas e seus dados | `EXCLUIR SELECIONADAS` |
+| **Reset completo** (legado) | Todas as empresas clientes | `RESET` |
+
+### RPCs
+
+| Função | Tipo | Descrição |
+|---|---|---|
+| `platform_cleanup_inventory(_caller_id uuid)` | STABLE, SECURITY DEFINER | Lista todas as empresas com contagem por tabela e total vinculado |
+| `platform_cleanup_preview(_caller_id uuid, _company_ids uuid[])` | STABLE, SECURITY DEFINER | Preview seletivo, somente leitura |
+| `platform_cleanup_execute(_caller_id uuid, _company_ids uuid[])` | SECURITY DEFINER | Execução transacional, revalida o preview |
+| `platform_protected_company_names()` / `platform_protected_user_emails()` | IMMUTABLE | Listas de preservação obrigatória |
+
+`search_path` fixo em `public`. `REVOKE ALL` de `PUBLIC`, `anon` e `authenticated`;
+`GRANT EXECUTE` somente para `service_role` e `postgres`. O `_caller_id` vem sempre do
+JWT validado na Edge Function `admin-reset`; o navegador envia apenas os `company_ids`.
+
+### Preservação obrigatória desta implantação
+
+Empresas (checkbox desabilitado + blocker no servidor):
+
+- Lemon Haze Floricultura
+- Magrao Auto Peças
+- Congelados Sartorio
+
+Contas (nunca removidas, mesmo se ficarem sem vínculo):
+
+- luccafelipe99@gmail.com (staff — `super_admin` + `admin` legado)
+- abel.beleleu@gmail.com
+- manus2silva01@gmail.com
+- leandrom.yamasaki@gmail.com (cliente, Lemon Haze Floricultura)
+- magraoautopecascbm@gmail.com (cliente, Magrao Auto Peças)
+- marco.sartorio@hotmail.com (cliente, Congelados Sartorio)
+
+Clientes preservados **não** recebem papel global — a preservação é por vínculo
+com empresa mantida e pela lista obrigatória.
+
+### Regra de preservação de usuários
+
+PRESERVAR quando: possui qualquer papel em `user_roles`; ou pertence a pelo menos uma
+empresa não selecionada; ou está na lista obrigatória.
+
+EXCLUIR conta Auth somente quando: não possui papel global, não está na lista
+obrigatória, não tem vínculo com empresa preservada e todos os vínculos pertencem às
+empresas selecionadas — e a conta aparece explicitamente em `AUTH_USERS_TO_DELETE`.
+
+### Vínculos mistos
+
+Usuário ligado a uma empresa selecionada **e** a uma preservada: conta Auth e `profiles`
+preservados; apenas o `company_members` da empresa removida é excluído.
+
+### Usuários órfãos
+
+Perfis sem papel global e sem nenhum vínculo aparecem em seção separada e **não** são
+excluídos pela limpeza seletiva.
+
+### Blockers implementados
+
+Seleção vazia · empresa inexistente · empresa de preservação obrigatória selecionada ·
+usuário protegido ou com papel global em `AUTH_USERS_TO_DELETE` · vínculo sem perfil
+identificado · caller sem `super_admin`/`admin` legado · id fora do formato UUID.
+Qualquer mudança de seleção na UI invalida o preview, limpa a confirmação e bloqueia
+o botão de execução.
+
+### Ordem de exclusão (seletiva)
+
+`support_ticket_messages` (dos tickets das empresas) → `support_tickets` →
+`picking_list_items` → `picking_lists` → `notifications` → `stock_balance` →
+`movements` → `lots` → `addresses` → `products` → `activity_log` (com `company_id`
+selecionado) → `company_members` → `companies` → `user_tab_permissions` e `profiles`
+apenas dos usuários de `AUTH_USERS_TO_DELETE`. Nenhum `DELETE` sem filtro por empresa.
+
+### Estado
+
+**LIMPEZA NÃO EXECUTADA. RESET COMPLETO NÃO EXECUTADO. Nenhuma empresa, usuário,
+profile, membership ou conta Auth foi removida nesta fase.** A execução é manual,
+pelo super admin autenticado.
