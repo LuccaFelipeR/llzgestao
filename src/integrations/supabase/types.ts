@@ -1030,6 +1030,16 @@ export type Database = {
         Args: { _company_id: string }
         Returns: boolean
       }
+      platform_cleanup_execute: {
+        Args: { _caller_id: string; _company_ids: string[] }
+        Returns: Json
+      }
+      platform_cleanup_preview: {
+        Args: { _caller_id: string; _company_ids: string[] }
+        Returns: Json
+      }
+      platform_protected_company_names: { Args: never; Returns: string[] }
+      platform_protected_user_emails: { Args: never; Returns: string[] }
       platform_reset_execute: { Args: { _caller_id: string }; Returns: Json }
       platform_reset_preview: { Args: { _caller_id: string }; Returns: Json }
       reject_company: {
