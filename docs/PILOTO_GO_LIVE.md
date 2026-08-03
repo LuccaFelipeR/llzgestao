@@ -55,3 +55,9 @@ O checklist de ativação da empresa acompanha as etapas 1–12 e pode atingir
 
 **Não classificar o piloto como produção autônoma.** Toda a operação inicial é
 acompanhada pela equipe LLZ.
+
+## 6.16.3 — limpeza antes do piloto
+
+Antes do go-live, usar **Limpeza seletiva** (não o reset completo) para remover apenas
+as empresas de teste, preservando Lemon Haze Floricultura, Magrao Auto Peças e
+Congelados Sartorio e seus usuários. Passo a passo em `docs/RESET_AMBIENTE.md`.

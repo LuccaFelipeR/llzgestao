@@ -191,3 +191,22 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
   login normal. Nenhuma conta, perfil ou papel foi removido.
 - `luccafelipe99@gmail.com` mantém `super_admin` + `admin` legado temporário.
 - **Reset continua NÃO executado** e permanece manual.
+
+## Fase 6.16.3 — limpeza seletiva de empresas
+
+- `/admin/reset` agora é **"Manutenção e limpeza do ambiente"**, com duas abas:
+  **Limpeza seletiva** (padrão) e **Reset completo** (legado, inalterado).
+- Novas RPCs `platform_cleanup_inventory`, `platform_cleanup_preview` e
+  `platform_cleanup_execute` (`SECURITY DEFINER`, `search_path=public`,
+  `EXECUTE` apenas para `service_role`/`postgres`). `_caller_id` sempre vem do JWT
+  validado na Edge Function `admin-reset`; o frontend envia só os `company_ids`.
+- Preservação obrigatória embutida no banco: empresas Lemon Haze Floricultura,
+  Magrao Auto Peças e Congelados Sartorio; contas luccafelipe99@, abel.beleleu@,
+  manus2silva01@, leandrom.yamasaki@, magraoautopecascbm@ e marco.sartorio@.
+- Conta Auth só é removida quando não há papel global, não há vínculo com empresa
+  preservada e todos os vínculos estavam nas empresas selecionadas. Vínculo misto
+  preserva conta e profile e remove apenas o membership da empresa excluída.
+- Usuários órfãos são listados, nunca excluídos pela limpeza.
+- Confirmação textual `EXCLUIR SELECIONADAS`; qualquer mudança de seleção invalida o
+  preview. Detalhes em `docs/RESET_AMBIENTE.md`.
+- **Nenhuma exclusão executada nesta fase.**

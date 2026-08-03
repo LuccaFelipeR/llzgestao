@@ -14,6 +14,8 @@ function json(body: unknown, status = 200) {
   });
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -52,9 +54,92 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const action = body?.action === "execute" ? "execute" : "preview";
+    const action: string = typeof body?.action === "string" ? body.action : "preview";
 
-    // 3. PREVIEW — o caller_id vem SEMPRE do JWT validado, nunca do frontend
+    // =====================================================
+    // LIMPEZA SELETIVA
+    // =====================================================
+    if (action === "inventory") {
+      const { data, error } = await admin.rpc("platform_cleanup_inventory", { _caller_id: caller.id });
+      if (error) {
+        console.error("platform_cleanup_inventory error", error);
+        return json({ error: "Não foi possível carregar a lista de empresas." }, 400);
+      }
+      return json({ action: "inventory", ...(data as Record<string, unknown>) });
+    }
+
+    if (action === "cleanup_preview" || action === "cleanup_execute") {
+      const rawIds: unknown = body?.company_ids;
+      if (!Array.isArray(rawIds) || rawIds.length === 0) {
+        return json({ error: "Selecione pelo menos uma empresa para a limpeza seletiva." }, 400);
+      }
+      const ids = [...new Set(rawIds.map(String))];
+      if (ids.some((id) => !UUID_RE.test(id))) {
+        return json({ error: "Identificador de empresa inválido recebido." }, 400);
+      }
+
+      const { data: preview, error: prevErr } = await admin.rpc("platform_cleanup_preview", {
+        _caller_id: caller.id,
+        _company_ids: ids,
+      });
+      if (prevErr) {
+        console.error("platform_cleanup_preview error", prevErr);
+        return json({ error: "Não foi possível gerar o preview da limpeza seletiva." }, 400);
+      }
+
+      const blockers: string[] = ((preview as any)?.blockers ?? []) as string[];
+
+      if (action === "cleanup_preview") {
+        return json({ action: "cleanup_preview", company_ids: ids, ...(preview as any) });
+      }
+
+      // ---- execução seletiva ----
+      if (blockers.length > 0) {
+        return json({ action: "aborted", blockers, ...(preview as any) }, 400);
+      }
+      if (body?.confirm !== "EXCLUIR SELECIONADAS") {
+        return json(
+          { error: 'Confirmação obrigatória: digite EXCLUIR SELECIONADAS para executar a limpeza.' },
+          400,
+        );
+      }
+
+      const { data: report, error: execErr } = await admin.rpc("platform_cleanup_execute", {
+        _caller_id: caller.id,
+        _company_ids: ids,
+      });
+      if (execErr) {
+        console.error("platform_cleanup_execute error", execErr);
+        return json(
+          { error: "A limpeza foi rejeitada pelas regras de segurança. Nenhum dado foi alterado.", action: "failed" },
+          400,
+        );
+      }
+
+      const authToDelete = ((report as any)?.auth_users_to_delete ?? []) as any[];
+      const deletedAuth: string[] = [];
+      const authErrors: { id: string; error: string }[] = [];
+      for (const u of authToDelete) {
+        const { error } = await admin.auth.admin.deleteUser(u.id);
+        if (error) authErrors.push({ id: u.id, error: error.message });
+        else deletedAuth.push(u.email ?? u.id);
+      }
+
+      return json({
+        action: "cleanup_executed",
+        complete_success: authErrors.length === 0,
+        company_ids: ids,
+        db_report: (report as any)?.removed ?? {},
+        deleted_auth_users: deletedAuth,
+        auth_errors: authErrors,
+        note:
+          "Somente as empresas selecionadas e seus dados foram removidos. Contas com vínculo em empresas preservadas permanecem ativas.",
+      });
+    }
+
+    // =====================================================
+    // RESET COMPLETO (comportamento existente)
+    // =====================================================
     const { data: preview, error: previewErr } = await admin.rpc("platform_reset_preview", {
       _caller_id: caller.id,
     });
@@ -66,7 +151,6 @@ Deno.serve(async (req) => {
     const preserved = (preview as any)?.preserved_platform_users ?? [];
     const usersToDelete = (preview as any)?.users_to_delete ?? [];
 
-    // 4. Travas de segurança
     const blockers: string[] = [];
     if (!preserved.some((u: any) => ["super_admin", "admin"].includes(u.role))) {
       blockers.push("Nenhum super admin válido identificado — reset abortado.");
@@ -78,7 +162,7 @@ Deno.serve(async (req) => {
       blockers.push("O usuário atual não possui papel global preservado — reset abortado.");
     }
 
-    if (action === "preview") {
+    if (action !== "execute") {
       return json({ action: "preview", blockers, ...(preview as any) });
     }
 
@@ -89,7 +173,6 @@ Deno.serve(async (req) => {
       return json({ error: 'Confirmação obrigatória: digite RESET para executar.' }, 400);
     }
 
-    // 5. Execução transacional no banco
     const { data: report, error: execErr } = await admin.rpc("platform_reset_execute", {
       _caller_id: caller.id,
     });
@@ -98,7 +181,6 @@ Deno.serve(async (req) => {
       return json({ error: "O reset foi rejeitado pelas regras de segurança. Nenhum dado foi alterado.", action: "failed" }, 400);
     }
 
-    // 6. Remoção das contas Auth dos clientes
     const deletedAuth: string[] = [];
     const authErrors: { id: string; error: string }[] = [];
     for (const u of usersToDelete) {

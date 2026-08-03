@@ -170,3 +170,8 @@ Não existe atalho de acesso administrativo na tela de login. Toda a equipe LLZ
 entra com e-mail e senha individuais; os papéis globais são lidos de
 `user_roles` após a autenticação. O reset de ambiente (`/admin/reset`) é
 exclusivo do super admin, executado manualmente e ainda **não executado**.
+
+### Manutenção do ambiente (6.16.3)
+
+`/admin/reset` oferece **Limpeza seletiva** (remove apenas empresas escolhidas) e
+**Reset completo** (remove todas as empresas clientes). Ver `docs/RESET_AMBIENTE.md`.

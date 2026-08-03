@@ -141,3 +141,10 @@ Roteiro de homologação: `HOMOLOGACAO_USUARIO_REAL.md`. Histórico: `HOMOLOGACA
   código. Equipe LLZ usa login normal.
 - Nenhum dado excluído: usuários, perfis, papéis, memberships, empresas e
   contas Auth preservados. Reset **não executado**.
+
+## 6.16.3 — Limpeza seletiva de empresas
+
+Implementada a limpeza seletiva por empresa em `/admin/reset` (preview + execução
+manual). Reset completo mantido em aba separada. Regras de preservação de empresas e
+usuários documentadas em `docs/RESET_AMBIENTE.md`.
+**Nenhuma empresa, usuário ou conta Auth foi excluída nesta fase.**

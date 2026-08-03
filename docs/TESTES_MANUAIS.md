@@ -142,3 +142,15 @@ Após todos passarem, remover o papel legado `admin`, sair/entrar e repetir.
 11. Forçar erro (ex.: sessão expirada) → a tela mostra card de erro, sem tela
     branca e sem perder o menu global.
 12. Nenhum reset executado.
+
+## 6.16.3 — limpeza seletiva
+
+| # | Teste | Status |
+|---|---|---|
+| 1 | Preview sem seleção → bloqueado | PASS (blocker "Nenhuma empresa selecionada.") |
+| 2 | Empresa preservada → checkbox desabilitado + blocker via API | PASS |
+| 3 | Leandro / Adilton / Marcos preservados | AWAITING_USER_EVIDENCE |
+| 4 | Lucca / Abel / Manu preservados, papéis agrupados em 1 linha | AWAITING_USER_EVIDENCE |
+| 5 | Vínculo misto preserva conta e remove só o membership | AWAITING_USER_EVIDENCE |
+| 6 | Empresa de teste lista apenas seus dados | AWAITING_USER_EVIDENCE |
+| 7 | Acesso: só super_admin/admin legado; RPCs negadas para authenticated | PASS (grants verificados) |
