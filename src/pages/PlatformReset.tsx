@@ -285,14 +285,11 @@ export default function PlatformReset() {
                 {filtered.map((c) => {
                   const checked = selected.includes(c.id);
                   return (
-                    <div
-                      key={c.id}
-                      className={`rounded-lg border p-3 text-xs ${c.protected ? "border-success/40 bg-success/5" : "border-border"}`}
-                    >
+                    <div key={c.id} className="rounded-lg border border-border p-3 text-xs">
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={checked}
-                          disabled={c.protected || loading}
+                          disabled={loading}
                           onCheckedChange={(v) =>
                             updateSelection(v ? [...selected, c.id] : selected.filter((id) => id !== c.id))
                           }
@@ -303,9 +300,6 @@ export default function PlatformReset() {
                             <span className="font-medium truncate">{c.name}</span>
                             <Badge variant="secondary" className="text-[10px]">{c.status}</Badge>
                             <Badge variant="outline" className="text-[10px]">{c.approval_status}</Badge>
-                            {c.protected && (
-                              <Badge className="text-[10px] gap-1"><Lock size={10} /> Preservação obrigatória</Badge>
-                            )}
                             <span className="text-muted-foreground">
                               criada em {new Date(c.created_at).toLocaleDateString("pt-BR")}
                             </span>
