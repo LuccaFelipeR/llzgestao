@@ -154,3 +154,15 @@ Após todos passarem, remover o papel legado `admin`, sair/entrar e repetir.
 | 5 | Vínculo misto preserva conta e remove só o membership | AWAITING_USER_EVIDENCE |
 | 6 | Empresa de teste lista apenas seus dados | AWAITING_USER_EVIDENCE |
 | 7 | Acesso: só super_admin/admin legado; RPCs negadas para authenticated | PASS (grants verificados) |
+
+## 6.16.4 — limpeza seletiva com vínculos órfãos
+
+| # | Teste | Status |
+|---|---|---|
+| 1 | Empresa inativa com histórico: histórico no preview, sem blocker | AWAITING_USER_EVIDENCE |
+| 2 | Membership sem profile em empresa selecionada → warning + `orphan_memberships_to_delete` | AWAITING_USER_EVIDENCE |
+| 3 | Membership sem profile em empresa não selecionada → `orphan_memberships_preserved` | AWAITING_USER_EVIDENCE |
+| 4 | Vínculo misto: conta/profile preservados, só o membership selecionado sai | AWAITING_USER_EVIDENCE |
+| 5 | Papel global nunca em `auth_users_to_delete` | PASS (regra validada no preview) |
+| 6 | Confirmação aceita maiúsculas, minúsculas e espaços | PASS |
+| 7 | Nenhuma execução nesta fase | PASS |

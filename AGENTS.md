@@ -210,3 +210,16 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - Confirmação textual `EXCLUIR SELECIONADAS`; qualquer mudança de seleção invalida o
   preview. Detalhes em `docs/RESET_AMBIENTE.md`.
 - **Nenhuma exclusão executada nesta fase.**
+
+## Fase 6.16.4 — limpeza seletiva com vínculos órfãos
+
+- Seleção manual é a **única** fonte de verdade: empresa não selecionada é preservada
+  integralmente. `platform_protected_company_names()` e `platform_protected_user_emails()`
+  foram removidas do banco, das RPCs e da UI.
+- Histórico e `company_members` sem `profiles` deixaram de ser blocker: viram warning e,
+  quando pertencem a empresa selecionada, são removidos junto (`company_id = ANY(...)`).
+- Preview separa `warnings` de `blockers` e devolve `orphan_memberships_to_delete`,
+  `orphan_memberships_preserved` e `orphan_auth_candidates` (nunca excluídos pela Edge Function).
+- `/admin/reset` mostra checklist de liberação e o motivo exato do botão desabilitado;
+  confirmação normalizada (`trim().toUpperCase()`).
+- **Nenhuma limpeza ou reset executado.**
