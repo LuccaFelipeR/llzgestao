@@ -170,11 +170,24 @@ export default function PlatformReset() {
   const counts: Record<string, number> = preview?.counts_to_delete ?? {};
   const cleanupCounts: Record<string, number> = cleanupPreview?.counts_to_delete ?? {};
   const cleanupBlockers: string[] = cleanupPreview?.blockers ?? [];
+  const cleanupWarnings: string[] = cleanupPreview?.warnings ?? [];
+  const confirmOk = cleanupConfirm.trim().toUpperCase() === CLEANUP_CONFIRM;
   const canExecuteCleanup =
-    !!cleanupPreview &&
-    selected.length > 0 &&
-    cleanupBlockers.length === 0 &&
-    cleanupConfirm === CLEANUP_CONFIRM;
+    !!cleanupPreview && selected.length > 0 && cleanupBlockers.length === 0 && confirmOk;
+
+  const disabledReason = !cleanupPreview
+    ? selected.length === 0
+      ? "Selecione pelo menos uma empresa."
+      : "Gere o preview da limpeza."
+    : selected.length === 0
+    ? "Selecione pelo menos uma empresa."
+    : cleanupBlockers.length > 0
+    ? `Existe${cleanupBlockers.length === 1 ? "" : "m"} ${cleanupBlockers.length} bloqueio${cleanupBlockers.length === 1 ? "" : "s"} de segurança.`
+    : !confirmOk
+    ? `Digite ${CLEANUP_CONFIRM}.`
+    : null;
+
+
 
   return (
     <div className="page-container space-y-5">
