@@ -175,3 +175,8 @@ exclusivo do super admin, executado manualmente e ainda **não executado**.
 
 `/admin/reset` oferece **Limpeza seletiva** (remove apenas empresas escolhidas) e
 **Reset completo** (remove todas as empresas clientes). Ver `docs/RESET_AMBIENTE.md`.
+
+### Limpeza seletiva (6.16.4)
+A manutenção do ambiente em `/admin/reset` remove apenas as empresas escolhidas manualmente.
+Empresas não selecionadas — e usuários vinculados a elas ou com papel global — são sempre
+preservados. Vínculos antigos sem cadastro geram aviso, não bloqueio.

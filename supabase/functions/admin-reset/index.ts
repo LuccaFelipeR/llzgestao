@@ -97,7 +97,8 @@ Deno.serve(async (req) => {
       if (blockers.length > 0) {
         return json({ action: "aborted", blockers, ...(preview as any) }, 400);
       }
-      if (body?.confirm !== "EXCLUIR SELECIONADAS") {
+      const confirmText = typeof body?.confirm === "string" ? body.confirm.trim().toUpperCase() : "";
+      if (confirmText !== "EXCLUIR SELECIONADAS") {
         return json(
           { error: 'Confirmação obrigatória: digite EXCLUIR SELECIONADAS para executar a limpeza.' },
           400,
@@ -132,8 +133,11 @@ Deno.serve(async (req) => {
         db_report: (report as any)?.removed ?? {},
         deleted_auth_users: deletedAuth,
         auth_errors: authErrors,
+        warnings: (report as any)?.warnings ?? [],
+        // contas apenas suspeitas (vínculo sem cadastro) NUNCA são removidas aqui
+        orphan_auth_candidates: (report as any)?.orphan_auth_candidates ?? [],
         note:
-          "Somente as empresas selecionadas e seus dados foram removidos. Contas com vínculo em empresas preservadas permanecem ativas.",
+          "Somente as empresas selecionadas e seus dados foram removidos. Contas com vínculo em empresas preservadas permanecem ativas. Contas listadas em orphan_auth_candidates precisam de verificação manual.",
       });
     }
 

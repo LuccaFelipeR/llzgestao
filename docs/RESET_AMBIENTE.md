@@ -311,3 +311,57 @@ apenas dos usuários de `AUTH_USERS_TO_DELETE`. Nenhum `DELETE` sem filtro por e
 **LIMPEZA NÃO EXECUTADA. RESET COMPLETO NÃO EXECUTADO. Nenhuma empresa, usuário,
 profile, membership ou conta Auth foi removida nesta fase.** A execução é manual,
 pelo super admin autenticado.
+
+## Fase 6.16.4 — limpeza seletiva dinâmica (NADA EXECUTADO)
+
+### Causa do botão bloqueado
+`platform_cleanup_preview` gerava o blocker "Existem vínculos sem perfil identificado"
+sempre que havia registro em `company_members` cujo `user_id` já não possuía `profiles`
+(usuário parcialmente removido antes). Com blocker, o botão nunca liberava.
+
+### Proteções fixas removidas
+- `platform_protected_company_names()` e `platform_protected_user_emails()` foram
+  **removidas** do banco e de todas as RPCs/UI.
+- Não existe mais checkbox desabilitado nem badge "Preservação obrigatória".
+
+### Regra dinâmica
+- Empresa **selecionada** → entra no preview de exclusão.
+- Empresa **não selecionada** → preservada integralmente (empresa e todos os vínculos).
+- Usuário preservado quando: tem papel global em `user_roles`, é o caller autenticado,
+  ou tem membership em pelo menos uma empresa não selecionada (vínculo misto).
+- `auth_users_to_delete` só recebe usuário com profile, sem papel global, que não é o
+  caller e cujos memberships pertencem todos às empresas selecionadas.
+
+### Histórico
+Histórico não é blocker: aparece nas contagens e gera apenas warning.
+
+### Vínculos órfãos (membership sem profile)
+- Empresa selecionada → `orphan_memberships_to_delete` (warning) e removido junto com a
+  empresa, sempre filtrado por `company_id = ANY(_company_ids)`.
+- Empresa não selecionada → `orphan_memberships_preserved` (warning de Data Quality),
+  intocado.
+- `orphan_auth_candidates` lista os `user_id` a verificar manualmente; a Edge Function
+  **nunca** exclui contas dessa lista.
+
+### Warnings x Blockers
+Warnings (não bloqueiam): órfãos, contas a verificar, histórico, perfis sem vínculo,
+empresa sem owner/ponto focal.
+Blockers: seleção vazia, empresa inexistente, caller sem autorização, caller na lista de
+exclusão, usuário com papel global ou com vínculo em empresa preservada em
+`auth_users_to_delete`.
+
+### Preview retorna
+`selected_companies_to_delete`, `companies_to_preserve`, `memberships_to_delete`,
+`orphan_memberships_to_delete`, `orphan_memberships_preserved`, `users_to_preserve`,
+`users_with_mixed_memberships`, `auth_users_to_delete`, `orphan_auth_candidates`,
+`counts_to_delete`, `warnings`, `blockers`.
+
+### UI
+Checklist de liberação antes do botão (empresas, preview, blockers, warnings, confirmação)
+e motivo exato quando desabilitado. Confirmação normalizada com
+`trim().toUpperCase()`; o frontend envia sempre `EXCLUIR SELECIONADAS`.
+"Selecionar todas" atinge apenas as empresas visíveis no filtro.
+
+### Estado
+**LIMPEZA NÃO EXECUTADA · RESET COMPLETO NÃO EXECUTADO · NENHUMA EMPRESA, USUÁRIO,
+PROFILE, MEMBERSHIP OU CONTA AUTH EXCLUÍDA NESTA FASE.**

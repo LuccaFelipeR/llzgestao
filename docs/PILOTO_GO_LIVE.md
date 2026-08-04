@@ -61,3 +61,8 @@ acompanhada pela equipe LLZ.
 Antes do go-live, usar **Limpeza seletiva** (não o reset completo) para remover apenas
 as empresas de teste, preservando Lemon Haze Floricultura, Magrao Auto Peças e
 Congelados Sartorio e seus usuários. Passo a passo em `docs/RESET_AMBIENTE.md`.
+
+## Atualização 6.16.4
+A limpeza do ambiente antes do piloto usa `/admin/reset` → Limpeza seletiva. Empresas não
+selecionadas são preservadas integralmente. Vínculos antigos sem cadastro não impedem mais
+a execução. A execução permanece manual pelo super admin. Nada foi excluído até aqui.

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertTriangle, ShieldAlert, RefreshCw, Trash2, Users, Building2, Info, ListChecks, Lock,
+  AlertTriangle, ShieldAlert, RefreshCw, Trash2, Users, Building2, Info, ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -120,7 +120,8 @@ export default function PlatformReset() {
     });
   }, [inventory, search, statusFilter]);
 
-  const selectableFiltered = filtered.filter((c) => !c.protected);
+  // "Selecionar todas" atinge somente as empresas visíveis no filtro atual
+  const selectableFiltered = filtered;
 
   async function runCleanupPreview() {
     if (selected.length === 0) {
@@ -170,11 +171,24 @@ export default function PlatformReset() {
   const counts: Record<string, number> = preview?.counts_to_delete ?? {};
   const cleanupCounts: Record<string, number> = cleanupPreview?.counts_to_delete ?? {};
   const cleanupBlockers: string[] = cleanupPreview?.blockers ?? [];
+  const cleanupWarnings: string[] = cleanupPreview?.warnings ?? [];
+  const confirmOk = cleanupConfirm.trim().toUpperCase() === CLEANUP_CONFIRM;
   const canExecuteCleanup =
-    !!cleanupPreview &&
-    selected.length > 0 &&
-    cleanupBlockers.length === 0 &&
-    cleanupConfirm === CLEANUP_CONFIRM;
+    !!cleanupPreview && selected.length > 0 && cleanupBlockers.length === 0 && confirmOk;
+
+  const disabledReason = !cleanupPreview
+    ? selected.length === 0
+      ? "Selecione pelo menos uma empresa."
+      : "Gere o preview da limpeza."
+    : selected.length === 0
+    ? "Selecione pelo menos uma empresa."
+    : cleanupBlockers.length > 0
+    ? `Existe${cleanupBlockers.length === 1 ? "" : "m"} ${cleanupBlockers.length} bloqueio${cleanupBlockers.length === 1 ? "" : "s"} de segurança.`
+    : !confirmOk
+    ? `Digite ${CLEANUP_CONFIRM}.`
+    : null;
+
+
 
   return (
     <div className="page-container space-y-5">
@@ -271,14 +285,11 @@ export default function PlatformReset() {
                 {filtered.map((c) => {
                   const checked = selected.includes(c.id);
                   return (
-                    <div
-                      key={c.id}
-                      className={`rounded-lg border p-3 text-xs ${c.protected ? "border-success/40 bg-success/5" : "border-border"}`}
-                    >
+                    <div key={c.id} className="rounded-lg border border-border p-3 text-xs">
                       <div className="flex items-start gap-3">
                         <Checkbox
                           checked={checked}
-                          disabled={c.protected || loading}
+                          disabled={loading}
                           onCheckedChange={(v) =>
                             updateSelection(v ? [...selected, c.id] : selected.filter((id) => id !== c.id))
                           }
@@ -289,9 +300,6 @@ export default function PlatformReset() {
                             <span className="font-medium truncate">{c.name}</span>
                             <Badge variant="secondary" className="text-[10px]">{c.status}</Badge>
                             <Badge variant="outline" className="text-[10px]">{c.approval_status}</Badge>
-                            {c.protected && (
-                              <Badge className="text-[10px] gap-1"><Lock size={10} /> Preservação obrigatória</Badge>
-                            )}
                             <span className="text-muted-foreground">
                               criada em {new Date(c.created_at).toLocaleDateString("pt-BR")}
                             </span>
@@ -331,6 +339,17 @@ export default function PlatformReset() {
                   </CardContent>
                 </Card>
               )}
+
+              {cleanupWarnings.length > 0 && (
+                <Card className="border-warning/50">
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle size={16} className="text-warning" /> Avisos (não impedem a limpeza)</CardTitle></CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    {cleanupWarnings.map((w) => <p key={w}>• {w}</p>)}
+                  </CardContent>
+                </Card>
+              )}
+
+
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
@@ -413,6 +432,41 @@ export default function PlatformReset() {
                 </Card>
 
                 <Card>
+                  <CardHeader><CardTitle className="text-sm">Vínculos sem cadastro — serão removidos</CardTitle></CardHeader>
+                  <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
+                    {(cleanupPreview.orphan_memberships_to_delete ?? []).map((m: AnyRec) => (
+                      <p key={m.membership_id} className="truncate font-mono text-[11px]">
+                        {m.company} · {m.role} · user {m.user_id}
+                      </p>
+                    ))}
+                    {(cleanupPreview.orphan_memberships_to_delete ?? []).length === 0 && <p className="text-muted-foreground">Nenhum.</p>}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Vínculos sem cadastro — preservados</CardTitle></CardHeader>
+                  <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
+                    {(cleanupPreview.orphan_memberships_preserved ?? []).map((m: AnyRec) => (
+                      <p key={m.membership_id} className="truncate font-mono text-[11px]">
+                        {m.company} · {m.role} · user {m.user_id}
+                      </p>
+                    ))}
+                    {(cleanupPreview.orphan_memberships_preserved ?? []).length === 0 && <p className="text-muted-foreground">Nenhum.</p>}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Contas a verificar manualmente</CardTitle></CardHeader>
+                  <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
+                    {(cleanupPreview.orphan_auth_candidates ?? []).map((u: AnyRec) => (
+                      <p key={u.user_id} className="truncate font-mono text-[11px]">{u.user_id}</p>
+                    ))}
+                    {(cleanupPreview.orphan_auth_candidates ?? []).length === 0 && <p className="text-muted-foreground">Nenhuma.</p>}
+                    <p className="text-muted-foreground pt-1">Nunca são removidas automaticamente.</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
                   <CardHeader><CardTitle className="text-sm">Registros por tabela</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-1 text-xs">
                     {Object.entries(cleanupCounts).map(([k, v]) => (
@@ -427,6 +481,17 @@ export default function PlatformReset() {
               <Card className="border-destructive/50">
                 <CardHeader><CardTitle className="text-sm text-destructive flex items-center gap-2"><AlertTriangle size={16} /> Executar limpeza seletiva</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
+                  <div className="rounded-lg border border-border p-3 text-xs space-y-1">
+                    <p className="font-medium mb-1">Checklist de liberação</p>
+                    <p>• Empresas selecionadas: {selected.length} — {selected.length > 0 ? "OK" : "pendente"}</p>
+                    <p>• Preview atualizado — {cleanupPreview ? "OK" : "pendente"}</p>
+                    <p>• Bloqueios: {cleanupBlockers.length} — {cleanupBlockers.length === 0 ? "OK" : "resolver"}</p>
+                    <p>• Avisos: {cleanupWarnings.length} — {cleanupWarnings.length === 0 ? "OK" : "revisar (não bloqueiam)"}</p>
+                    <p>• Confirmação — {confirmOk ? "OK" : "pendente"}</p>
+                    {disabledReason && (
+                      <p className="text-destructive pt-1">Botão desabilitado: {disabledReason}</p>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Ação irreversível. Digite <span className="font-mono font-bold">{CLEANUP_CONFIRM}</span> para liberar o botão.
                     Alterar a seleção invalida o preview e exige nova conferência.

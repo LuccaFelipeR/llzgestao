@@ -148,3 +148,9 @@ Implementada a limpeza seletiva por empresa em `/admin/reset` (preview + execuç
 manual). Reset completo mantido em aba separada. Regras de preservação de empresas e
 usuários documentadas em `docs/RESET_AMBIENTE.md`.
 **Nenhuma empresa, usuário ou conta Auth foi excluída nesta fase.**
+
+## Fase 6.16.4
+Limpeza seletiva passou a ser 100% dinâmica: a seleção manual é a única fonte de verdade.
+Listas fixas de empresas/e-mails protegidos removidas. Histórico e vínculos órfãos viraram
+warnings (não bloqueiam). Preview separa warnings de blockers e a UI mostra o checklist de
+liberação com o motivo exato do botão desabilitado. Nenhuma limpeza executada.
