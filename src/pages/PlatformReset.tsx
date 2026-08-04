@@ -481,6 +481,17 @@ export default function PlatformReset() {
               <Card className="border-destructive/50">
                 <CardHeader><CardTitle className="text-sm text-destructive flex items-center gap-2"><AlertTriangle size={16} /> Executar limpeza seletiva</CardTitle></CardHeader>
                 <CardContent className="space-y-3">
+                  <div className="rounded-lg border border-border p-3 text-xs space-y-1">
+                    <p className="font-medium mb-1">Checklist de liberação</p>
+                    <p>• Empresas selecionadas: {selected.length} — {selected.length > 0 ? "OK" : "pendente"}</p>
+                    <p>• Preview atualizado — {cleanupPreview ? "OK" : "pendente"}</p>
+                    <p>• Bloqueios: {cleanupBlockers.length} — {cleanupBlockers.length === 0 ? "OK" : "resolver"}</p>
+                    <p>• Avisos: {cleanupWarnings.length} — {cleanupWarnings.length === 0 ? "OK" : "revisar (não bloqueiam)"}</p>
+                    <p>• Confirmação — {confirmOk ? "OK" : "pendente"}</p>
+                    {disabledReason && (
+                      <p className="text-destructive pt-1">Botão desabilitado: {disabledReason}</p>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Ação irreversível. Digite <span className="font-mono font-bold">{CLEANUP_CONFIRM}</span> para liberar o botão.
                     Alterar a seleção invalida o preview e exige nova conferência.
