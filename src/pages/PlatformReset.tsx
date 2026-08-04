@@ -340,6 +340,17 @@ export default function PlatformReset() {
                 </Card>
               )}
 
+              {cleanupWarnings.length > 0 && (
+                <Card className="border-warning/50">
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle size={16} className="text-warning" /> Avisos (não impedem a limpeza)</CardTitle></CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    {cleanupWarnings.map((w) => <p key={w}>• {w}</p>)}
+                  </CardContent>
+                </Card>
+              )}
+
+
+
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Trash2 size={16} className="text-destructive" /> Empresas a excluir</CardTitle></CardHeader>
