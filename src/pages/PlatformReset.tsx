@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  AlertTriangle, ShieldAlert, RefreshCw, Trash2, Users, Building2, Info, ListChecks, Lock,
+  AlertTriangle, ShieldAlert, RefreshCw, Trash2, Users, Building2, Info, ListChecks,
 } from "lucide-react";
 import { toast } from "sonner";
 
