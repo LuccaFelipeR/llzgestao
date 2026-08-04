@@ -120,7 +120,8 @@ export default function PlatformReset() {
     });
   }, [inventory, search, statusFilter]);
 
-  const selectableFiltered = filtered.filter((c) => !c.protected);
+  // "Selecionar todas" atinge somente as empresas visíveis no filtro atual
+  const selectableFiltered = filtered;
 
   async function runCleanupPreview() {
     if (selected.length === 0) {
