@@ -432,6 +432,41 @@ export default function PlatformReset() {
                 </Card>
 
                 <Card>
+                  <CardHeader><CardTitle className="text-sm">Vínculos sem cadastro — serão removidos</CardTitle></CardHeader>
+                  <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
+                    {(cleanupPreview.orphan_memberships_to_delete ?? []).map((m: AnyRec) => (
+                      <p key={m.membership_id} className="truncate font-mono text-[11px]">
+                        {m.company} · {m.role} · user {m.user_id}
+                      </p>
+                    ))}
+                    {(cleanupPreview.orphan_memberships_to_delete ?? []).length === 0 && <p className="text-muted-foreground">Nenhum.</p>}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Vínculos sem cadastro — preservados</CardTitle></CardHeader>
+                  <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
+                    {(cleanupPreview.orphan_memberships_preserved ?? []).map((m: AnyRec) => (
+                      <p key={m.membership_id} className="truncate font-mono text-[11px]">
+                        {m.company} · {m.role} · user {m.user_id}
+                      </p>
+                    ))}
+                    {(cleanupPreview.orphan_memberships_preserved ?? []).length === 0 && <p className="text-muted-foreground">Nenhum.</p>}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader><CardTitle className="text-sm">Contas a verificar manualmente</CardTitle></CardHeader>
+                  <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
+                    {(cleanupPreview.orphan_auth_candidates ?? []).map((u: AnyRec) => (
+                      <p key={u.user_id} className="truncate font-mono text-[11px]">{u.user_id}</p>
+                    ))}
+                    {(cleanupPreview.orphan_auth_candidates ?? []).length === 0 && <p className="text-muted-foreground">Nenhuma.</p>}
+                    <p className="text-muted-foreground pt-1">Nunca são removidas automaticamente.</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
                   <CardHeader><CardTitle className="text-sm">Registros por tabela</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-1 text-xs">
                     {Object.entries(cleanupCounts).map(([k, v]) => (
