@@ -97,7 +97,8 @@ Deno.serve(async (req) => {
       if (blockers.length > 0) {
         return json({ action: "aborted", blockers, ...(preview as any) }, 400);
       }
-      if (body?.confirm !== "EXCLUIR SELECIONADAS") {
+      const confirmText = typeof body?.confirm === "string" ? body.confirm.trim().toUpperCase() : "";
+      if (confirmText !== "EXCLUIR SELECIONADAS") {
         return json(
           { error: 'Confirmação obrigatória: digite EXCLUIR SELECIONADAS para executar a limpeza.' },
           400,
