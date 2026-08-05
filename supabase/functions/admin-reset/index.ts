@@ -110,9 +110,53 @@ Deno.serve(async (req) => {
         _company_ids: ids,
       });
       if (execErr) {
-        console.error("platform_cleanup_execute error", execErr);
+        // log completo server-side (nunca retornado cru ao cliente)
+        console.error("platform_cleanup_execute error", {
+          code: (execErr as any)?.code,
+          message: (execErr as any)?.message,
+          details: (execErr as any)?.details,
+          hint: (execErr as any)?.hint,
+        });
+
+        // A RPC embute um JSON de diagnóstico na mensagem quando falha numa etapa
+        let staged: Record<string, unknown> | null = null;
+        const raw = String((execErr as any)?.message ?? "");
+        const start = raw.indexOf("{");
+        const end = raw.lastIndexOf("}");
+        if (start >= 0 && end > start) {
+          try {
+            const parsed = JSON.parse(raw.slice(start, end + 1));
+            if (parsed?.cleanup_error) staged = parsed;
+          } catch { /* mensagem não estruturada */ }
+        }
+
+        if (staged) {
+          return json(
+            {
+              action: "failed",
+              error: "Não foi possível concluir a limpeza das empresas selecionadas.",
+              stage: staged.stage ?? "desconhecida",
+              error_code: staged.error_code ?? null,
+              constraint: (execErr as any)?.details ?? null,
+              detail:
+                typeof staged.message === "string"
+                  ? staged.message
+                  : "Existe um registro vinculado que precisa ser tratado.",
+              data_changed: false,
+            },
+            400,
+          );
+        }
+
         return json(
-          { error: "A limpeza foi rejeitada pelas regras de segurança. Nenhum dado foi alterado.", action: "failed" },
+          {
+            action: "failed",
+            error: "A limpeza foi rejeitada pelas regras de segurança. Nenhum dado foi alterado.",
+            stage: "validacao",
+            error_code: (execErr as any)?.code ?? null,
+            detail: raw || "Regra de segurança impediu a operação.",
+            data_changed: false,
+          },
           400,
         );
       }
