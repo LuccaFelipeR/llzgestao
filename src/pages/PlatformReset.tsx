@@ -74,6 +74,17 @@ export default function PlatformReset() {
             if (Array.isArray(parsed?.blockers) && parsed.blockers.length > 0) {
               serverMessage = parsed.blockers.join(" ");
             }
+            if (parsed?.stage) {
+              const extra = [
+                `Etapa: ${parsed.stage}`,
+                parsed.error_code ? `Código: ${parsed.error_code}` : null,
+                parsed.detail ? `Detalhe: ${parsed.detail}` : null,
+                "Nenhum dado foi alterado.",
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              serverMessage = `${serverMessage ?? ""} ${extra}`.trim();
+            }
           } catch {
             /* corpo não-JSON */
           }
