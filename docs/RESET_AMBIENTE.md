@@ -365,3 +365,23 @@ e motivo exato quando desabilitado. Confirmação normalizada com
 ### Estado
 **LIMPEZA NÃO EXECUTADA · RESET COMPLETO NÃO EXECUTADO · NENHUMA EMPRESA, USUÁRIO,
 PROFILE, MEMBERSHIP OU CONTA AUTH EXCLUÍDA NESTA FASE.**
+
+## Fase 6.16.5 — diagnóstico por etapa na limpeza seletiva
+
+- `platform_cleanup_execute` agora marca a etapa corrente (`delete_products`,
+  `delete_companies`, `insert_audit_log`, etc.). Em caso de erro, devolve um JSON
+  com `stage`, `error_code`, `message`, `detail` e `hint`. A transação inteira é
+  revertida — `data_changed: false`.
+- Causa raiz da falha HTTP 400: as travas de exclusão
+  (`prevent_delete_company_if_referenced`, `prevent_delete_product_if_referenced`,
+  `prevent_delete_address_if_referenced`) disparavam durante a limpeza autorizada
+  e abortavam a transação com `P0001`. Elas agora respeitam o flag transacional
+  `app.cleanup_mode = 'on'`, definido **somente** dentro da limpeza seletiva
+  (executável apenas pela `service_role` via Edge Function). Fora dela, as travas
+  continuam valendo integralmente.
+- A execução também remove filhos ligados por produto/endereço/lista mesmo quando
+  `company_id` é nulo (dados legados) e limpa `main_focal_user_id` / `approved_by`
+  de empresas preservadas que apontem para usuários removidos.
+- A Edge Function registra `code/message/details/hint` no log do servidor e devolve
+  ao super admin `stage`, `error_code`, `detail` e `data_changed`, sem expor SQL,
+  secrets ou service role.
