@@ -100,20 +100,6 @@ export default function CompanyUsersCenter({ initialCompanyId }: Props) {
     queryClient.invalidateQueries({ queryKey: ["admin-companies"] });
   };
 
-  const rpc = (fn: string, args: Record<string, unknown>, okTitle: string) =>
-    ({
-      mutationFn: async () => {
-        const { data, error } = await (supabase as any).rpc(fn, args);
-        if (error) throw error;
-        return data;
-      },
-      onSuccess: () => {
-        invalidate();
-        toast({ title: okTitle });
-      },
-      onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-    });
-
   const setRoleMutation = useMutation({
     mutationFn: async ({ memberId, role }: { memberId: string; role: string }) => {
       const { error } = await (supabase as any).rpc("company_member_set_role", {
