@@ -311,35 +311,6 @@ export default function AdminPanel() {
     },
   });
 
-  const approveMutation = useMutation({
-    mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
-      const { error } = await supabase.from("profiles").update({ is_approved: approved, updated_at: new Date().toISOString() }).eq("id", userId);
-      if (error) throw error;
-      // Aprovar um usuário de EMPRESA nunca cria papel GLOBAL (user_roles).
-      // O vínculo operacional vive em company_members.
-    },
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
-      toast({ title: "Usuário atualizado" });
-    },
-    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-  });
-
-  const roleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole as any });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
-      toast({ title: "Papel atualizado" });
-    },
-    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (userId: string) => {
       // Delete user_roles, tab_permissions, company_members, profile
@@ -386,10 +357,6 @@ export default function AdminPanel() {
   const platformStaff = (profiles ?? []).filter((p) =>
     (allRoles ?? []).some((r) => r.user_id === p.id && PLATFORM_ROLE_KEYS.includes(r.role)),
   );
-
-  function getUserRole(userId: string) {
-    return allRoles?.find((r) => r.user_id === userId)?.role ?? null;
-  }
 
   function isTabBlocked(userId: string, tabKey: string) {
     const perm = allPermissions?.find((p) => p.user_id === userId && p.tab_key === tabKey);
@@ -554,6 +521,10 @@ export default function AdminPanel() {
             ?.filter((c: any) => companyStatusFilter === "all" ? true : (c.status ?? "active") === companyStatusFilter)
             .map((c: any) => {
             const memberCount = c.company_members?.length ?? 0;
+            const activeMembers = (c.company_members ?? []).filter((m: any) => m.is_active !== false).length;
+            const ownerMember = (c.company_members ?? []).find((m: any) => m.role === "owner");
+            const ownerProfile = (profiles ?? []).find((p: any) => p.id === ownerMember?.user_id);
+            const ownerLabel = ownerProfile?.full_name || ownerProfile?.email || (ownerMember ? "—" : "sem proprietário");
             const hasFocal = !!c.main_focal_user_id;
             const status = c.status ?? "active";
             const isBlocked = status === "blocked";
@@ -586,7 +557,7 @@ export default function AdminPanel() {
                       {c.segment ? ` • Segmento: ${c.segment}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Membros: {memberCount} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                      Membros: {memberCount} ({activeMembers} ativos) • Proprietário: {ownerLabel} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
@@ -611,6 +582,10 @@ export default function AdminPanel() {
                     <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
                       onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
                       <Pencil size={14} /> Detalhes
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                      onClick={() => { setUsersCenterCompanyId(c.id); setTab("companyUsers"); }}>
+                      <Users size={14} /> Gerenciar equipe
                     </Button>
                     {/* Lifecycle actions */}
                     {status === "active" || status === "trial" ? (
