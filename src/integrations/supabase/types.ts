@@ -1006,6 +1006,30 @@ export type Database = {
     }
     Functions: {
       approve_company: { Args: { _company_id: string }; Returns: undefined }
+      can_manage_company_members: {
+        Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
+      company_member_add_by_email: {
+        Args: { _company_id: string; _email: string; _role: string }
+        Returns: Json
+      }
+      company_member_set_active: {
+        Args: { _active: boolean; _company_id: string; _member_id: string }
+        Returns: Json
+      }
+      company_member_set_focal: {
+        Args: { _company_id: string; _member_id: string }
+        Returns: Json
+      }
+      company_member_set_role: {
+        Args: { _company_id: string; _member_id: string; _role: string }
+        Returns: Json
+      }
+      company_transfer_ownership: {
+        Args: { _company_id: string; _new_owner_member_id: string }
+        Returns: Json
+      }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -1030,6 +1054,7 @@ export type Database = {
         Args: { _company_id: string }
         Returns: boolean
       }
+      platform_access_diagnostics: { Args: never; Returns: Json }
       platform_cleanup_execute: {
         Args: { _caller_id: string; _company_ids: string[] }
         Returns: Json
