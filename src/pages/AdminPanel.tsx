@@ -12,12 +12,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "@/hooks/use-toast";
 import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw, Crown } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
+import CompanyUsersCenter from "@/components/CompanyUsersCenter";
+import AccessDiagnostics from "@/components/AccessDiagnostics";
 import { friendlyError } from "@/lib/error-messages";
 
-const ROLE_LABELS: Record<string, string> = {
-  operator: "Operador",
-  supervisor: "Supervisor",
+/** Cargos EMPRESARIAIS (company_members) — nunca gravados em user_roles */
+const COMPANY_ROLE_LABELS: Record<string, string> = {
+  owner: "Proprietário",
   admin: "Administrador",
+  supervisor: "Supervisor",
+  member: "Operador",
 };
 
 const ALL_TABS = [
@@ -36,7 +40,8 @@ const ALL_TABS = [
 export default function AdminPanel() {
   const { user, isPlatformAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"users" | "platform" | "activity" | "audit" | "system" | "companies">("users");
+  const [tab, setTab] = useState<"companies" | "companyUsers" | "platform" | "activity" | "audit" | "system">("companies");
+  const [usersCenterCompanyId, setUsersCenterCompanyId] = useState<string | null>(null);
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
   const [editCompany, setEditCompany] = useState<any>(null);
@@ -306,35 +311,6 @@ export default function AdminPanel() {
     },
   });
 
-  const approveMutation = useMutation({
-    mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
-      const { error } = await supabase.from("profiles").update({ is_approved: approved, updated_at: new Date().toISOString() }).eq("id", userId);
-      if (error) throw error;
-      // Aprovar um usuário de EMPRESA nunca cria papel GLOBAL (user_roles).
-      // O vínculo operacional vive em company_members.
-    },
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
-      toast({ title: "Usuário atualizado" });
-    },
-    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-  });
-
-  const roleMutation = useMutation({
-    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      await supabase.from("user_roles").delete().eq("user_id", userId);
-      const { error } = await supabase.from("user_roles").insert({ user_id: userId, role: newRole as any });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
-      toast({ title: "Papel atualizado" });
-    },
-    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-  });
-
   const deleteMutation = useMutation({
     mutationFn: async (userId: string) => {
       // Delete user_roles, tab_permissions, company_members, profile
@@ -382,10 +358,6 @@ export default function AdminPanel() {
     (allRoles ?? []).some((r) => r.user_id === p.id && PLATFORM_ROLE_KEYS.includes(r.role)),
   );
 
-  function getUserRole(userId: string) {
-    return allRoles?.find((r) => r.user_id === userId)?.role ?? null;
-  }
-
   function isTabBlocked(userId: string, tabKey: string) {
     const perm = allPermissions?.find((p) => p.user_id === userId && p.tab_key === tabKey);
     return perm?.is_allowed === false;
@@ -410,11 +382,11 @@ export default function AdminPanel() {
       {/* Tabs */}
       <div className="flex gap-1 mb-6 bg-secondary rounded-xl p-1 overflow-x-auto">
         {[
-          { key: "users" as const, label: "Usuários", icon: Users },
+          { key: "companies" as const, label: "Empresas", icon: Building2 },
+          { key: "companyUsers" as const, label: "Usuários das Empresas", icon: Users },
           { key: "platform" as const, label: "Equipe LLZ", icon: Crown },
           { key: "activity" as const, label: "Atividade", icon: Activity },
           { key: "audit" as const, label: "Auditoria", icon: ClipboardCheck },
-          { key: "companies" as const, label: "Empresas", icon: Building2 },
           { key: "system" as const, label: "Sistema", icon: TrendingUp },
         ].map((t) => (
           <button
@@ -430,102 +402,11 @@ export default function AdminPanel() {
         ))}
       </div>
 
-      {/* Users Tab */}
-      {tab === "users" && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">{profiles?.length ?? 0} usuário(s) • {profiles?.filter(p => !p.is_approved).length ?? 0} pendente(s)</p>
-            <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setShowAbc(s => !s)}>
-              <BarChart3 size={14} /> {showAbc ? "Ocultar" : "Curva ABC"}
-            </Button>
-          </div>
-          {showAbc && (
-            <div className="bg-card border border-border rounded-xl p-4">
-              <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><BarChart3 size={16} className="text-primary" /> Curva ABC de Usuários (por movimentações)</h3>
-              <p className="text-[10px] text-muted-foreground mb-3">A: 70% das ações • B: 20% • C: 10%</p>
-              <div className="space-y-1.5">
-                {userAbc?.length === 0 && <p className="text-xs text-muted-foreground">Sem atividade registrada ainda.</p>}
-                {userAbc?.map((u) => {
-                  const prof = profiles?.find(p => p.id === u.user_id);
-                  const color = u.cls === "A" ? "bg-accent/15 text-accent" : u.cls === "B" ? "bg-warning/15 text-warning" : "bg-muted text-muted-foreground";
-                  return (
-                    <div key={u.user_id} className="flex items-center gap-2 text-xs py-1.5 border-b border-border last:border-0">
-                      <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold ${color}`}>{u.cls}</span>
-                      <span className="flex-1 truncate font-medium">{prof?.full_name || prof?.email || u.user_id.slice(0, 8)}</span>
-                      <span className="font-mono text-muted-foreground">{u.count} ações</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-          {profiles?.map((p) => {
-            const isMe = p.id === user?.id;
-            const userRole = getUserRole(p.id);
-            const blockedCount = allPermissions?.filter((perm) => perm.user_id === p.id && !perm.is_allowed).length ?? 0;
-            return (
-              <div key={p.id} className="bg-card border border-border rounded-xl p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm truncate">{p.full_name || "Sem nome"}</span>
-                      {isMe && <Badge variant="secondary" className="text-[10px]">Você</Badge>}
-                      {p.is_approved ? (
-                        <Badge className="text-[10px] bg-accent/15 text-accent border-0">Aprovado</Badge>
-                      ) : (
-                        <Badge variant="destructive" className="text-[10px]">Pendente</Badge>
-                      )}
-                      {blockedCount > 0 && (
-                        <Badge variant="outline" className="text-[10px] border-warning text-warning">{blockedCount} aba(s) bloqueada(s)</Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{p.email}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Desde {new Date(p.created_at).toLocaleDateString("pt-BR")}
-                      {userRole && ` • ${ROLE_LABELS[userRole]}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
-                    {!isMe && (
-                      <>
-                        <Select
-                          value={userRole ?? "none"}
-                          onValueChange={(v) => roleMutation.mutate({ userId: p.id, newRole: v })}
-                        >
-                          <SelectTrigger className="w-28 h-8 text-xs">
-                            <SelectValue placeholder="Papel" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="operator">Operador</SelectItem>
-                            <SelectItem value="supervisor">Supervisor</SelectItem>
-                            <SelectItem value="admin">Administrador</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button size="sm" variant="outline" className="h-8 text-xs gap-1" onClick={() => setPermDialogUser(p)}>
-                          <Settings2 size={14} /> Abas
-                        </Button>
-                        {p.is_approved ? (
-                          <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => approveMutation.mutate({ userId: p.id, approved: false })}>
-                            <UserX size={14} className="mr-1" /> Bloquear
-                          </Button>
-                        ) : (
-                          <Button size="sm" className="h-8 text-xs" onClick={() => approveMutation.mutate({ userId: p.id, approved: true })}>
-                            <UserCheck size={14} className="mr-1" /> Aprovar
-                          </Button>
-                        )}
-                        <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => setDeleteDialogUser(p)}>
-                          <Trash2 size={14} />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {profiles?.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">Nenhum usuário cadastrado.</p>
-          )}
+      {/* Usuários das Empresas (cargos empresariais + diagnóstico) */}
+      {tab === "companyUsers" && (
+        <div className="space-y-8">
+          <CompanyUsersCenter initialCompanyId={usersCenterCompanyId} />
+          <AccessDiagnostics />
         </div>
       )}
 
@@ -640,6 +521,10 @@ export default function AdminPanel() {
             ?.filter((c: any) => companyStatusFilter === "all" ? true : (c.status ?? "active") === companyStatusFilter)
             .map((c: any) => {
             const memberCount = c.company_members?.length ?? 0;
+            const activeMembers = (c.company_members ?? []).filter((m: any) => m.is_active !== false).length;
+            const ownerMember = (c.company_members ?? []).find((m: any) => m.role === "owner");
+            const ownerProfile = (profiles ?? []).find((p: any) => p.id === ownerMember?.user_id);
+            const ownerLabel = ownerProfile?.full_name || ownerProfile?.email || (ownerMember ? "—" : "sem proprietário");
             const hasFocal = !!c.main_focal_user_id;
             const status = c.status ?? "active";
             const isBlocked = status === "blocked";
@@ -672,7 +557,7 @@ export default function AdminPanel() {
                       {c.segment ? ` • Segmento: ${c.segment}` : ""}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Membros: {memberCount} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
+                      Membros: {memberCount} ({activeMembers} ativos) • Proprietário: {ownerLabel} • Criado: {new Date(c.created_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
@@ -697,6 +582,10 @@ export default function AdminPanel() {
                     <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
                       onClick={() => { setEditCompany(c); setEditCompanyName(c.name); }}>
                       <Pencil size={14} /> Detalhes
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
+                      onClick={() => { setUsersCenterCompanyId(c.id); setTab("companyUsers"); }}>
+                      <Users size={14} /> Gerenciar equipe
                     </Button>
                     {/* Lifecycle actions */}
                     {status === "active" || status === "trial" ? (

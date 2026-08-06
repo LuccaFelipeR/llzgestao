@@ -187,3 +187,20 @@ senha e confirmação de e-mail quando aplicável). Após autenticar, o
 
 Cliente preservado na limpeza seletiva **não** recebe papel global. A preservação vem do
 vínculo com empresa mantida ou da lista obrigatória em `platform_protected_user_emails()`.
+
+## Fase 6.17A — Central de gestão de usuários multiempresa
+
+- Aba **Usuários das Empresas** (`/admin`): exige empresa selecionada e administra apenas
+  `company_members` — Proprietário, Administrador, Supervisor e Operador. Nenhuma ação
+  dessa aba grava em `user_roles`.
+- Aba **Equipe LLZ**: exclusiva para papéis globais em `user_roles`.
+- Novas RPCs (`SECURITY DEFINER`, `search_path=public`, sem `EXECUTE` para `anon`):
+  `company_member_set_role`, `company_transfer_ownership`, `company_member_set_focal`,
+  `company_member_set_active`, `company_member_add_by_email` e
+  `platform_access_diagnostics` (somente leitura).
+- Autorização por `can_manage_company_members` = equipe LLZ administradora
+  (`is_platform_client_admin`) ou admin/owner/ponto focal da própria empresa.
+- Bloquear usuário é **por empresa**: o vínculo fica inativo, mas conta, perfil e vínculos
+  em outras empresas continuam intactos. Nenhuma ação exclui contas.
+- Transferência de propriedade é transacional: o proprietário anterior vira Administrador e a
+  empresa mantém exatamente um proprietário ativo.
