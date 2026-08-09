@@ -36,7 +36,7 @@ interface MemberRow { user_id: string; is_active: boolean; companies: { name: st
 interface InviteRow { email: string; status: string; intended_role: string }
 
 export default function AccountsCenter() {
-  const { isPlatformAdmin } = useAuth();
+  const { isPlatformAdmin, isPlatformSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
