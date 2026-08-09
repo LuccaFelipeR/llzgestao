@@ -27,6 +27,25 @@ const INVITE_STATUS: Record<string, string> = {
   revoked: "Cancelado",
 };
 
+interface StaffRoleRow { id: string; user_id: string; role: string }
+interface StaffProfileRow {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  created_at: string;
+  roles: StaffRoleRow[];
+}
+interface InviteRow {
+  id: string;
+  email: string;
+  full_name: string | null;
+  intended_role: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  registered_at: string | null;
+}
+
 export default function PlatformStaffCenter() {
   const { isPlatformSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -42,33 +61,25 @@ export default function PlatformStaffCenter() {
         supabase.from("user_roles").select("id, user_id, role"),
       ]);
       if (profilesRes.error) throw profilesRes.error;
-      const roles = (rolesRes.data ?? []).filter((r: any) => GLOBAL_ROLE_KEYS.includes(r.role));
-      return (profilesRes.data ?? [])
-        .map((p: any) => ({ ...p, roles: roles.filter((r: any) => r.user_id === p.id) }))
-        .filter((p: any) => p.roles.length > 0);
+      const roles = ((rolesRes.data ?? []) as StaffRoleRow[]).filter((r) => GLOBAL_ROLE_KEYS.includes(r.role));
+      return ((profilesRes.data ?? []) as Omit<StaffProfileRow, "roles">[])
+        .map((p) => ({ ...p, roles: roles.filter((r) => r.user_id === p.id) }))
+        .filter((p) => p.roles.length > 0) as StaffProfileRow[];
     },
   });
 
   const { data: invites } = useQuery({
     queryKey: ["llz-staff-invites"],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await sb
         .from("platform_staff_invites")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as any[];
+      return (data ?? []) as InviteRow[];
     },
   });
 
-  function runRpc(name: string, args: Record<string, unknown>, successMsg: string) {
-    return async () => {
-      const { data, error } = await (supabase as any).rpc(name, args);
-      if (error) throw error;
-      if (data && data.ok === false) throw new Error(data.error);
-      return successMsg;
-    };
-  }
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["llz-staff-invites"] });
