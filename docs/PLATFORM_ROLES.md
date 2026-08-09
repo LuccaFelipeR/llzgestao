@@ -227,3 +227,21 @@ Existem exatamente **dois tipos de conta**, declarados em `profiles.account_type
 - `useAuth()` expõe `accountType`, `isStaffAccount` e `isStaffPendingActivation`.
 - Painel `/admin`: aba **Contas** (visão global, aprovar/bloquear) e aba
   **Equipe LLZ** (membros ativos + convites). Nenhuma ação de conta grava cargo de empresa.
+
+## Fase 6.17C — Gestão completa da Equipe LLZ e cargos de contas existentes
+
+- **Conta existente vira Equipe LLZ** por `staff_add_existing_account(_user_id, _role)`:
+  muda `profiles.account_type` para `llz_staff` e concede o papel global escolhido.
+  A conversão é **bloqueada** quando existe vínculo em `company_members`; a tentativa
+  fica registrada em `activity_log`.
+- **Papéis administráveis pela UI**: `platform_admin`, `support_agent`, `developer`.
+  `super_admin` (e `admin` legado) não são alteráveis pela tela.
+- `staff_role_apply(_user_id, _role, _mode)` com `_mode = replace|add` e
+  `staff_role_remove(_user_id, _role)`. Ambos exigem `is_platform_super_admin`,
+  protegem contas super admin e impedem auto-alteração.
+- **Central da Equipe LLZ** (`/admin/global` → Equipe LLZ) passa a ter três visões:
+  Membros ativos, Aguardando ativação e Convites, com filtros por papel.
+- **Central de contas**: contas cliente sem vínculo empresarial podem ser adicionadas
+  à Equipe LLZ (papel inicial Suporte); contas com vínculo exibem o motivo do bloqueio.
+- **Diagnóstico de acessos**: papel de empresa em slot global é `critical`; conta LLZ
+  sem papel há mais de 7 dias vira alerta; "sem empresa" não é mais apontado para staff.
