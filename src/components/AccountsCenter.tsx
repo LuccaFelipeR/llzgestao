@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { UserCheck, UserX, Search, IdCard } from "lucide-react";
+import { UserCheck, UserX, Search, IdCard, Crown } from "lucide-react";
 import { friendlyError } from "@/lib/error-messages";
 
 const GLOBAL_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
@@ -36,7 +36,7 @@ interface MemberRow { user_id: string; is_active: boolean; companies: { name: st
 interface InviteRow { email: string; status: string; intended_role: string }
 
 export default function AccountsCenter() {
-  const { isPlatformAdmin } = useAuth();
+  const { isPlatformAdmin, isPlatformSuperAdmin } = useAuth();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
@@ -71,6 +71,23 @@ export default function AccountsCenter() {
     },
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
+
+  const addToStaff = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: "support_agent" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
+      queryClient.invalidateQueries({ queryKey: ["llz-staff-center"] });
+      queryClient.invalidateQueries({ queryKey: ["access-diagnostics"] });
+      toast({
+        title: "Conta adicionada à Equipe LLZ",
+        description: "Papel inicial: Suporte. Ajuste em Equipe LLZ, se necessário.",
+      });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
+  });
+
 
   const rows = useMemo(() => {
     if (!data) return [];
@@ -201,7 +218,24 @@ export default function AccountsCenter() {
                     <UserX size={14} /> Bloquear conta
                   </Button>
                 )}
+                {!isStaff && r.memberships.length === 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1"
+                    disabled={!isPlatformSuperAdmin || addToStaff.isPending}
+                    onClick={() => addToStaff.mutate({ userId: r.id })}
+                  >
+                    <Crown size={14} /> Adicionar à Equipe LLZ
+                  </Button>
+                )}
+                {!isStaff && r.memberships.length > 0 && (
+                  <span className="text-[11px] text-muted-foreground self-center">
+                    Vinculada a empresa cliente — não pode virar Equipe LLZ.
+                  </span>
+                )}
               </div>
+
             </div>
           );
         })}
