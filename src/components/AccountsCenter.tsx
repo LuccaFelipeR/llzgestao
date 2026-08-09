@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
-import { UserCheck, UserX, Search, IdCard } from "lucide-react";
+import { UserCheck, UserX, Search, IdCard, Crown } from "lucide-react";
 import { friendlyError } from "@/lib/error-messages";
 
 const GLOBAL_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
