@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sb, rpcOk } from "@/lib/db-any";
 import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ export default function PlatformStaffCenter() {
 
   const createInvite = useMutation({
     mutationFn: async () =>
-      runRpc("staff_invite_create", { _email: email, _full_name: fullName, _role: role }, "Convite criado")(),
+      rpcOk("staff_invite_create", { _email: email, _full_name: fullName, _role: role }),
     onSuccess: () => {
       setEmail("");
       setFullName("");
@@ -101,13 +102,13 @@ export default function PlatformStaffCenter() {
   });
 
   const revokeInvite = useMutation({
-    mutationFn: async (id: string) => runRpc("staff_invite_revoke", { _invite_id: id }, "ok")(),
+    mutationFn: async (id: string) => rpcOk("staff_invite_revoke", { _invite_id: id }),
     onSuccess: () => { invalidate(); toast({ title: "Convite cancelado" }); },
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
   const activateInvite = useMutation({
-    mutationFn: async (id: string) => runRpc("staff_invite_activate", { _invite_id: id }, "ok")(),
+    mutationFn: async (id: string) => rpcOk("staff_invite_activate", { _invite_id: id }),
     onSuccess: () => { invalidate(); toast({ title: "Membro ativado", description: "Papel global concedido." }); },
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
@@ -230,7 +231,7 @@ export default function PlatformStaffCenter() {
         {(staff ?? []).length === 0 && (
           <p className="text-xs text-muted-foreground">Nenhum usuário com papel global cadastrado.</p>
         )}
-        {(staff ?? []).map((p: any) => (
+        {(staff ?? []).map((p) => (
           <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-sm truncate">{p.full_name || "Sem nome"}</p>
@@ -241,7 +242,7 @@ export default function PlatformStaffCenter() {
             </div>
             <div className="flex gap-1 flex-wrap">
               <Badge variant="outline" className="text-[10px]">Equipe LLZ</Badge>
-              {p.roles.map((r: any) => (
+              {p.roles.map((r) => (
                 <Badge key={r.id} variant="secondary" className="text-[10px]">
                   {PLATFORM_ROLE_LABEL[r.role] ?? r.role}
                 </Badge>
