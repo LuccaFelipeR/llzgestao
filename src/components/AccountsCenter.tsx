@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { sb, rpcOk } from "@/lib/db-any";
 import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,19 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: "blocked", label: "Bloqueadas" },
 ];
 
+interface ProfileRow {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  is_approved: boolean;
+  rejection_reason?: string | null;
+  account_type?: string | null;
+  created_at: string;
+}
+interface RoleRow { user_id: string; role: string }
+interface MemberRow { user_id: string; is_active: boolean; companies: { name: string } | null }
+interface InviteRow { email: string; status: string; intended_role: string }
+
 export default function AccountsCenter() {
   const { isPlatformAdmin } = useAuth();
   const queryClient = useQueryClient();
@@ -33,28 +47,22 @@ export default function AccountsCenter() {
       const [profilesRes, rolesRes, membersRes, invitesRes] = await Promise.all([
         supabase.from("profiles").select("*").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
-        (supabase as any).from("company_members").select("user_id, role, is_active, companies(name)"),
-        (supabase as any).from("platform_staff_invites").select("email, status, intended_role"),
+        sb.from("company_members").select("user_id, is_active, companies(name)"),
+        sb.from("platform_staff_invites").select("email, status, intended_role"),
       ]);
       if (profilesRes.error) throw profilesRes.error;
       return {
-        profiles: (profilesRes.data ?? []) as any[],
-        roles: (rolesRes.data ?? []) as any[],
-        members: (membersRes.data ?? []) as any[],
-        invites: (invitesRes.data ?? []) as any[],
+        profiles: (profilesRes.data ?? []) as ProfileRow[],
+        roles: (rolesRes.data ?? []) as RoleRow[],
+        members: (membersRes.data ?? []) as MemberRow[],
+        invites: (invitesRes.data ?? []) as InviteRow[],
       };
     },
   });
 
   const setApproval = useMutation({
     mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
-      const { data, error } = await (supabase as any).rpc("account_set_approval", {
-        _user_id: userId,
-        _approved: approved,
-        _reason: null,
-      });
-      if (error) throw error;
-      if (data && data.ok === false) throw new Error(data.error);
+      await rpcOk("account_set_approval", { _user_id: userId, _approved: approved, _reason: null });
     },
     onSuccess: (_d, v) => {
       queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
@@ -76,7 +84,7 @@ export default function AccountsCenter() {
 
   const filtered = rows.filter((r) => {
     const q = search.trim().toLowerCase();
-    if (q && !(`${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q))) return false;
+    if (q && !`${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q)) return false;
     if (filter === "pending") return !r.is_approved;
     if (filter === "customers") return r.account_type === "customer";
     if (filter === "staff") return r.account_type === "llz_staff";
@@ -153,7 +161,7 @@ export default function AccountsCenter() {
                   <p>
                     Papéis globais:{" "}
                     {r.roles.length > 0
-                      ? r.roles.map((x: any) => PLATFORM_ROLE_LABEL[x.role] ?? x.role).join(", ")
+                      ? r.roles.map((x) => PLATFORM_ROLE_LABEL[x.role] ?? x.role).join(", ")
                       : r.invite?.status === "registered"
                         ? "Cadastro concluído — aguardando ativação LLZ"
                         : "Nenhum"}
@@ -164,7 +172,7 @@ export default function AccountsCenter() {
                     Empresas:{" "}
                     {r.memberships.length > 0
                       ? r.memberships
-                          .map((m: any) => `${m.companies?.name ?? "—"}${m.is_active ? "" : " (bloqueado na empresa)"}`)
+                          .map((m) => `${m.companies?.name ?? "—"}${m.is_active ? "" : " (bloqueado na empresa)"}`)
                           .join(", ")
                       : "Nenhuma"}
                   </p>
