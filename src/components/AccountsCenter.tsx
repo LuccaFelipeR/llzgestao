@@ -72,6 +72,23 @@ export default function AccountsCenter() {
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
+  const addToStaff = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: "support_agent" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
+      queryClient.invalidateQueries({ queryKey: ["llz-staff-center"] });
+      queryClient.invalidateQueries({ queryKey: ["access-diagnostics"] });
+      toast({
+        title: "Conta adicionada à Equipe LLZ",
+        description: "Papel inicial: Suporte. Ajuste em Equipe LLZ, se necessário.",
+      });
+    },
+    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
+  });
+
+
   const rows = useMemo(() => {
     if (!data) return [];
     return data.profiles.map((p) => {
