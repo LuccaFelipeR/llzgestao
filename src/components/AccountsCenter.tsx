@@ -201,7 +201,24 @@ export default function AccountsCenter() {
                     <UserX size={14} /> Bloquear conta
                   </Button>
                 )}
+                {!isStaff && r.memberships.length === 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1"
+                    disabled={!isPlatformSuperAdmin || addToStaff.isPending}
+                    onClick={() => addToStaff.mutate({ userId: r.id })}
+                  >
+                    <Crown size={14} /> Adicionar à Equipe LLZ
+                  </Button>
+                )}
+                {!isStaff && r.memberships.length > 0 && (
+                  <span className="text-[11px] text-muted-foreground self-center">
+                    Vinculada a empresa cliente — não pode virar Equipe LLZ.
+                  </span>
+                )}
               </div>
+
             </div>
           );
         })}
