@@ -620,6 +620,57 @@ export type Database = {
           },
         ]
       }
+      platform_staff_invites: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          full_name: string | null
+          id: string
+          intended_role: Database["public"]["Enums"]["app_role"]
+          invited_by: string | null
+          registered_at: string | null
+          registered_user_id: string | null
+          revoked_at: string | null
+          status: string
+          token_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          intended_role: Database["public"]["Enums"]["app_role"]
+          invited_by?: string | null
+          registered_at?: string | null
+          registered_user_id?: string | null
+          revoked_at?: string | null
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          full_name?: string | null
+          id?: string
+          intended_role?: Database["public"]["Enums"]["app_role"]
+          invited_by?: string | null
+          registered_at?: string | null
+          registered_user_id?: string | null
+          revoked_at?: string | null
+          status?: string
+          token_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
@@ -726,6 +777,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string
           created_at: string
           email: string
           full_name: string | null
@@ -738,6 +790,7 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          account_type?: string
           created_at?: string
           email: string
           full_name?: string | null
@@ -750,6 +803,7 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          account_type?: string
           created_at?: string
           email?: string
           full_name?: string | null
@@ -1005,6 +1059,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      account_set_approval: {
+        Args: { _approved: boolean; _reason?: string; _user_id: string }
+        Returns: Json
+      }
+      account_set_type: {
+        Args: { _account_type: string; _user_id: string }
+        Returns: Json
+      }
       approve_company: { Args: { _company_id: string }; Returns: undefined }
       can_manage_company_members: {
         Args: { _company_id: string; _user_id: string }
@@ -1073,6 +1135,12 @@ export type Database = {
         Args: { _company_id: string; _reason: string }
         Returns: undefined
       }
+      staff_invite_activate: { Args: { _invite_id: string }; Returns: Json }
+      staff_invite_create: {
+        Args: { _email: string; _full_name: string; _role: string }
+        Returns: Json
+      }
+      staff_invite_revoke: { Args: { _invite_id: string }; Returns: Json }
     }
     Enums: {
       address_type: "ARMAZENAGEM" | "TECNICO"

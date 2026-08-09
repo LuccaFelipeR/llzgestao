@@ -204,3 +204,26 @@ vínculo com empresa mantida ou da lista obrigatória em `platform_protected_use
   em outras empresas continuam intactos. Nenhuma ação exclui contas.
 - Transferência de propriedade é transacional: o proprietário anterior vira Administrador e a
   empresa mantém exatamente um proprietário ativo.
+
+## Fase 6.17B — Tipos de conta e convites da Equipe LLZ
+
+Existem exatamente **dois tipos de conta**, declarados em `profiles.account_type`:
+
+| Tipo | Valor | Empresa | Onde vive o acesso |
+|---|---|---|---|
+| Cliente | `customer` | obrigatória | `company_members` |
+| Equipe LLZ | `llz_staff` | **nenhuma** (esperado) | `user_roles` |
+
+- Convites da equipe ficam em `public.platform_staff_invites`
+  (`pending` → `registered` → `active`, ou `revoked`/`expired`).
+- `handle_new_user()` reconhece o e-mail convidado, marca `account_type='llz_staff'`,
+  não cria empresa e não envia a pessoa para o onboarding de cliente.
+- RPCs: `staff_invite_create`, `staff_invite_revoke`, `staff_invite_activate`,
+  `account_set_approval`, `account_set_type` (`SECURITY DEFINER`, sem `EXECUTE` para `anon`).
+- Só o super administrador cria, cancela e ativa convites. Ativar o convite é o
+  único caminho para conceder papel global.
+- Conta LLZ sem papel global vê a tela **Ativação pendente** (`StaffPendingActivation`),
+  nunca o onboarding empresarial nem a tela de aprovação de cliente.
+- `useAuth()` expõe `accountType`, `isStaffAccount` e `isStaffPendingActivation`.
+- Painel `/admin`: aba **Contas** (visão global, aprovar/bloquear) e aba
+  **Equipe LLZ** (membros ativos + convites). Nenhuma ação de conta grava cargo de empresa.
