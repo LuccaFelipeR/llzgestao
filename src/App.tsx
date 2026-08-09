@@ -18,6 +18,8 @@ import NotificationSettings from "@/pages/NotificationSettings";
 import Login from "@/pages/Login";
 import ResetPassword from "@/pages/ResetPassword";
 import PendingApproval from "@/pages/PendingApproval";
+import StaffPendingActivation from "@/pages/StaffPendingActivation";
+
 import AIInsights from "@/pages/AIInsights";
 import CompanyOnboarding from "@/pages/CompanyOnboarding";
 import Documentation from "@/pages/Documentation";
@@ -41,7 +43,7 @@ function ProtectedRoute({
   adminOnly = false,
   superAdminOnly = false,
 }: { children: React.ReactNode; adminOnly?: boolean; superAdminOnly?: boolean }) {
-  const { session, loading, isApproved, isPlatformStaff, isPlatformSuperAdmin } = useAuth();
+  const { session, loading, isApproved, isPlatformStaff, isPlatformSuperAdmin, isStaffPendingActivation } = useAuth();
 
   if (loading) {
     return (
@@ -52,16 +54,19 @@ function ProtectedRoute({
   }
 
   if (!session) return <Navigate to="/login" replace />;
+  // Conta da equipe LLZ ainda sem papel global: nunca vai para o fluxo empresarial.
+  if (isStaffPendingActivation) return <StaffPendingActivation />;
   if (!isApproved) return <PendingApproval />;
   if (superAdminOnly && !isPlatformSuperAdmin) return <Navigate to="/" replace />;
   if (adminOnly && !isPlatformStaff) return <Navigate to="/" replace />;
+
 
   return <>{children}</>;
 }
 
 function CompanyGate({ children }: { children: React.ReactNode }) {
   const { company, loading, currentCompanyId } = useCompany();
-  const { isPlatformStaff } = useAuth();
+  const { isStaffAccount } = useAuth();
 
   if (loading) {
     return (
@@ -71,8 +76,9 @@ function CompanyGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Equipe LLZ (papel global): entra sem empresa, nunca vê onboarding de cliente.
-  if (isPlatformStaff) return <>{children}</>;
+  // Conta da Equipe LLZ: entra sem empresa, nunca vê onboarding de cliente.
+  if (isStaffAccount) return <>{children}</>;
+
 
   if (company && !company.onboarding_completed) {
     return <CompanyOnboarding />;

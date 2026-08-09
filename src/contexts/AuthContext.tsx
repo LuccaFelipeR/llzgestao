@@ -36,7 +36,10 @@ interface Profile {
   full_name: string | null;
   is_approved: boolean;
   rejection_reason?: string | null;
+  /** Tipo de conta: 'customer' (cliente) ou 'llz_staff' (equipe LLZ) */
+  account_type?: string | null;
 }
+
 
 interface AuthContextType {
   session: Session | null;
@@ -46,6 +49,12 @@ interface AuthContextType {
   role: string | null;
   roles: string[];
   platformRole: string | null;
+  /** Tipo de conta declarado no profile (fonte de verdade do backend) */
+  accountType: "customer" | "llz_staff";
+  /** Conta marcada como equipe LLZ (independe de já possuir papel global) */
+  isStaffAccount: boolean;
+  /** Conta LLZ que ainda não recebeu papel global (aguardando ativação) */
+  isStaffPendingActivation: boolean;
   /** true para qualquer papel global da equipe LLZ */
   isPlatformStaff: boolean;
   isPlatformSuperAdmin: boolean;
@@ -60,6 +69,7 @@ interface AuthContextType {
   refreshProfile: () => Promise<void>;
 }
 
+
 const AuthContext = createContext<AuthContextType>({
   session: null,
   user: null,
@@ -67,7 +77,11 @@ const AuthContext = createContext<AuthContextType>({
   role: null,
   roles: [],
   platformRole: null,
+  accountType: "customer",
+  isStaffAccount: false,
+  isStaffPendingActivation: false,
   isPlatformStaff: false,
+
   isPlatformSuperAdmin: false,
   isPlatformAdmin: false,
   isSupportStaff: false,
@@ -135,6 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isPlatformSuperAdmin = roles.some((r) => SUPER_ADMIN_ROLES.includes(r));
   const isPlatformAdmin = roles.some((r) => CLIENT_ADMIN_ROLES.includes(r));
   const isSupportStaff = roles.some((r) => SUPPORT_ROLES.includes(r));
+  const accountType: "customer" | "llz_staff" =
+    profile?.account_type === "llz_staff" ? "llz_staff" : "customer";
+  const isStaffAccount = accountType === "llz_staff" || isPlatformStaff;
+  const isStaffPendingActivation = accountType === "llz_staff" && !isPlatformStaff;
 
   return (
     <AuthContext.Provider
@@ -145,7 +163,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: roles[0] ?? null,
         roles,
         platformRole: platformRoles[0] ?? null,
+        accountType,
+        isStaffAccount,
+        isStaffPendingActivation,
         isPlatformStaff,
+
         isPlatformSuperAdmin,
         isPlatformAdmin,
         isSupportStaff,

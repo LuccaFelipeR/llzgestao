@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -10,10 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw, Crown } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw, Crown, IdCard } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 import CompanyUsersCenter from "@/components/CompanyUsersCenter";
 import AccessDiagnostics from "@/components/AccessDiagnostics";
+import AccountsCenter from "@/components/AccountsCenter";
+import PlatformStaffCenter from "@/components/PlatformStaffCenter";
+
 import { friendlyError } from "@/lib/error-messages";
 
 /** Cargos EMPRESARIAIS (company_members) — nunca gravados em user_roles */
@@ -40,7 +43,7 @@ const ALL_TABS = [
 export default function AdminPanel() {
   const { user, isPlatformAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"companies" | "companyUsers" | "platform" | "activity" | "audit" | "system">("companies");
+  const [tab, setTab] = useState<"companies" | "accounts" | "companyUsers" | "platform" | "activity" | "audit" | "system">("companies");
   const [usersCenterCompanyId, setUsersCenterCompanyId] = useState<string | null>(null);
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
@@ -353,10 +356,8 @@ export default function AdminPanel() {
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
 
-  const PLATFORM_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
-  const platformStaff = (profiles ?? []).filter((p) =>
-    (allRoles ?? []).some((r) => r.user_id === p.id && PLATFORM_ROLE_KEYS.includes(r.role)),
-  );
+
+
 
   function isTabBlocked(userId: string, tabKey: string) {
     const perm = allPermissions?.find((p) => p.user_id === userId && p.tab_key === tabKey);
@@ -383,6 +384,7 @@ export default function AdminPanel() {
       <div className="flex gap-1 mb-6 bg-secondary rounded-xl p-1 overflow-x-auto">
         {[
           { key: "companies" as const, label: "Empresas", icon: Building2 },
+          { key: "accounts" as const, label: "Contas", icon: IdCard },
           { key: "companyUsers" as const, label: "Usuários das Empresas", icon: Users },
           { key: "platform" as const, label: "Equipe LLZ", icon: Crown },
           { key: "activity" as const, label: "Atividade", icon: Activity },
@@ -402,6 +404,9 @@ export default function AdminPanel() {
         ))}
       </div>
 
+      {/* Contas (visão global de todas as contas) */}
+      {tab === "accounts" && <AccountsCenter />}
+
       {/* Usuários das Empresas (cargos empresariais + diagnóstico) */}
       {tab === "companyUsers" && (
         <div className="space-y-8">
@@ -409,6 +414,7 @@ export default function AdminPanel() {
           <AccessDiagnostics />
         </div>
       )}
+
 
       {/* Activity Tab */}
       {tab === "activity" && (
@@ -436,37 +442,9 @@ export default function AdminPanel() {
         </div>
       )}
 
-      {/* Equipe LLZ (papéis GLOBAIS da plataforma) */}
-      {tab === "platform" && (
-        <div className="space-y-3">
-          <div className="bg-card border border-border rounded-xl p-4">
-            <h3 className="font-semibold text-sm flex items-center gap-2"><Crown size={16} className="text-primary" /> Equipe LLZ — acessos da plataforma</h3>
-            <p className="text-[11px] text-muted-foreground mt-1">
-              Somente usuários com papel GLOBAL (<code>user_roles</code>). Papéis de empresa
-              (owner, admin, supervisor, operador, ponto focal) ficam em “Usuários” e em cada empresa —
-              nunca são papéis globais.
-            </p>
-          </div>
-          {platformStaff.length === 0 && (
-            <p className="text-xs text-muted-foreground">Nenhum usuário com papel global cadastrado.</p>
-          )}
-          {platformStaff.map((p) => (
-            <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm truncate">{p.full_name || "Sem nome"}</p>
-                <p className="text-xs text-muted-foreground truncate">{p.email}</p>
-              </div>
-              <div className="flex gap-1 flex-wrap">
-                {(allRoles ?? []).filter((r) => r.user_id === p.id).map((r) => (
-                  <Badge key={r.id} variant="secondary" className="text-[10px]">
-                    {PLATFORM_ROLE_LABEL[r.role] ?? r.role}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Equipe LLZ (papéis GLOBAIS da plataforma + convites) */}
+      {tab === "platform" && <PlatformStaffCenter />}
+
 
       {/* Audit Tab */}
       {tab === "audit" && <OperationalAudit />}
