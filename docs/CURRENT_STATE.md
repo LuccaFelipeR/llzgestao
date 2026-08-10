@@ -154,3 +154,16 @@ Limpeza seletiva passou a ser 100% dinâmica: a seleção manual é a única fon
 Listas fixas de empresas/e-mails protegidos removidas. Histórico e vínculos órfãos viraram
 warnings (não bloqueiam). Preview separa warnings de blockers e a UI mostra o checklist de
 liberação com o motivo exato do botão desabilitado. Nenhuma limpeza executada.
+
+## Fase 6.18A — Central de Implantação (interna LLZ)
+- Nova aba **Implantações** no Painel do Desenvolvedor (somente empresas com contas `customer`).
+- Estágio, próxima ação e nível de atenção são **calculados** a partir de evidências reais
+  (aprovação, onboarding, produtos, endereços, movimentos, saldo, suporte, atividade).
+- Percentual = mesma fonte de verdade do checklist de ativação (`src/lib/deployment.ts`,
+  reutilizado por `ActivationChecklist`).
+- `companies.deployment_owner_id` (responsável LLZ, sem criar `company_members`) e
+  `assisted_validation_at/by/note` (homologação assistida).
+- Tabela `company_deployment_notes`: notas internas, RLS restrita a `is_platform_staff`.
+- RPCs: `deployment_overview`, `deployment_detail`, `deployment_set_owner`,
+  `deployment_complete_validation` (todas SECURITY DEFINER, restritas à equipe LLZ).
+- Limpeza seletiva já executada; documentação anterior que a tratava como pendente está superada.

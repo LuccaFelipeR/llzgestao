@@ -122,12 +122,16 @@ export type Database = {
           approval_status: string
           approved_at: string | null
           approved_by: string | null
+          assisted_validation_at: string | null
+          assisted_validation_by: string | null
+          assisted_validation_note: string | null
           business_type: Database["public"]["Enums"]["business_type"]
           city: string | null
           controls_batch: boolean
           controls_expiration: boolean
           country: string | null
           created_at: string
+          deployment_owner_id: string | null
           document_number: string | null
           email: string | null
           estimated_size: string | null
@@ -169,12 +173,16 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          assisted_validation_at?: string | null
+          assisted_validation_by?: string | null
+          assisted_validation_note?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
           controls_batch?: boolean
           controls_expiration?: boolean
           country?: string | null
           created_at?: string
+          deployment_owner_id?: string | null
           document_number?: string | null
           email?: string | null
           estimated_size?: string | null
@@ -216,12 +224,16 @@ export type Database = {
           approval_status?: string
           approved_at?: string | null
           approved_by?: string | null
+          assisted_validation_at?: string | null
+          assisted_validation_by?: string | null
+          assisted_validation_note?: string | null
           business_type?: Database["public"]["Enums"]["business_type"]
           city?: string | null
           controls_batch?: boolean
           controls_expiration?: boolean
           country?: string | null
           created_at?: string
+          deployment_owner_id?: string | null
           document_number?: string | null
           email?: string | null
           estimated_size?: string | null
@@ -257,6 +269,44 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: []
+      }
+      company_deployment_notes: {
+        Row: {
+          author_id: string
+          category: string
+          company_id: string
+          created_at: string
+          id: string
+          note: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          category?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          note: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          category?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          note?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_deployment_notes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_members: {
         Row: {
@@ -1090,6 +1140,16 @@ export type Database = {
       }
       company_transfer_ownership: {
         Args: { _company_id: string; _new_owner_member_id: string }
+        Returns: Json
+      }
+      deployment_complete_validation: {
+        Args: { _company_id: string; _note?: string }
+        Returns: Json
+      }
+      deployment_detail: { Args: { _company_id: string }; Returns: Json }
+      deployment_overview: { Args: never; Returns: Json }
+      deployment_set_owner: {
+        Args: { _company_id: string; _user_id: string }
         Returns: Json
       }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
