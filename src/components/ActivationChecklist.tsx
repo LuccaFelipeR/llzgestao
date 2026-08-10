@@ -6,6 +6,8 @@ import { CheckCircle2, Circle, ChevronRight, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import { buildActivationItems, activationPct, type ChecklistItem } from "@/lib/deployment";
+
 
 type Item = {
   key: string;
