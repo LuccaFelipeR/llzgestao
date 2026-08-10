@@ -123,6 +123,10 @@ export default function AccountsCenter() {
     });
   }, [data]);
 
+  const staffTarget = rows.find((r) => r.id === staffTargetId) ?? null;
+
+
+
   const filtered = rows.filter((r) => {
     const q = search.trim().toLowerCase();
     if (q && !`${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q)) return false;
