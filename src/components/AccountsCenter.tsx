@@ -6,13 +6,31 @@ import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { UserCheck, UserX, Search, IdCard, Crown } from "lucide-react";
 import { friendlyError } from "@/lib/error-messages";
 
 const GLOBAL_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
 
+/** Papéis globais atribuíveis pela interface — nunca há seleção implícita. */
+const MANAGEABLE_ROLES: { value: string; label: string }[] = [
+  { value: "platform_admin", label: "Administrador da Plataforma" },
+  { value: "support_agent", label: "Suporte" },
+  { value: "developer", label: "Desenvolvedor" },
+];
+
 type Filter = "all" | "pending" | "customers" | "staff" | "blocked";
+
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "Todas" },
@@ -40,6 +58,8 @@ export default function AccountsCenter() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
+  const [staffTargetId, setStaffTargetId] = useState<string | null>(null);
+  const [staffRole, setStaffRole] = useState<string>("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["accounts-center"],
@@ -73,20 +93,24 @@ export default function AccountsCenter() {
   });
 
   const addToStaff = useMutation({
-    mutationFn: async ({ userId }: { userId: string }) => {
-      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: "support_agent" });
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: role });
     },
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
       queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
       queryClient.invalidateQueries({ queryKey: ["llz-staff-center"] });
       queryClient.invalidateQueries({ queryKey: ["access-diagnostics"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      setStaffTargetId(null);
+      setStaffRole("");
       toast({
         title: "Conta adicionada à Equipe LLZ",
-        description: "Papel inicial: Suporte. Ajuste em Equipe LLZ, se necessário.",
+        description: `Papel global concedido: ${MANAGEABLE_ROLES.find((r) => r.value === v.role)?.label ?? v.role}.`,
       });
     },
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
+
 
 
   const rows = useMemo(() => {
@@ -98,6 +122,10 @@ export default function AccountsCenter() {
       return { ...p, roles, memberships, invite };
     });
   }, [data]);
+
+  const staffTarget = rows.find((r) => r.id === staffTargetId) ?? null;
+
+
 
   const filtered = rows.filter((r) => {
     const q = search.trim().toLowerCase();
@@ -224,14 +252,15 @@ export default function AccountsCenter() {
                     variant="outline"
                     className="h-8 text-xs gap-1"
                     disabled={!isPlatformSuperAdmin || addToStaff.isPending}
-                    onClick={() => addToStaff.mutate({ userId: r.id })}
+                    onClick={() => { setStaffRole(""); setStaffTargetId(r.id); }}
                   >
                     <Crown size={14} /> Adicionar à Equipe LLZ
                   </Button>
                 )}
                 {!isStaff && r.memberships.length > 0 && (
                   <span className="text-[11px] text-muted-foreground self-center">
-                    Vinculada a empresa cliente — não pode virar Equipe LLZ.
+                    Vinculada a empresa cliente ({r.memberships.map((m) => m.companies?.name ?? "—").join(", ")}) — não
+                    pode virar Equipe LLZ.
                   </span>
                 )}
               </div>
@@ -240,6 +269,88 @@ export default function AccountsCenter() {
           );
         })}
       </div>
+
+      <Dialog
+        open={!!staffTarget}
+        onOpenChange={(o) => { if (!o) { setStaffTargetId(null); setStaffRole(""); } }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar à Equipe LLZ</DialogTitle>
+            <DialogDescription>
+              Escolha conscientemente o cargo global. Nenhum cargo é atribuído automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {staffTarget && (
+            <div className="space-y-3">
+              <div className="border border-border rounded-lg p-3 text-xs space-y-1">
+                <p className="font-semibold text-sm">{staffTarget.full_name || "Sem nome"}</p>
+                <p className="text-muted-foreground">{staffTarget.email}</p>
+                <p className="text-muted-foreground">
+                  Tipo atual: {staffTarget.account_type === "llz_staff" ? "Equipe LLZ" : "Cliente"}
+                </p>
+                {staffTarget.memberships.length === 0 ? (
+                  <p className="text-muted-foreground">Vínculo empresarial: nenhum (confirmado)</p>
+                ) : (
+                  <p className="text-destructive">
+                    Vínculo empresarial: {staffTarget.memberships.map((m) => m.companies?.name ?? "—").join(", ")} —
+                    conversão bloqueada.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Cargo global (obrigatório)</Label>
+                <Select value={staffRole} onValueChange={setStaffRole}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Selecione o cargo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MANAGEABLE_ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {staffRole && (
+                <p className="text-[11px] text-muted-foreground">
+                  Esta conta passará a ser do tipo Equipe LLZ e receberá acesso global de{" "}
+                  <strong>{MANAGEABLE_ROLES.find((r) => r.value === staffRole)?.label}</strong>. Nenhuma empresa será
+                  criada.
+                </p>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => { setStaffTargetId(null); setStaffRole(""); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={
+                !isPlatformSuperAdmin ||
+                !staffRole ||
+                !staffTarget ||
+                staffTarget.memberships.length > 0 ||
+                addToStaff.isPending
+              }
+              onClick={() => staffTarget && addToStaff.mutate({ userId: staffTarget.id, role: staffRole })}
+            >
+              <Crown size={14} /> Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+
 }
