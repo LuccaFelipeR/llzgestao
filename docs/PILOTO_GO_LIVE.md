@@ -66,3 +66,11 @@ Congelados Sartorio e seus usuários. Passo a passo em `docs/RESET_AMBIENTE.md`.
 A limpeza do ambiente antes do piloto usa `/admin/reset` → Limpeza seletiva. Empresas não
 selecionadas são preservadas integralmente. Vínculos antigos sem cadastro não impedem mais
 a execução. A execução permanece manual pelo super admin. Nada foi excluído até aqui.
+
+## Fase 6.18A — Central de Implantação
+A limpeza seletiva já foi executada e as empresas de teste indesejadas foram removidas.
+Os tipos de conta `customer` / `llz_staff`, a Central de Contas, a Central de Usuários das
+Empresas e a Central da Equipe LLZ existem e estão em uso (membros LLZ não precisam ter
+empresa). O acompanhamento do piloto agora é feito no Painel do Desenvolvedor →
+**Implantações**, com estágio, percentual (mesmo checklist de ativação), próxima ação,
+nível de atenção, responsável LLZ, notas internas e validação assistida.
