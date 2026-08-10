@@ -10,12 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw, Crown, IdCard } from "lucide-react";
+import { Shield, UserCheck, UserX, Users, Activity, Package, MapPin, Boxes, Clock, TrendingUp, ClipboardCheck, Trash2, Settings2, AlertTriangle, Building2, RefreshCw, Copy, BarChart3, Pencil, Ban, PlayCircle, Archive, RotateCcw, Crown, IdCard, Rocket } from "lucide-react";
 import OperationalAudit from "@/components/OperationalAudit";
 import CompanyUsersCenter from "@/components/CompanyUsersCenter";
 import AccessDiagnostics from "@/components/AccessDiagnostics";
 import AccountsCenter from "@/components/AccountsCenter";
 import PlatformStaffCenter from "@/components/PlatformStaffCenter";
+import DeploymentCenter from "@/components/DeploymentCenter";
 
 import { friendlyError } from "@/lib/error-messages";
 
@@ -43,7 +44,7 @@ const ALL_TABS = [
 export default function AdminPanel() {
   const { user, isPlatformAdmin } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<"companies" | "accounts" | "companyUsers" | "platform" | "activity" | "audit" | "system">("companies");
+  const [tab, setTab] = useState<"companies" | "deployments" | "accounts" | "companyUsers" | "platform" | "activity" | "audit" | "system">("companies");
   const [usersCenterCompanyId, setUsersCenterCompanyId] = useState<string | null>(null);
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
   const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
@@ -384,6 +385,7 @@ export default function AdminPanel() {
       <div className="flex gap-1 mb-6 bg-secondary rounded-xl p-1 overflow-x-auto">
         {[
           { key: "companies" as const, label: "Empresas", icon: Building2 },
+          { key: "deployments" as const, label: "Implantações", icon: Rocket },
           { key: "accounts" as const, label: "Contas", icon: IdCard },
           { key: "companyUsers" as const, label: "Usuários das Empresas", icon: Users },
           { key: "platform" as const, label: "Equipe LLZ", icon: Crown },
@@ -405,6 +407,8 @@ export default function AdminPanel() {
       </div>
 
       {/* Contas (visão global de todas as contas) */}
+      {tab === "deployments" && <DeploymentCenter />}
+
       {tab === "accounts" && <AccountsCenter />}
 
       {/* Usuários das Empresas (cargos empresariais + diagnóstico) */}
