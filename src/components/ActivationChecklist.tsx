@@ -34,81 +34,17 @@ export default function ActivationChecklist() {
         supabase.from("activity_log").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("action", "csv_import_completed"),
         supabase.from("activity_log").select("id", { count: "exact", head: true }).eq("company_id", cid).eq("action", "support_center_viewed"),
       ]);
-
-
-      const list: Item[] = [
-        {
-          key: "identity",
-          label: "Dados básicos da empresa preenchidos",
-          done: !!company?.name && company?.name.trim().length > 0 && !!company?.business_type,
-          href: "/configuracoes",
-          cta: "Editar",
-        },
-        {
-          key: "focal",
-          label: "Ponto focal definido",
-          done: !!company?.main_focal_user_id,
-          href: "/configuracoes",
-          cta: "Definir",
-        },
-        {
-          key: "config",
-          label: "Configurações operacionais concluídas",
-          done: company?.onboarding_status === "completed",
-          href: "/company-onboarding",
-          cta: "Configurar",
-        },
-        {
-          key: "product",
-          label: "Primeiro produto cadastrado",
-          done: (products.count ?? 0) > 0,
-          href: "/produtos",
-          cta: "Cadastrar",
-        },
-        ...(company?.uses_addressing !== false
-          ? [{
-              key: "address",
-              label: "Primeiro endereço cadastrado",
-              done: (addresses.count ?? 0) > 0,
-              href: "/enderecos",
-              cta: "Cadastrar",
-            } as Item]
-          : []),
-        {
-          key: "movement",
-          label: "Primeira entrada registrada",
-          done: (movements.count ?? 0) > 0,
-          href: "/recebimento",
-          cta: "Registrar",
-        },
-        {
-          key: "balance",
-          label: "Primeiro saldo positivo",
-          done: (balance.count ?? 0) > 0,
-          href: "/estoque",
-          cta: "Ver estoque",
-        },
-        ...(company?.plans_csv_import
-          ? [{
-              key: "import",
-              label: "Importação CSV concluída",
-              done: (csvImports.count ?? 0) > 0,
-              href: "/onboarding",
-              cta: "Importar",
-            } as Item]
-          : []),
-        {
-          key: "support",
-          label: "Central de suporte conhecida",
-          done: (supportSeen.count ?? 0) > 0,
-          href: "/suporte",
-          cta: "Abrir",
-        },
-
-      ];
-
-      return list;
+      return buildActivationItems(company, {
+        products: products.count ?? 0,
+        addresses: addresses.count ?? 0,
+        movementsIn: movements.count ?? 0,
+        movementsOut: 0,
+        balance: balance.count ?? 0,
+        csvImports: csvImports.count ?? 0,
+        supportSeen: supportSeen.count ?? 0,
+      });
     },
+
   });
 
   const dismiss = useMutation({
