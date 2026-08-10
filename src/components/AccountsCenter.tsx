@@ -6,13 +6,31 @@ import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { UserCheck, UserX, Search, IdCard, Crown } from "lucide-react";
 import { friendlyError } from "@/lib/error-messages";
 
 const GLOBAL_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
 
+/** Papéis globais atribuíveis pela interface — nunca há seleção implícita. */
+const MANAGEABLE_ROLES: { value: string; label: string }[] = [
+  { value: "platform_admin", label: "Administrador da Plataforma" },
+  { value: "support_agent", label: "Suporte" },
+  { value: "developer", label: "Desenvolvedor" },
+];
+
 type Filter = "all" | "pending" | "customers" | "staff" | "blocked";
+
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "Todas" },
