@@ -91,20 +91,24 @@ export default function AccountsCenter() {
   });
 
   const addToStaff = useMutation({
-    mutationFn: async ({ userId }: { userId: string }) => {
-      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: "support_agent" });
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: role });
     },
-    onSuccess: () => {
+    onSuccess: (_d, v) => {
       queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
       queryClient.invalidateQueries({ queryKey: ["llz-staff-center"] });
       queryClient.invalidateQueries({ queryKey: ["access-diagnostics"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
+      setStaffTargetId(null);
+      setStaffRole("");
       toast({
         title: "Conta adicionada à Equipe LLZ",
-        description: "Papel inicial: Suporte. Ajuste em Equipe LLZ, se necessário.",
+        description: `Papel global concedido: ${MANAGEABLE_ROLES.find((r) => r.value === v.role)?.label ?? v.role}.`,
       });
     },
     onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
   });
+
 
 
   const rows = useMemo(() => {
