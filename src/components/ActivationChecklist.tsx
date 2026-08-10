@@ -132,22 +132,21 @@ export default function ActivationChecklist() {
   );
 }
 
-// Helper for admin panel - synchronous calculation from a company row + counts
+// Helper for admin panel — mesma fonte de verdade do checklist exibido ao cliente
 export function calcActivationPct(company: any, counts: {
   products: number; addresses: number; movements: number; balance: number;
+  csvImports?: number; supportSeen?: number;
 }): number {
-  const usesAddr = company?.uses_addressing !== false;
-  const wantsCsv = !!company?.plans_csv_import;
-  const items = [
-    !!company?.name && !!company?.business_type,
-    !!company?.main_focal_user_id,
-    company?.onboarding_status === "completed",
-    counts.products > 0,
-    ...(usesAddr ? [counts.addresses > 0] : []),
-    counts.movements > 0,
-    counts.balance > 0,
-    ...(wantsCsv ? [counts.products >= 5 || counts.addresses >= 5] : []),
-  ];
-  const done = items.filter(Boolean).length;
-  return Math.round((done / items.length) * 100);
+  return activationPct(
+    buildActivationItems(company, {
+      products: counts.products,
+      addresses: counts.addresses,
+      movementsIn: counts.movements,
+      movementsOut: 0,
+      balance: counts.balance,
+      csvImports: counts.csvImports ?? 0,
+      supportSeen: counts.supportSeen ?? 0,
+    })
+  );
 }
+
