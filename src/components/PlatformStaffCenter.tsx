@@ -75,7 +75,7 @@ export default function PlatformStaffCenter() {
   const [showAdd, setShowAdd] = useState(false);
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidateId, setCandidateId] = useState<string | null>(null);
-  const [candidateRole, setCandidateRole] = useState("support_agent");
+  const [candidateRole, setCandidateRole] = useState("");
 
   // gerenciar acesso
   const [manageId, setManageId] = useState<string | null>(null);
@@ -278,7 +278,7 @@ export default function PlatformStaffCenter() {
                 <div className="space-y-1 max-w-xs">
                   <Label className="text-xs">Papel LLZ</Label>
                   <Select value={candidateRole} onValueChange={setCandidateRole}>
-                    <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-9 text-sm"><SelectValue placeholder="Selecione o cargo" /></SelectTrigger>
                     <SelectContent>
                       {MANAGEABLE_ROLES.map((r) => (
                         <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
@@ -294,15 +294,15 @@ export default function PlatformStaffCenter() {
                 ) : (
                   <p className="text-[11px] text-muted-foreground">
                     Resumo: <strong>{candidate.email}</strong> passará a ser <strong>Equipe LLZ</strong> com o papel{" "}
-                    <strong>{MANAGEABLE_ROLES.find((r) => r.value === candidateRole)?.label}</strong>. Nenhuma empresa
-                    será criada ou vinculada.
+                    <strong>{MANAGEABLE_ROLES.find((r) => r.value === candidateRole)?.label ?? "— selecione o cargo"}</strong>.
+                    Nenhuma empresa será criada ou vinculada.
                   </p>
                 )}
                 <Button
                   size="sm"
                   className="h-8 text-xs gap-1"
                   disabled={
-                    !isPlatformSuperAdmin || candidate.companies.length > 0 || addExisting.isPending
+                    !isPlatformSuperAdmin || !candidateRole || candidate.companies.length > 0 || addExisting.isPending
                   }
                   onClick={() => addExisting.mutate({ userId: candidate.id, role: candidateRole })}
                 >
