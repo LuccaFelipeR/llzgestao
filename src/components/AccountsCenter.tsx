@@ -58,6 +58,8 @@ export default function AccountsCenter() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
+  const [staffTargetId, setStaffTargetId] = useState<string | null>(null);
+  const [staffRole, setStaffRole] = useState<string>("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["accounts-center"],
