@@ -248,14 +248,15 @@ export default function AccountsCenter() {
                     variant="outline"
                     className="h-8 text-xs gap-1"
                     disabled={!isPlatformSuperAdmin || addToStaff.isPending}
-                    onClick={() => addToStaff.mutate({ userId: r.id })}
+                    onClick={() => { setStaffRole(""); setStaffTargetId(r.id); }}
                   >
                     <Crown size={14} /> Adicionar à Equipe LLZ
                   </Button>
                 )}
                 {!isStaff && r.memberships.length > 0 && (
                   <span className="text-[11px] text-muted-foreground self-center">
-                    Vinculada a empresa cliente — não pode virar Equipe LLZ.
+                    Vinculada a empresa cliente ({r.memberships.map((m) => m.companies?.name ?? "—").join(", ")}) — não
+                    pode virar Equipe LLZ.
                   </span>
                 )}
               </div>
@@ -264,6 +265,88 @@ export default function AccountsCenter() {
           );
         })}
       </div>
+
+      <Dialog
+        open={!!staffTarget}
+        onOpenChange={(o) => { if (!o) { setStaffTargetId(null); setStaffRole(""); } }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar à Equipe LLZ</DialogTitle>
+            <DialogDescription>
+              Escolha conscientemente o cargo global. Nenhum cargo é atribuído automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+
+          {staffTarget && (
+            <div className="space-y-3">
+              <div className="border border-border rounded-lg p-3 text-xs space-y-1">
+                <p className="font-semibold text-sm">{staffTarget.full_name || "Sem nome"}</p>
+                <p className="text-muted-foreground">{staffTarget.email}</p>
+                <p className="text-muted-foreground">
+                  Tipo atual: {staffTarget.account_type === "llz_staff" ? "Equipe LLZ" : "Cliente"}
+                </p>
+                {staffTarget.memberships.length === 0 ? (
+                  <p className="text-muted-foreground">Vínculo empresarial: nenhum (confirmado)</p>
+                ) : (
+                  <p className="text-destructive">
+                    Vínculo empresarial: {staffTarget.memberships.map((m) => m.companies?.name ?? "—").join(", ")} —
+                    conversão bloqueada.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Cargo global (obrigatório)</Label>
+                <Select value={staffRole} onValueChange={setStaffRole}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Selecione o cargo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MANAGEABLE_ROLES.map((r) => (
+                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {staffRole && (
+                <p className="text-[11px] text-muted-foreground">
+                  Esta conta passará a ser do tipo Equipe LLZ e receberá acesso global de{" "}
+                  <strong>{MANAGEABLE_ROLES.find((r) => r.value === staffRole)?.label}</strong>. Nenhuma empresa será
+                  criada.
+                </p>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => { setStaffTargetId(null); setStaffRole(""); }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1"
+              disabled={
+                !isPlatformSuperAdmin ||
+                !staffRole ||
+                !staffTarget ||
+                staffTarget.memberships.length > 0 ||
+                addToStaff.isPending
+              }
+              onClick={() => staffTarget && addToStaff.mutate({ userId: staffTarget.id, role: staffRole })}
+            >
+              <Crown size={14} /> Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+
 }
