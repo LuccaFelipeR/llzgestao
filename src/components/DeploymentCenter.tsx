@@ -420,6 +420,7 @@ export default function DeploymentCenter() {
 
       <div className="text-xs text-muted-foreground">
         Percentual médio de implantação: <span className="font-bold text-foreground">{kpis.avg}%</span>
+        <span className="ml-1">(cadastros rejeitados não entram na média)</span>
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
