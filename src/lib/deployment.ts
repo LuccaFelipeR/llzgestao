@@ -1,11 +1,21 @@
 /**
- * Fase 6.18A — Central de Implantação.
+ * Fase 6.18A — Central de Implantação (fechamento em 6.18A.1).
  *
  * Fonte de verdade ÚNICA do progresso de implantação: o mesmo checklist de
  * ativação exibido ao cliente (`ActivationChecklist`). Nada aqui é mantido
  * manualmente: estágio, percentual, próxima ação e nível de atenção são
  * derivados de evidências reais do banco.
+ *
+ * 6.18A.1 — decisões:
+ * - `rejeitada` é estágio próprio; empresa rejeitada nunca aparece como
+ *   "Aguardando aprovação" e não conta como implantação avançando.
+ * - O estágio `cadastro` foi removido: no fluxo real o criador já vira `owner`,
+ *   então `members_total = 0` era inalcançável e o estado apenas duplicava
+ *   "Aguardando aprovação".
+ * - Primeira saída e validação assistida são marcos operacionais e NÃO entram
+ *   no percentual do checklist.
  */
+
 
 export type DeploymentCounts = {
   products: number;
