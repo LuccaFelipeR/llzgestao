@@ -223,3 +223,23 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - `/admin/reset` mostra checklist de liberação e o motivo exato do botão desabilitado;
   confirmação normalizada (`trim().toUpperCase()`).
 - **Nenhuma limpeza ou reset executado.**
+
+## Fase 6.18A.1 — fechamento da Central de Implantação
+
+- **Empresa rejeitada** deixou de aparecer como "Aguardando aprovação". Novo estágio
+  `rejeitada` ("Cadastro rejeitado"): aparece em cards, filtros e KPI próprio, mantém
+  atenção crítica e próxima ação "Revisar rejeição da empresa". Nunca altera
+  `approval_status` automaticamente e é excluído da média de implantação
+  (`NON_PROGRESSING_STAGES`).
+- **Estágio `cadastro` removido.** No fluxo real o criador já vira `owner`, logo
+  `members_total = 0` era inalcançável; o estado era artificial e duplicava
+  "Aguardando aprovação". Empresa recém-criada e pendente fica em
+  `aguardando_aprovacao`.
+- **Fonte única do checklist confirmada:** `buildActivationItems()` alimenta
+  `ActivationChecklist`, `calcActivationPct` (painel admin) e `computeDeployment`
+  (Central de Implantação). Sem endereçamento não há item de endereço; item CSV só
+  quando `plans_csv_import`; primeira saída e validação assistida são marcos
+  operacionais fora do percentual.
+- **Testes:** `src/test/deployment.test.ts` cobre 11 cenários de estágio + fonte
+  única do checklist + determinismo.
+- Nenhuma regra de estoque, RLS ou RPC foi alterada nesta fase.

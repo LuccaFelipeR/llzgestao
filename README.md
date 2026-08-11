@@ -180,3 +180,21 @@ exclusivo do super admin, executado manualmente e ainda **não executado**.
 A manutenção do ambiente em `/admin/reset` remove apenas as empresas escolhidas manualmente.
 Empresas não selecionadas — e usuários vinculados a elas ou com papel global — são sempre
 preservados. Vínculos antigos sem cadastro geram aviso, não bloqueio.
+
+### Central de Implantação (6.18A / 6.18A.1)
+
+Contas têm tipo (`customer` / `llz_staff`). A administração global reúne
+**Central de Contas**, **Usuários das Empresas**, **Equipe LLZ** e
+**Implantações**. Membros da equipe LLZ não precisam de `company_members`;
+definir um responsável LLZ por implantação **não** cria vínculo empresarial.
+
+A aba **Implantações** deriva tudo de evidência real do banco (`deployment_overview`):
+estágio, percentual, próxima ação e nível de atenção. O percentual é sempre
+`buildActivationItems()` — a mesma regra do checklist exibido ao cliente.
+Notas internas (`company_deployment_notes`) e a validação assistida são visíveis
+apenas para a equipe LLZ. A limpeza seletiva do ambiente já foi executada.
+
+Matriz de estágios: `rejeitada` → `aguardando_aprovacao` → `configuracao` →
+`preparacao_dados` → `primeira_movimentacao` → `validacao_operacional` →
+`pronta` → `em_operacao`. Empresa rejeitada tem estágio próprio, atenção
+crítica e não entra na média de implantação.

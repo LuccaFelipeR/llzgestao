@@ -1,11 +1,21 @@
 /**
- * Fase 6.18A — Central de Implantação.
+ * Fase 6.18A — Central de Implantação (fechamento em 6.18A.1).
  *
  * Fonte de verdade ÚNICA do progresso de implantação: o mesmo checklist de
  * ativação exibido ao cliente (`ActivationChecklist`). Nada aqui é mantido
  * manualmente: estágio, percentual, próxima ação e nível de atenção são
  * derivados de evidências reais do banco.
+ *
+ * 6.18A.1 — decisões:
+ * - `rejeitada` é estágio próprio; empresa rejeitada nunca aparece como
+ *   "Aguardando aprovação" e não conta como implantação avançando.
+ * - O estágio `cadastro` foi removido: no fluxo real o criador já vira `owner`,
+ *   então `members_total = 0` era inalcançável e o estado apenas duplicava
+ *   "Aguardando aprovação".
+ * - Primeira saída e validação assistida são marcos operacionais e NÃO entram
+ *   no percentual do checklist.
  */
+
 
 export type DeploymentCounts = {
   products: number;
@@ -101,7 +111,7 @@ export function activationPct(items: ChecklistItem[]): number {
 }
 
 export type DeploymentStage =
-  | "cadastro"
+  | "rejeitada"
   | "aguardando_aprovacao"
   | "configuracao"
   | "preparacao_dados"
@@ -111,7 +121,7 @@ export type DeploymentStage =
   | "em_operacao";
 
 export const STAGE_LABEL: Record<DeploymentStage, string> = {
-  cadastro: "Cadastro recebido",
+  rejeitada: "Cadastro rejeitado",
   aguardando_aprovacao: "Aguardando aprovação",
   configuracao: "Configuração inicial",
   preparacao_dados: "Preparação de dados",
@@ -122,7 +132,7 @@ export const STAGE_LABEL: Record<DeploymentStage, string> = {
 };
 
 export const STAGE_ORDER: DeploymentStage[] = [
-  "cadastro",
+  "rejeitada",
   "aguardando_aprovacao",
   "configuracao",
   "preparacao_dados",
@@ -131,6 +141,10 @@ export const STAGE_ORDER: DeploymentStage[] = [
   "pronta",
   "em_operacao",
 ];
+
+/** Estágios que NÃO representam avanço normal na implantação. */
+export const NON_PROGRESSING_STAGES: DeploymentStage[] = ["rejeitada"];
+
 
 export type AttentionLevel = "normal" | "atencao" | "critico";
 
@@ -180,7 +194,8 @@ export function computeDeployment(row: any): DeploymentComputed {
     );
 
   let stage: DeploymentStage;
-  if (!approved) stage = "aguardando_aprovacao";
+  if (approval === "rejected") stage = "rejeitada";
+  else if (!approved) stage = "aguardando_aprovacao";
   else if (!onboardingDone) stage = "configuracao";
   else if (!dataReady) stage = "preparacao_dados";
   else if (counts.movementsIn === 0) stage = "primeira_movimentacao";
@@ -188,7 +203,6 @@ export function computeDeployment(row: any): DeploymentComputed {
   else if (!validated || !activityAfterValidation) stage = "pronta";
   else stage = "em_operacao";
 
-  if (approval === "pending" && (row.members_total ?? 0) === 0) stage = "cadastro";
 
   // Próxima ação = primeira pendência real
   let nextAction: string;

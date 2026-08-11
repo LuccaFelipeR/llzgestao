@@ -166,3 +166,16 @@ Após todos passarem, remover o papel legado `admin`, sair/entrar e repetir.
 | 5 | Papel global nunca em `auth_users_to_delete` | PASS (regra validada no preview) |
 | 6 | Confirmação aceita maiúsculas, minúsculas e espaços | PASS |
 | 7 | Nenhuma execução nesta fase | PASS |
+
+## 6.18A.1 — Central de Implantação
+
+| # | Teste | Status |
+|---|---|---|
+| 1 | Estágios, próxima ação e atenção de `computeDeployment` | PASS (`src/test/deployment.test.ts`, 18 testes) |
+| 2 | Empresa rejeitada mostra "Cadastro rejeitado", KPI próprio e atenção crítica | PASS (unitário) / AWAITING_USER_EVIDENCE (UI) |
+| 3 | Empresa sem endereçamento não exige endereço no checklist | PASS |
+| 4 | Item CSV só aparece com `plans_csv_import` | PASS |
+| 5 | Percentual do cliente = percentual da Central de Implantação | PASS (mesma função) |
+| 6 | Cliente não lê `company_deployment_notes` | PASS (RLS: apenas `is_platform_staff`) |
+| 7 | Definir responsável LLZ não cria `company_members` | PASS (revisão de `deployment_set_owner`) |
+| 8 | Validação assistida exige aprovação, onboarding, produto, entrada e saldo | PASS (revisão da RPC) |

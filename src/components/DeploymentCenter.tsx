@@ -25,6 +25,7 @@ import {
   computeDeployment,
   STAGE_LABEL,
   STAGE_ORDER,
+  NON_PROGRESSING_STAGES,
   NOTE_CATEGORIES,
   NOTE_CATEGORY_LABEL,
   type DeploymentStage,
@@ -124,11 +125,15 @@ export default function DeploymentCenter() {
 
   const kpis = useMemo(() => {
     const byStage = (s: DeploymentStage) => rows.filter((r) => r.calc.stage === s).length;
-    const inDeployment = rows.filter((r) => r.calc.stage !== "em_operacao").length;
-    const avg = rows.length ? Math.round(rows.reduce((a, r) => a + r.calc.pct, 0) / rows.length) : 0;
+    const progressing = rows.filter((r) => !NON_PROGRESSING_STAGES.includes(r.calc.stage));
+    const inDeployment = progressing.filter((r) => r.calc.stage !== "em_operacao").length;
+    const avg = progressing.length
+      ? Math.round(progressing.reduce((a, r) => a + r.calc.pct, 0) / progressing.length)
+      : 0;
     return {
       inDeployment,
-      awaiting: byStage("aguardando_aprovacao") + byStage("cadastro"),
+      awaiting: byStage("aguardando_aprovacao"),
+      rejected: byStage("rejeitada"),
       configuring: byStage("configuracao") + byStage("preparacao_dados"),
       validating: byStage("primeira_movimentacao") + byStage("validacao_operacional"),
       ready: byStage("pronta"),
@@ -137,6 +142,7 @@ export default function DeploymentCenter() {
       avg,
     };
   }, [rows]);
+
 
   const detailRow = rows.find((r) => r.id === openId) ?? null;
 
@@ -401,9 +407,10 @@ export default function DeploymentCenter() {
   // ---------------- Lista ----------------
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         <Kpi label="Em implantação" value={kpis.inDeployment} />
         <Kpi label="Aguardando aprovação" value={kpis.awaiting} />
+        <Kpi label="Cadastros rejeitados" value={kpis.rejected} tone={kpis.rejected > 0 ? "warn" : undefined} />
         <Kpi label="Configurando" value={kpis.configuring} />
         <Kpi label="Em validação" value={kpis.validating} />
         <Kpi label="Prontas para operar" value={kpis.ready} />
@@ -413,6 +420,7 @@ export default function DeploymentCenter() {
 
       <div className="text-xs text-muted-foreground">
         Percentual médio de implantação: <span className="font-bold text-foreground">{kpis.avg}%</span>
+        <span className="ml-1">(cadastros rejeitados não entram na média)</span>
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
