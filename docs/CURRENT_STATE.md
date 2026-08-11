@@ -167,3 +167,22 @@ liberação com o motivo exato do botão desabilitado. Nenhuma limpeza executada
 - RPCs: `deployment_overview`, `deployment_detail`, `deployment_set_owner`,
   `deployment_complete_validation` (todas SECURITY DEFINER, restritas à equipe LLZ).
 - Limpeza seletiva já executada; documentação anterior que a tratava como pendente está superada.
+
+## Atualização 6.18A / 6.18A.1
+
+CONFIRMED_IMPLEMENTED (adições):
+
+| Módulo | Observação |
+|---|---|
+| Tipos de conta | `customer` / `llz_staff` em `profiles`; equipe LLZ sem `company_members`. |
+| Central de Contas | Visão global de contas, tipo e cargos. |
+| Usuários das Empresas | Gestão de membros, papéis e ponto focal por empresa. |
+| Equipe LLZ | Convites, ativação e cargos globais com seleção explícita. |
+| Central de Implantação | Estágio, percentual, próxima ação e atenção derivados do banco. |
+| Responsável LLZ | `companies.deployment_owner_id`; não gera vínculo empresarial. |
+| Notas internas | `company_deployment_notes`, visíveis só para equipe LLZ. |
+| Homologação assistida | `deployment_complete_validation` — confirmação humana registrada. |
+| Limpeza seletiva | **Executada**; empresas de teste indesejadas removidas. |
+| Estágio `rejeitada` (6.18A.1) | Empresa rejeitada não é mais exibida como pendente. |
+
+Reset completo continua **não executado**. Nenhuma regra de estoque foi alterada.
