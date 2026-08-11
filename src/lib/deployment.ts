@@ -101,7 +101,7 @@ export function activationPct(items: ChecklistItem[]): number {
 }
 
 export type DeploymentStage =
-  | "cadastro"
+  | "rejeitada"
   | "aguardando_aprovacao"
   | "configuracao"
   | "preparacao_dados"
@@ -111,7 +111,7 @@ export type DeploymentStage =
   | "em_operacao";
 
 export const STAGE_LABEL: Record<DeploymentStage, string> = {
-  cadastro: "Cadastro recebido",
+  rejeitada: "Cadastro rejeitado",
   aguardando_aprovacao: "Aguardando aprovação",
   configuracao: "Configuração inicial",
   preparacao_dados: "Preparação de dados",
@@ -122,7 +122,7 @@ export const STAGE_LABEL: Record<DeploymentStage, string> = {
 };
 
 export const STAGE_ORDER: DeploymentStage[] = [
-  "cadastro",
+  "rejeitada",
   "aguardando_aprovacao",
   "configuracao",
   "preparacao_dados",
@@ -131,6 +131,10 @@ export const STAGE_ORDER: DeploymentStage[] = [
   "pronta",
   "em_operacao",
 ];
+
+/** Estágios que NÃO representam avanço normal na implantação. */
+export const NON_PROGRESSING_STAGES: DeploymentStage[] = ["rejeitada"];
+
 
 export type AttentionLevel = "normal" | "atencao" | "critico";
 
