@@ -25,6 +25,7 @@ import {
   computeDeployment,
   STAGE_LABEL,
   STAGE_ORDER,
+  NON_PROGRESSING_STAGES,
   NOTE_CATEGORIES,
   NOTE_CATEGORY_LABEL,
   type DeploymentStage,
