@@ -65,7 +65,7 @@ describe("computeDeployment — matriz de estágios", () => {
   it("empresa sem endereçamento não exige endereços", () => {
     const r = computeDeployment({ ...base, uses_addressing: false, addresses: 0 });
     expect(r.items.some((i) => i.key === "address")).toBe(false);
-    expect(r.stage).toBe("em_operacao");
+    expect(r.stage).toBe("pronta");
   });
 
   it("empresa com endereçamento e sem endereços fica em preparação de dados", () => {
