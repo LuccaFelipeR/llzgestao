@@ -184,7 +184,8 @@ export function computeDeployment(row: any): DeploymentComputed {
     );
 
   let stage: DeploymentStage;
-  if (!approved) stage = "aguardando_aprovacao";
+  if (approval === "rejected") stage = "rejeitada";
+  else if (!approved) stage = "aguardando_aprovacao";
   else if (!onboardingDone) stage = "configuracao";
   else if (!dataReady) stage = "preparacao_dados";
   else if (counts.movementsIn === 0) stage = "primeira_movimentacao";
@@ -192,7 +193,6 @@ export function computeDeployment(row: any): DeploymentComputed {
   else if (!validated || !activityAfterValidation) stage = "pronta";
   else stage = "em_operacao";
 
-  if (approval === "pending" && (row.members_total ?? 0) === 0) stage = "cadastro";
 
   // Próxima ação = primeira pendência real
   let nextAction: string;
