@@ -407,9 +407,10 @@ export default function DeploymentCenter() {
   // ---------------- Lista ----------------
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         <Kpi label="Em implantação" value={kpis.inDeployment} />
         <Kpi label="Aguardando aprovação" value={kpis.awaiting} />
+        <Kpi label="Cadastros rejeitados" value={kpis.rejected} tone={kpis.rejected > 0 ? "warn" : undefined} />
         <Kpi label="Configurando" value={kpis.configuring} />
         <Kpi label="Em validação" value={kpis.validating} />
         <Kpi label="Prontas para operar" value={kpis.ready} />
