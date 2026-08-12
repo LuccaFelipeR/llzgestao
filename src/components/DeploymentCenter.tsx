@@ -21,6 +21,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { friendlyError } from "@/lib/error-messages";
+import { useCompanyEntitlements } from "@/hooks/useEntitlements";
+import { usageList } from "@/lib/entitlements";
 import {
   computeDeployment,
   STAGE_LABEL,
@@ -293,6 +295,8 @@ export default function DeploymentCenter() {
             <Row k="Bloqueados" v={c.members_blocked} />
             <Row k="Limite do plano" v={c.max_users ?? "sem limite"} />
           </Block>
+
+          <CommercialBlock companyId={c.company_id ?? c.id} />
 
           <Block title="Suporte">
             <Row k="Central acessada" v={Number(c.support_seen ?? 0) > 0 ? "sim" : "não"} />
@@ -658,3 +662,24 @@ function FilterSelect({
 }
 
 export { Rocket as DeploymentIcon };
+
+/**
+ * Fase 6.19A — informação comercial mínima e útil para a implantação:
+ * plano, uso de usuários e possível limite crítico. A Central de Implantação
+ * NÃO é painel financeiro: gestão de plano/exceções fica no cadastro da empresa.
+ */
+function CommercialBlock({ companyId }: { companyId: string }) {
+  const { data: ent } = useCompanyEntitlements(companyId);
+  if (!ent) return null;
+  const usage = usageList(ent);
+  const users = usage.find((u) => u.key === "max_users");
+  const critical = usage.filter((u) => u.state !== "normal");
+  return (
+    <Block title="Comercial" icon={<Building2 size={14} />}>
+      <Row k="Plano" v={ent.plan?.name ?? "—"} />
+      <Row k="Usuários" v={users ? users.text : "—"} />
+      <Row k="Exceção comercial" v={ent.overrides?.has_any ? "sim" : "não"} />
+      <Row k="Limites em atenção" v={critical.length ? critical.map((u) => u.label).join(", ") : "nenhum"} />
+    </Block>
+  );
+}
