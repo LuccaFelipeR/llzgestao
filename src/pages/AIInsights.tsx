@@ -87,6 +87,15 @@ export default function AIInsights() {
 
   const visibleInsights = INSIGHTS.filter((i) => !i.superOnly || isSuperAdmin);
 
+  // Fase 6.19A — recurso comercial: liberado pelo plano ou para a equipe LLZ.
+  if (currentCompanyId && entitlements && !can("ai_insights") && !isSuperAdmin) {
+    return (
+      <div className="page-container">
+        <FeatureLockedCard feature="ai_insights" planName={entitlements.plan?.name} />
+      </div>
+    );
+  }
+
   return (
     <div className="page-container">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
