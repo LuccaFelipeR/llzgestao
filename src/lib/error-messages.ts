@@ -5,6 +5,14 @@ type AnyError = { message?: string; code?: string; details?: string; hint?: stri
 
 const RULES: Array<{ test: (m: string, code?: string) => boolean; message: string }> = [
   {
+    test: (m) => /LIMITE_PLANO/i.test(m),
+    message: "Limite do plano atingido para este tipo de cadastro. Os dados existentes continuam disponíveis; para cadastrar mais, é preciso ampliar o plano com a LLZ.",
+  },
+  {
+    test: (m) => /RECURSO_PLANO/i.test(m),
+    message: "Este recurso não está disponível no plano atual da empresa.",
+  },
+  {
     test: (m) => /products.*sku|sku.*products|idx_products_company_sku/i.test(m),
     message: "Já existe um produto com este SKU nesta empresa. Edite o cadastro existente ou informe outro SKU.",
   },

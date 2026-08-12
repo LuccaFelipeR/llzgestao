@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ReactMarkdown from "react-markdown";
+import { FeatureLockedCard } from "@/components/FeatureLocked";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import remarkGfm from "remark-gfm";
 
 type InsightType = "overview" | "restock" | "layout" | "fefo" | "dead-stock" | "data-quality" | "global-companies";
@@ -22,6 +24,7 @@ const INSIGHTS: { type: InsightType; label: string; desc: string; icon: any; col
 
 export default function AIInsights() {
   const { isSuperAdmin, currentCompanyId, availableCompanies } = useCompany();
+  const { entitlements, can } = useEntitlements();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [activeType, setActiveType] = useState<InsightType | null>(null);
@@ -83,6 +86,15 @@ export default function AIInsights() {
   }
 
   const visibleInsights = INSIGHTS.filter((i) => !i.superOnly || isSuperAdmin);
+
+  // Fase 6.19A — recurso comercial: liberado pelo plano ou para a equipe LLZ.
+  if (currentCompanyId && entitlements && !can("ai_insights") && !isSuperAdmin) {
+    return (
+      <div className="page-container">
+        <FeatureLockedCard feature="ai_insights" planName={entitlements.plan?.name} />
+      </div>
+    );
+  }
 
   return (
     <div className="page-container">

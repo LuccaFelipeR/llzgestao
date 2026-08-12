@@ -243,3 +243,22 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
 - **Testes:** `src/test/deployment.test.ts` cobre 11 cenários de estágio + fonte
   única do checklist + determinismo.
 - Nenhuma regra de estoque, RLS ou RPC foi alterada nesta fase.
+
+## Fase 6.19A — Motor de planos, recursos e limites
+
+- Fonte de verdade comercial: catálogo `plans` + `company_entitlement_overrides`.
+  Precedência: override → `companies.max_*` (legado) → plano → ilimitado (`-1`).
+- Frontend nunca decide plano sozinho: usar `useEntitlements()` e
+  `src/lib/entitlements.ts`. **Proibido** número de limite ou nome de plano
+  hardcoded em componente.
+- Backend valida por trigger (`assert_within_limit`) em `products`, `addresses`,
+  `company_members` (ativação) e `movements` (mês corrente), com
+  `pg_advisory_xact_lock`. Nunca confiar apenas no botão desabilitado.
+- Limite atingido **nunca** apaga, bloqueia ou degrada dados existentes; apenas
+  impede novas criações.
+- `uses_addressing` / `uses_expedition` / `plans_csv_import` = preferência da
+  empresa. `features` do plano = direito comercial. Não misturar.
+- Plano é independente de `status`, `approval_status`, estágio de implantação e
+  tipo de conta.
+- Trial hoje é apenas rótulo (`status='trial'` + `trial_ends_at`), sem ciclo de
+  assinatura. Cobrança/gateway: NOT_IMPLEMENTED (6.19C).

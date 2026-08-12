@@ -308,6 +308,44 @@ export type Database = {
           },
         ]
       }
+      company_entitlement_overrides: {
+        Row: {
+          company_id: string
+          created_at: string
+          features: Json
+          limits: Json
+          note: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          features?: Json
+          limits?: Json
+          note?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          features?: Json
+          limits?: Json
+          note?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_entitlement_overrides_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_members: {
         Row: {
           approved_at: string | null
@@ -669,6 +707,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plans: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          features: Json
+          is_active: boolean
+          limits: Json
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          features?: Json
+          is_active?: boolean
+          limits?: Json
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          features?: Json
+          is_active?: boolean
+          limits?: Json
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       platform_staff_invites: {
         Row: {
@@ -1118,10 +1192,15 @@ export type Database = {
         Returns: Json
       }
       approve_company: { Args: { _company_id: string }; Returns: undefined }
+      assert_within_limit: {
+        Args: { _company_id: string; _key: string; _label: string }
+        Returns: undefined
+      }
       can_manage_company_members: {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
+      company_entitlements: { Args: { _company_id: string }; Returns: Json }
       company_member_add_by_email: {
         Args: { _company_id: string; _email: string; _role: string }
         Returns: Json
@@ -1142,6 +1221,7 @@ export type Database = {
         Args: { _company_id: string; _new_owner_member_id: string }
         Returns: Json
       }
+      company_usage: { Args: { _company_id: string }; Returns: Json }
       deployment_complete_validation: {
         Args: { _company_id: string; _note?: string }
         Returns: Json
@@ -1152,7 +1232,15 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: Json
       }
+      effective_limit: {
+        Args: { _company_id: string; _key: string }
+        Returns: number
+      }
       get_user_company_id: { Args: { _user_id: string }; Returns: string }
+      has_feature: {
+        Args: { _company_id: string; _feature: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1175,6 +1263,23 @@ export type Database = {
       mark_support_center_viewed: {
         Args: { _company_id: string }
         Returns: boolean
+      }
+      plan_clear_company_override: {
+        Args: { _company_id: string }
+        Returns: Json
+      }
+      plan_set_company_override: {
+        Args: {
+          _company_id: string
+          _features: Json
+          _limits: Json
+          _note: string
+        }
+        Returns: Json
+      }
+      plan_set_company_plan: {
+        Args: { _company_id: string; _plan_code: string }
+        Returns: Json
       }
       platform_access_diagnostics: { Args: never; Returns: Json }
       platform_cleanup_execute: {

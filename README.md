@@ -198,3 +198,27 @@ Matriz de estágios: `rejeitada` → `aguardando_aprovacao` → `configuracao` �
 `preparacao_dados` → `primeira_movimentacao` → `validacao_operacional` →
 `pronta` → `em_operacao`. Empresa rejeitada tem estágio próprio, atenção
 crítica e não entra na média de implantação.
+
+## Planos, recursos e limites (Fase 6.19A)
+
+O comportamento comercial não vem mais de `companies.plan` isolado. A fonte de
+verdade é o catálogo `plans` (limites + recursos configuráveis) somado aos
+overrides por empresa (`company_entitlement_overrides`):
+
+```
+Plano base + Overrides da empresa = Entitlements efetivos
+```
+
+Limites: `max_users`, `max_products`, `max_addresses`, `max_monthly_movements`
+(`-1` = ilimitado). Recursos: `csv_import`, `addressing`, `expedition`,
+`ai_insights`, `advanced_reports`, `priority_support`.
+
+O frontend consulta `company_entitlements()` via `useEntitlements()` e
+interpreta com `src/lib/entitlements.ts`. O banco valida por trigger antes de
+criar produto, endereço, usuário ativo e movimentação do mês — botão desabilitado
+nunca é a única barreira. Atingir o limite não apaga nem bloqueia dados
+existentes: apenas novas criações ficam impedidas.
+
+Recurso do plano (direito comercial) e flags `uses_*` (preferência operacional)
+são conceitos separados: a empresa só liga a flag se o plano oferecer o recurso.
+Nenhuma cobrança/gateway existe nesta fase.

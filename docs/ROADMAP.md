@@ -13,14 +13,21 @@
 - Fase 6.10: onboarding inteligente e checklist de ativação.
 - Fase 6.11: consequências operacionais reais, correção CSV, documentação.
 
-## Em andamento / próximo
-- **Fase 7 — Franquias**: hierarquia matriz→filial com visão consolidada e
-  transferências entre unidades. Requer campo `parent_company_id` e novas
-  policies de leitura hierárquica.
-- **Fase 7.1 — Cobrança**: planos com limites reais (produtos, usuários,
-  empresas), integração de pagamento.
-- **Fase 7.2 — Notificações reais**: e-mail transacional e WhatsApp API.
-- **Fase 7.3 — Mobile app**: PWA otimizado para chão de fábrica.
+## Sequência real (atualizada em 6.19A)
+
+- 6.14 a 6.18A.1 — concluídas (administração global, staff, limpeza seletiva,
+  Central de Implantação).
+- **6.19A — Motor de planos, recursos e limites (CONCLUÍDA)**: catálogo `plans`,
+  overrides por empresa, entitlements efetivos, uso real, enforcement no banco,
+  painel do cliente e gestão pela equipe LLZ. Sem gateway de pagamento.
+- **6.19B — Trial e ciclo de assinatura (PRÓXIMA)**: estados
+  `trial → active → past_due → canceled`, expiração real do trial e
+  consequências operacionais. Ainda sem cobrança.
+- **6.19C — Cobrança/pagamentos**: gateway, checkout e faturamento.
+- **Fase futura — Franquias**: hierarquia matriz→filial (`parent_company_id`),
+  visão consolidada e transferências entre unidades.
+- Fase futura — Notificações reais (e-mail transacional e WhatsApp API).
+- Fase futura — PWA de chão de fábrica.
 
 ## Fora de escopo (por enquanto)
 - ERP financeiro completo (contas a pagar/receber, DRE).
