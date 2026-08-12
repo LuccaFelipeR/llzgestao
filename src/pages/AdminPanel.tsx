@@ -762,6 +762,12 @@ export default function AdminPanel() {
                 </div>
               </div>
 
+              {/* Plano, limites e exceções comerciais (Fase 6.19A) */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase text-muted-foreground">Situação comercial</h4>
+                <CompanyPlanManager companyId={editCompany.id} canManage={isPlatformAdmin} />
+              </div>
+
               {/* Focal Point */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold uppercase text-muted-foreground">Focal Point principal</h4>
