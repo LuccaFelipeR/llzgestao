@@ -12,11 +12,15 @@ import { friendlyError } from "@/lib/error-messages";
 import { Settings, Building2, Tag, CalendarClock, MapPin, PackageCheck, Package, Upload, Save, ChevronLeft, RotateCcw, Lock } from "lucide-react";
 import ActivationChecklist from "@/components/ActivationChecklist";
 import NoCompanySelected from "@/components/NoCompanySelected";
+import PlanUsagePanel from "@/components/PlanUsagePanel";
+import { useEntitlements } from "@/hooks/useEntitlements";
+import { FEATURE_LABEL } from "@/lib/entitlements";
 
 const SEGMENTS = ["Alimentos", "Bebidas", "Farmácia", "Cosméticos", "Varejo", "Moda", "Peças", "Eletrônicos", "Industrial", "Outros"];
 
 export default function CompanySettings() {
   const { company, currentCompanyId, isCompanyAdmin, isFocalPoint, refetch } = useCompany();
+  const { can } = useEntitlements();
   const navigate = useNavigate();
   const canEdit = isCompanyAdmin || isFocalPoint;
 
@@ -122,6 +126,8 @@ export default function CompanySettings() {
 
       <ActivationChecklist />
 
+      <PlanUsagePanel companyId={currentCompanyId} />
+
       {/* Status */}
       <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -171,9 +177,9 @@ export default function CompanySettings() {
         <SettingsRow icon={Tag} label="Controlar lote" hint="Destaca lote em cadastros, recebimentos e movimentações." value={controlsBatch} onChange={setControlsBatch} disabled={!canEdit} />
         <SettingsRow icon={CalendarClock} label="Controlar validade" hint="Exibe alertas de vencimento e campos de validade." value={controlsExpiration} onChange={setControlsExpiration} disabled={!canEdit} />
         <SettingsRow icon={Package} label="Trabalha com perecíveis" hint="Ativa regras específicas para produtos perecíveis." value={handlesPerishables} onChange={setHandlesPerishables} disabled={!canEdit} />
-        <SettingsRow icon={MapPin} label="Usar endereçamento" hint="Habilita cadastro e uso de endereços de armazenagem." value={usesAddressing} onChange={setUsesAddressing} disabled={!canEdit} />
-        <SettingsRow icon={PackageCheck} label="Usar expedição guiada" hint="Ativa listas de picking e conferência." value={usesExpedition} onChange={setUsesExpedition} disabled={!canEdit} />
-        <SettingsRow icon={Upload} label="Pretende importar por CSV" hint="Mantém a importação em destaque no checklist." value={plansCsv} onChange={setPlansCsv} disabled={!canEdit} />
+        <SettingsRow icon={MapPin} label="Usar endereçamento" hint={can("addressing") ? "Habilita cadastro e uso de endereços de armazenagem." : `${FEATURE_LABEL.addressing} não está incluído no plano atual.`} value={usesAddressing} onChange={setUsesAddressing} disabled={!canEdit || !can("addressing")} />
+        <SettingsRow icon={PackageCheck} label="Usar expedição guiada" hint={can("expedition") ? "Ativa listas de picking e conferência." : `${FEATURE_LABEL.expedition} não está incluída no plano atual.`} value={usesExpedition} onChange={setUsesExpedition} disabled={!canEdit || !can("expedition")} />
+        <SettingsRow icon={Upload} label="Pretende importar por CSV" hint={can("csv_import") ? "Mantém a importação em destaque no checklist." : `${FEATURE_LABEL.csv_import} não está incluída no plano atual.`} value={plansCsv} onChange={setPlansCsv} disabled={!canEdit || !can("csv_import")} />
       </section>
 
       {/* Meta */}
