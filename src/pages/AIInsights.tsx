@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCompany } from "@/contexts/CompanyContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ReactMarkdown from "react-markdown";
+import { FeatureLockedCard } from "@/components/FeatureLocked";
+import { useEntitlements } from "@/hooks/useEntitlements";
 import remarkGfm from "remark-gfm";
 
 type InsightType = "overview" | "restock" | "layout" | "fefo" | "dead-stock" | "data-quality" | "global-companies";
@@ -22,6 +24,7 @@ const INSIGHTS: { type: InsightType; label: string; desc: string; icon: any; col
 
 export default function AIInsights() {
   const { isSuperAdmin, currentCompanyId, availableCompanies } = useCompany();
+  const { entitlements, can } = useEntitlements();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState("");
   const [activeType, setActiveType] = useState<InsightType | null>(null);
