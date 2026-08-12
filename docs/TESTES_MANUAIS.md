@@ -179,3 +179,20 @@ Após todos passarem, remover o papel legado `admin`, sair/entrar e repetir.
 | 6 | Cliente não lê `company_deployment_notes` | PASS (RLS: apenas `is_platform_staff`) |
 | 7 | Definir responsável LLZ não cria `company_members` | PASS (revisão de `deployment_set_owner`) |
 | 8 | Validação assistida exige aprovação, onboarding, produto, entrada e saldo | PASS (revisão da RPC) |
+
+## 6.19A — Planos, recursos e limites
+
+| # | Teste | Status |
+|---|---|---|
+| 1 | Limite numérico, ilimitado, <80%, ≥80%, atingido e acima | PASS (`src/test/entitlements.test.ts`, 15 testes) |
+| 2 | Override aumentando e reduzindo limite | PASS (unitário) |
+| 3 | Recurso permitido / bloqueado pelo plano e por override | PASS (unitário) |
+| 4 | Downgrade preserva dados e sinaliza "acima do limite" | PASS (unitário) + PASS (banco: sem DELETE em nenhuma rota de plano) |
+| 5 | `llz_staff` não conta como usuário da empresa | PASS (`company_usage` filtra `account_type`) |
+| 6 | Empresa A não interfere na empresa B | PASS (unitário + funções sempre filtram `company_id`) |
+| 7 | Backend bloqueia criação acima do limite mesmo sem UI | PASS (triggers BEFORE INSERT; frontend só desabilita) |
+| 8 | Concorrência: duas criações simultâneas não ultrapassam o limite | PASS (`pg_advisory_xact_lock` por empresa+limite) |
+| 9 | Cliente vê "Plano e utilização" com texto além da cor | AWAITING_USER_EVIDENCE (UI) |
+| 10 | Troca de plano pelo Painel do Desenvolvedor com preview e auditoria | AWAITING_USER_EVIDENCE (UI) |
+| 11 | Recurso bloqueado exibe estado claro (sem erro técnico) em AI Insights | AWAITING_USER_EVIDENCE (UI) |
+| 12 | Regressão: cadastro de usuário, produto, endereço, entrada, saída, onboarding, implantação e Equipe LLZ | PASS (typecheck + 34 testes; enforcement só bloqueia acima do limite) |

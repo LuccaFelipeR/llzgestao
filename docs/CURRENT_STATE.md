@@ -186,3 +186,35 @@ CONFIRMED_IMPLEMENTED (adições):
 | Estágio `rejeitada` (6.18A.1) | Empresa rejeitada não é mais exibida como pendente. |
 
 Reset completo continua **não executado**. Nenhuma regra de estoque foi alterada.
+
+## Atualização 6.19A — Motor de planos, recursos e limites
+
+CONFIRMED_IMPLEMENTED (adições):
+
+| Item | Observação |
+|---|---|
+| Catálogo `plans` | `code/name/description/is_active/sort_order/limits/features`. Planos: free, starter, pro, enterprise. Leitura para autenticados; escrita só `is_platform_client_admin`. |
+| Overrides | `company_entitlement_overrides` (limites + recursos + motivo). Cliente lê o próprio; só plataforma escreve. |
+| Fonte única (SQL) | `effective_limit`, `has_feature`, `company_usage`, `company_entitlements`. Precedência: override → coluna legada `companies.max_*` → plano → ilimitado (-1). |
+| Fonte única (frontend) | `src/lib/entitlements.ts` + `src/hooks/useEntitlements.ts`. Nenhum limite hardcoded em componente. |
+| Limites | `max_users`, `max_products`, `max_addresses`, `max_monthly_movements`. `-1` = ilimitado. |
+| Recursos | `csv_import`, `addressing`, `expedition`, `ai_insights`, `advanced_reports`, `priority_support`. |
+| Enforcement backend | Triggers BEFORE INSERT em `products`, `addresses`, `movements` e BEFORE INSERT/UPDATE em `company_members` (só ativação). `pg_advisory_xact_lock` por empresa+limite evita corrida. Bypass apenas em `app.cleanup_mode='on'`. |
+| Preferência x direito | `uses_addressing`/`uses_expedition`/`plans_csv_import` continuam sendo preferência; trigger impede ligar flag sem o recurso no plano. |
+| Usuários contados | Somente `company_members.is_active` com `profiles.account_type <> 'llz_staff'`. |
+| Tela do cliente | "Plano e utilização" em `/configuracoes` (`PlanUsagePanel`): plano, situação, recursos, barras e texto de estado (0–79% normal, 80–99% atenção, 100% limite, acima do limite). |
+| Painel do Desenvolvedor | `CompanyPlanManager` no cadastro da empresa: uso, recursos, troca de plano com preview e overrides. Auditado em `activity_log` (`plan_changed`, `plan_override_applied`, `plan_override_removed`). |
+| Central de Implantação | Bloco "Comercial": plano, uso de usuários, exceção e limites em atenção. Sem painel financeiro. |
+| Downgrade | Nunca apaga dados. Empresa acima do limite mantém tudo e só perde a criação de novos registros. |
+
+TRIAL (estado atual, não alterado nesta fase): `companies.status = 'trial'` e
+`trial_ends_at` são apenas rótulos operacionais — geram aviso em Notificações,
+KPI no painel global e filtro no admin. Não existe ciclo de assinatura, cobrança
+ou expiração automática. O plano é independente do status. Ciclo comercial
+(`trial → active → past_due → canceled`) fica para a Fase 6.19B.
+
+NOT_IMPLEMENTED: gateway de pagamento, checkout, autoserviço de upgrade,
+faturamento e expiração automática de trial.
+
+Grandfathering aplicado: `Magrao Auto Peças` recebeu override de `max_addresses`
+por já operar acima do limite padrão do plano Free.
