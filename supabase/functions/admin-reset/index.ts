@@ -188,18 +188,14 @@ Deno.serve(async (req) => {
       return json({ error: "Não foi possível gerar o preview do ambiente." }, 400);
     }
 
-    const preserved = (preview as any)?.preserved_platform_users ?? [];
-    const usersToDelete = (preview as any)?.users_to_delete ?? [];
+    const staff = (preview as any)?.staff_accounts ?? [];
 
     const blockers: string[] = [];
-    if (!preserved.some((u: any) => ["super_admin", "admin"].includes(u.role))) {
+    if (!staff.some((u: any) => u.is_super_admin)) {
       blockers.push("Nenhum super admin válido identificado — reset abortado.");
     }
-    if (usersToDelete.some((u: any) => u.id === caller.id)) {
-      blockers.push("O usuário atual está na lista de exclusão — reset abortado.");
-    }
-    if (!preserved.some((u: any) => u.id === caller.id)) {
-      blockers.push("O usuário atual não possui papel global preservado — reset abortado.");
+    if (!staff.some((u: any) => u.id === caller.id)) {
+      blockers.push("O usuário atual não é uma conta ativa da Equipe LLZ — reset abortado.");
     }
 
     if (action !== "execute") {
@@ -221,24 +217,16 @@ Deno.serve(async (req) => {
       return json({ error: "O reset foi rejeitado pelas regras de segurança. Nenhum dado foi alterado.", action: "failed" }, 400);
     }
 
-    const deletedAuth: string[] = [];
-    const authErrors: { id: string; error: string }[] = [];
-    for (const u of usersToDelete) {
-      if (preserved.some((p: any) => p.id === u.id)) continue;
-      const { error } = await admin.auth.admin.deleteUser(u.id);
-      if (error) authErrors.push({ id: u.id, error: error.message });
-      else deletedAuth.push(u.email ?? u.id);
-    }
-
+    // IDENTIDADE PRESERVADA: o reset nunca exclui contas de acesso.
     return json({
       action: "executed",
-      preserved_platform_users: preserved,
-      deleted_auth_users: deletedAuth,
-      auth_errors: authErrors,
+      staff_accounts: staff,
+      accounts_preserved: (preview as any)?.customer_accounts_preserved ?? [],
       db_report: report,
       note:
-        "Tokens já emitidos podem permanecer válidos até expirar; as contas removidas não conseguem mais ler nem gravar dados.",
+        "Todas as empresas e dados empresariais foram removidos. Nenhuma conta de acesso foi excluída: as contas de cliente continuam existindo como Cliente sem empresa.",
     });
+
   } catch (e) {
     console.error("admin-reset unexpected error", e);
     return json({ error: "Ocorreu uma falha interna. Nenhum dado foi alterado." }, 500);
