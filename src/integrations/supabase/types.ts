@@ -752,7 +752,7 @@ export type Database = {
           expires_at: string
           full_name: string | null
           id: string
-          intended_role: Database["public"]["Enums"]["app_role"]
+          intended_role: Database["public"]["Enums"]["app_role"] | null
           invited_by: string | null
           registered_at: string | null
           registered_user_id: string | null
@@ -768,7 +768,7 @@ export type Database = {
           expires_at?: string
           full_name?: string | null
           id?: string
-          intended_role: Database["public"]["Enums"]["app_role"]
+          intended_role?: Database["public"]["Enums"]["app_role"] | null
           invited_by?: string | null
           registered_at?: string | null
           registered_user_id?: string | null
@@ -784,7 +784,7 @@ export type Database = {
           expires_at?: string
           full_name?: string | null
           id?: string
-          intended_role?: Database["public"]["Enums"]["app_role"]
+          intended_role?: Database["public"]["Enums"]["app_role"] | null
           invited_by?: string | null
           registered_at?: string | null
           registered_user_id?: string | null
@@ -910,6 +910,8 @@ export type Database = {
           notify_daily_summary: boolean
           notify_min_stock: boolean
           rejection_reason: string | null
+          staff_activated_at: string | null
+          staff_activated_by: string | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -923,6 +925,8 @@ export type Database = {
           notify_daily_summary?: boolean
           notify_min_stock?: boolean
           rejection_reason?: string | null
+          staff_activated_at?: string | null
+          staff_activated_by?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -936,6 +940,8 @@ export type Database = {
           notify_daily_summary?: boolean
           notify_min_stock?: boolean
           rejection_reason?: string | null
+          staff_activated_at?: string | null
+          staff_activated_by?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -1300,24 +1306,15 @@ export type Database = {
         Args: { _company_id: string; _reason: string }
         Returns: undefined
       }
-      staff_add_existing_account: {
-        Args: { _role: string; _user_id: string }
-        Returns: Json
-      }
+      staff_activate: { Args: { _user_id: string }; Returns: Json }
+      staff_add_existing_account: { Args: { _user_id: string }; Returns: Json }
       staff_invite_activate: { Args: { _invite_id: string }; Returns: Json }
       staff_invite_create: {
-        Args: { _email: string; _full_name: string; _role: string }
+        Args: { _email: string; _full_name: string }
         Returns: Json
       }
       staff_invite_revoke: { Args: { _invite_id: string }; Returns: Json }
-      staff_role_apply: {
-        Args: { _mode?: string; _role: string; _user_id: string }
-        Returns: Json
-      }
-      staff_role_remove: {
-        Args: { _role: string; _user_id: string }
-        Returns: Json
-      }
+      staff_remove: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       address_type: "ARMAZENAGEM" | "TECNICO"
