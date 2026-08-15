@@ -390,23 +390,23 @@ export default function PlatformReset() {
                 <Card>
                   <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Users size={16} className="text-success" /> Usuários preservados</CardTitle></CardHeader>
                   <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
-                    {(cleanupPreview.users_to_preserve ?? []).map((u: AnyRec) => (
+                    {(cleanupPreview.accounts_preserved ?? []).map((u: AnyRec) => (
                       <div key={u.id} className="flex justify-between gap-2">
                         <span className="truncate">{u.full_name || "—"} · {u.email}</span>
                         <span className="text-muted-foreground text-[10px]">{u.reason}</span>
                       </div>
                     ))}
-                    {(cleanupPreview.users_to_preserve ?? []).length === 0 && <p className="text-muted-foreground">Nenhum.</p>}
+                    {(cleanupPreview.accounts_preserved ?? []).length === 0 && <p className="text-muted-foreground">Nenhum.</p>}
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Trash2 size={16} className="text-destructive" /> Contas de acesso a remover</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Trash2 size={16} className="text-destructive" /> Contas que ficarão sem empresa (preservadas)</CardTitle></CardHeader>
                   <CardContent className="space-y-1 text-xs max-h-64 overflow-y-auto">
-                    {(cleanupPreview.auth_users_to_delete ?? []).map((u: AnyRec) => (
+                    {(cleanupPreview.accounts_without_company_after ?? []).map((u: AnyRec) => (
                       <p key={u.id} className="truncate">{u.full_name || "—"} · {u.email}</p>
                     ))}
-                    {(cleanupPreview.auth_users_to_delete ?? []).length === 0 && <p className="text-muted-foreground">Nenhuma conta será removida.</p>}
+                    {(cleanupPreview.accounts_without_company_after ?? []).length === 0 && <p className="text-muted-foreground">Nenhuma conta perderá todos os vínculos. Nenhuma conta é excluída.</p>}
                   </CardContent>
                 </Card>
 
@@ -561,28 +561,28 @@ export default function PlatformReset() {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
-                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Users size={16} className="text-success" /> Usuários globais preservados</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Users size={16} className="text-success" /> Contas da Equipe LLZ preservadas</CardTitle></CardHeader>
                   <CardContent className="space-y-2 text-xs">
-                    {groupRoles(preview.preserved_platform_users ?? []).map((u: AnyRec) => (
+                    {groupRoles(preview.staff_accounts ?? []).map((u: AnyRec) => (
                       <div key={u.id} className="flex items-center justify-between gap-2">
                         <span className="truncate">{u.full_name || "—"} · {u.email}</span>
-                        <Badge variant="secondary" className="text-[10px]">{u.roles.join(", ")}</Badge>
+                        <Badge variant="secondary" className="text-[10px]">{u.is_super_admin ? "Super Admin" : "Equipe LLZ"}</Badge>
                       </div>
                     ))}
-                    {(preview.preserved_platform_users ?? []).length === 0 && <p className="text-destructive">Nenhum usuário global identificado.</p>}
+                    {(preview.staff_accounts ?? []).length === 0 && <p className="text-destructive">Nenhum usuário global identificado.</p>}
                   </CardContent>
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Trash2 size={16} className="text-destructive" /> Usuários que serão removidos</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm flex items-center gap-2"><Trash2 size={16} className="text-destructive" /> Contas de cliente preservadas (ficam sem empresa)</CardTitle></CardHeader>
                   <CardContent className="space-y-2 text-xs max-h-72 overflow-y-auto">
-                    {(preview.users_to_delete ?? []).map((u: AnyRec) => (
+                    {(preview.customer_accounts_preserved ?? []).map((u: AnyRec) => (
                       <div key={u.id}>
                         <p className="truncate">{u.full_name || "—"} · {u.email}</p>
                         <p className="text-muted-foreground text-[10px]">{(u.companies ?? []).join(", ") || "sem empresa"}</p>
                       </div>
                     ))}
-                    {(preview.users_to_delete ?? []).length === 0 && <p className="text-muted-foreground">Nenhum usuário cliente.</p>}
+                    {(preview.customer_accounts_preserved ?? []).length === 0 && <p className="text-muted-foreground">Nenhuma conta de cliente.</p>}
                   </CardContent>
                 </Card>
 
