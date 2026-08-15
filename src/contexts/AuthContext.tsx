@@ -145,14 +145,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const platformRoles = roles.filter((r) => (PLATFORM_ROLES as readonly string[]).includes(r));
-  const isPlatformStaff = platformRoles.length > 0;
   const isPlatformSuperAdmin = roles.some((r) => SUPER_ADMIN_ROLES.includes(r));
-  const isPlatformAdmin = roles.some((r) => CLIENT_ADMIN_ROLES.includes(r));
-  const isSupportStaff = roles.some((r) => SUPPORT_ROLES.includes(r));
   const accountType: "customer" | "llz_staff" =
     profile?.account_type === "llz_staff" ? "llz_staff" : "customer";
+  // Novo modelo: acesso interno vem da ATIVAÇÃO da conta LLZ (ou do super admin),
+  // não de papéis globais. Papéis legados seguem valendo como ativação.
+  const isStaffActivated =
+    accountType === "llz_staff" && !!(profile as { staff_activated_at?: string | null } | null)?.staff_activated_at;
+  const isPlatformStaff = isPlatformSuperAdmin || isStaffActivated || platformRoles.length > 0;
+  const isPlatformAdmin = isPlatformStaff;
+  const isSupportStaff = isPlatformStaff;
   const isStaffAccount = accountType === "llz_staff" || isPlatformStaff;
   const isStaffPendingActivation = accountType === "llz_staff" && !isPlatformStaff;
+
 
   return (
     <AuthContext.Provider
