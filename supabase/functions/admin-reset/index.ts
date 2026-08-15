@@ -161,28 +161,20 @@ Deno.serve(async (req) => {
         );
       }
 
-      const authToDelete = ((report as any)?.auth_users_to_delete ?? []) as any[];
-      const deletedAuth: string[] = [];
-      const authErrors: { id: string; error: string }[] = [];
-      for (const u of authToDelete) {
-        const { error } = await admin.auth.admin.deleteUser(u.id);
-        if (error) authErrors.push({ id: u.id, error: error.message });
-        else deletedAuth.push(u.email ?? u.id);
-      }
-
+      // IDENTIDADE PRESERVADA: nenhuma conta de acesso é excluída pela limpeza.
       return json({
         action: "cleanup_executed",
-        complete_success: authErrors.length === 0,
+        complete_success: true,
         company_ids: ids,
         db_report: (report as any)?.removed ?? {},
-        deleted_auth_users: deletedAuth,
-        auth_errors: authErrors,
+        accounts_preserved: (report as any)?.accounts_preserved ?? [],
+        accounts_without_company_after: (report as any)?.accounts_without_company_after ?? [],
         warnings: (report as any)?.warnings ?? [],
-        // contas apenas suspeitas (vínculo sem cadastro) NUNCA são removidas aqui
         orphan_auth_candidates: (report as any)?.orphan_auth_candidates ?? [],
         note:
-          "Somente as empresas selecionadas e seus dados foram removidos. Contas com vínculo em empresas preservadas permanecem ativas. Contas listadas em orphan_auth_candidates precisam de verificação manual.",
+          "Somente as empresas selecionadas, seus dados e seus vínculos foram removidos. Nenhuma conta de acesso foi excluída: quem perdeu o último vínculo continua como Cliente sem empresa.",
       });
+
     }
 
     // =====================================================
