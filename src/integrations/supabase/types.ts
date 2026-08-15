@@ -752,7 +752,7 @@ export type Database = {
           expires_at: string
           full_name: string | null
           id: string
-          intended_role: Database["public"]["Enums"]["app_role"]
+          intended_role: Database["public"]["Enums"]["app_role"] | null
           invited_by: string | null
           registered_at: string | null
           registered_user_id: string | null
@@ -768,7 +768,7 @@ export type Database = {
           expires_at?: string
           full_name?: string | null
           id?: string
-          intended_role: Database["public"]["Enums"]["app_role"]
+          intended_role?: Database["public"]["Enums"]["app_role"] | null
           invited_by?: string | null
           registered_at?: string | null
           registered_user_id?: string | null
@@ -784,7 +784,7 @@ export type Database = {
           expires_at?: string
           full_name?: string | null
           id?: string
-          intended_role?: Database["public"]["Enums"]["app_role"]
+          intended_role?: Database["public"]["Enums"]["app_role"] | null
           invited_by?: string | null
           registered_at?: string | null
           registered_user_id?: string | null
@@ -910,6 +910,8 @@ export type Database = {
           notify_daily_summary: boolean
           notify_min_stock: boolean
           rejection_reason: string | null
+          staff_activated_at: string | null
+          staff_activated_by: string | null
           updated_at: string
           whatsapp_number: string | null
         }
@@ -923,6 +925,8 @@ export type Database = {
           notify_daily_summary?: boolean
           notify_min_stock?: boolean
           rejection_reason?: string | null
+          staff_activated_at?: string | null
+          staff_activated_by?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -936,6 +940,8 @@ export type Database = {
           notify_daily_summary?: boolean
           notify_min_stock?: boolean
           rejection_reason?: string | null
+          staff_activated_at?: string | null
+          staff_activated_by?: string | null
           updated_at?: string
           whatsapp_number?: string | null
         }
@@ -1191,6 +1197,8 @@ export type Database = {
         Args: { _account_type: string; _user_id: string }
         Returns: Json
       }
+      admin_user_detail: { Args: { _user_id: string }; Returns: Json }
+      admin_users_overview: { Args: { _search?: string }; Returns: Json }
       approve_company: { Args: { _company_id: string }; Returns: undefined }
       assert_within_limit: {
         Args: { _company_id: string; _key: string; _label: string }
@@ -1205,6 +1213,10 @@ export type Database = {
         Args: { _company_id: string; _email: string; _role: string }
         Returns: Json
       }
+      company_member_link: {
+        Args: { _company_id: string; _role: string; _user_id: string }
+        Returns: Json
+      }
       company_member_set_active: {
         Args: { _active: boolean; _company_id: string; _member_id: string }
         Returns: Json
@@ -1215,6 +1227,10 @@ export type Database = {
       }
       company_member_set_role: {
         Args: { _company_id: string; _member_id: string; _role: string }
+        Returns: Json
+      }
+      company_member_unlink: {
+        Args: { _company_id: string; _member_id: string }
         Returns: Json
       }
       company_transfer_ownership: {
@@ -1300,24 +1316,15 @@ export type Database = {
         Args: { _company_id: string; _reason: string }
         Returns: undefined
       }
-      staff_add_existing_account: {
-        Args: { _role: string; _user_id: string }
-        Returns: Json
-      }
+      staff_activate: { Args: { _user_id: string }; Returns: Json }
+      staff_add_existing_account: { Args: { _user_id: string }; Returns: Json }
       staff_invite_activate: { Args: { _invite_id: string }; Returns: Json }
       staff_invite_create: {
-        Args: { _email: string; _full_name: string; _role: string }
+        Args: { _email: string; _full_name: string }
         Returns: Json
       }
       staff_invite_revoke: { Args: { _invite_id: string }; Returns: Json }
-      staff_role_apply: {
-        Args: { _mode?: string; _role: string; _user_id: string }
-        Returns: Json
-      }
-      staff_role_remove: {
-        Args: { _role: string; _user_id: string }
-        Returns: Json
-      }
+      staff_remove: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       address_type: "ARMAZENAGEM" | "TECNICO"
