@@ -1197,6 +1197,8 @@ export type Database = {
         Args: { _account_type: string; _user_id: string }
         Returns: Json
       }
+      admin_user_detail: { Args: { _user_id: string }; Returns: Json }
+      admin_users_overview: { Args: { _search?: string }; Returns: Json }
       approve_company: { Args: { _company_id: string }; Returns: undefined }
       assert_within_limit: {
         Args: { _company_id: string; _key: string; _label: string }
@@ -1211,6 +1213,10 @@ export type Database = {
         Args: { _company_id: string; _email: string; _role: string }
         Returns: Json
       }
+      company_member_link: {
+        Args: { _company_id: string; _role: string; _user_id: string }
+        Returns: Json
+      }
       company_member_set_active: {
         Args: { _active: boolean; _company_id: string; _member_id: string }
         Returns: Json
@@ -1221,6 +1227,10 @@ export type Database = {
       }
       company_member_set_role: {
         Args: { _company_id: string; _member_id: string; _role: string }
+        Returns: Json
+      }
+      company_member_unlink: {
+        Args: { _company_id: string; _member_id: string }
         Returns: Json
       }
       company_transfer_ownership: {
