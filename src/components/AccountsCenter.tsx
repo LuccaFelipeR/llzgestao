@@ -1,151 +1,74 @@
-import { useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { sb, rpcOk } from "@/lib/db-any";
-import { useAuth, PLATFORM_ROLE_LABEL } from "@/contexts/AuthContext";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { sb } from "@/lib/db-any";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
-import { UserCheck, UserX, Search, IdCard, Crown } from "lucide-react";
-import { friendlyError } from "@/lib/error-messages";
+import { Search, IdCard, Crown, Building2 } from "lucide-react";
+import UserDetailDialog, {
+  COMPANY_ROLE_LABELS,
+  UserOverviewRow,
+  accountLabel,
+  statusLabel,
+} from "@/components/UserDetailDialog";
 
-const GLOBAL_ROLE_KEYS = ["super_admin", "admin", "platform_admin", "support_agent", "developer"];
-
-/** Papéis globais atribuíveis pela interface — nunca há seleção implícita. */
-const MANAGEABLE_ROLES: { value: string; label: string }[] = [
-  { value: "platform_admin", label: "Administrador da Plataforma" },
-  { value: "support_agent", label: "Suporte" },
-  { value: "developer", label: "Desenvolvedor" },
-];
-
-type Filter = "all" | "pending" | "customers" | "staff" | "blocked";
-
+type Filter = "all" | "pending" | "customers" | "no_company" | "staff" | "blocked";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "Todas" },
   { key: "pending", label: "Pendentes" },
   { key: "customers", label: "Clientes" },
+  { key: "no_company", label: "Sem empresa" },
   { key: "staff", label: "Equipe LLZ" },
   { key: "blocked", label: "Bloqueadas" },
 ];
 
-interface ProfileRow {
-  id: string;
-  email: string | null;
-  full_name: string | null;
-  is_approved: boolean;
-  rejection_reason?: string | null;
-  account_type?: string | null;
-  created_at: string;
+interface Props {
+  /** Abre direto uma pessoa (usado pela Central da Equipe LLZ). */
+  initialUserId?: string | null;
 }
-interface RoleRow { user_id: string; role: string }
-interface MemberRow { user_id: string; is_active: boolean; companies: { name: string } | null }
-interface InviteRow { email: string; status: string; intended_role: string }
 
-export default function AccountsCenter() {
-  const { isPlatformAdmin, isPlatformSuperAdmin } = useAuth();
-  const queryClient = useQueryClient();
+export default function AccountsCenter({ initialUserId }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
-  const [staffTargetId, setStaffTargetId] = useState<string | null>(null);
-  const [staffRole, setStaffRole] = useState<string>("");
+  const [openId, setOpenId] = useState<string | null>(initialUserId ?? null);
+
+  useEffect(() => {
+    if (initialUserId) setOpenId(initialUserId);
+  }, [initialUserId]);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["accounts-center"],
+    queryKey: ["admin-users-overview"],
     queryFn: async () => {
-      const [profilesRes, rolesRes, membersRes, invitesRes] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id, role"),
-        sb.from("company_members").select("user_id, is_active, companies(name)"),
-        sb.from("platform_staff_invites").select("email, status, intended_role"),
-      ]);
-      if (profilesRes.error) throw profilesRes.error;
-      return {
-        profiles: (profilesRes.data ?? []) as ProfileRow[],
-        roles: (rolesRes.data ?? []) as RoleRow[],
-        members: (membersRes.data ?? []) as MemberRow[],
-        invites: (invitesRes.data ?? []) as InviteRow[],
-      };
+      const { data, error } = await sb.rpc("admin_users_overview", { _search: null });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return (data?.items ?? []) as UserOverviewRow[];
     },
   });
 
-  const setApproval = useMutation({
-    mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
-      await rpcOk("account_set_approval", { _user_id: userId, _approved: approved, _reason: null });
-    },
-    onSuccess: (_d, v) => {
-      queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-      toast({ title: v.approved ? "Conta aprovada" : "Conta bloqueada" });
-    },
-    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-  });
-
-  const addToStaff = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      await rpcOk("staff_add_existing_account", { _user_id: userId, _role: role });
-    },
-    onSuccess: (_d, v) => {
-      queryClient.invalidateQueries({ queryKey: ["accounts-center"] });
-      queryClient.invalidateQueries({ queryKey: ["llz-staff-center"] });
-      queryClient.invalidateQueries({ queryKey: ["access-diagnostics"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-      setStaffTargetId(null);
-      setStaffRole("");
-      toast({
-        title: "Conta adicionada à Equipe LLZ",
-        description: `Papel global concedido: ${MANAGEABLE_ROLES.find((r) => r.value === v.role)?.label ?? v.role}.`,
-      });
-    },
-    onError: (e: Error) => toast({ title: "Erro", description: friendlyError(e), variant: "destructive" }),
-  });
-
-
-
-  const rows = useMemo(() => {
-    if (!data) return [];
-    return data.profiles.map((p) => {
-      const roles = data.roles.filter((r) => r.user_id === p.id && GLOBAL_ROLE_KEYS.includes(r.role));
-      const memberships = data.members.filter((m) => m.user_id === p.id);
-      const invite = data.invites.find((i) => (i.email ?? "").toLowerCase() === (p.email ?? "").toLowerCase());
-      return { ...p, roles, memberships, invite };
-    });
-  }, [data]);
-
-  const staffTarget = rows.find((r) => r.id === staffTargetId) ?? null;
-
-
-
-  const filtered = rows.filter((r) => {
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (q && !`${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q)) return false;
-    if (filter === "pending") return !r.is_approved;
-    if (filter === "customers") return r.account_type === "customer";
-    if (filter === "staff") return r.account_type === "llz_staff";
-    if (filter === "blocked") return !r.is_approved && !!r.rejection_reason;
-    return true;
-  });
+    return (data ?? []).filter((r) => {
+      if (q && !`${r.full_name ?? ""} ${r.email ?? ""}`.toLowerCase().includes(q)) return false;
+      if (filter === "pending") return !r.is_approved;
+      if (filter === "customers") return r.account_type !== "llz_staff";
+      if (filter === "no_company") return r.account_type !== "llz_staff" && r.companies.length === 0;
+      if (filter === "staff") return r.account_type === "llz_staff";
+      if (filter === "blocked") return !r.is_approved && !!r.rejection_reason;
+      return true;
+    });
+  }, [data, search, filter]);
 
   return (
     <div className="space-y-3">
       <div className="bg-card border border-border rounded-xl p-4">
         <h3 className="font-semibold text-sm flex items-center gap-2">
-          <IdCard size={16} className="text-primary" /> Central de contas
+          <IdCard size={16} className="text-primary" /> Central de usuários
         </h3>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Visão global de todas as contas. Existem apenas dois tipos: <strong>Cliente</strong> e{" "}
-          <strong>Equipe LLZ</strong>. Membro da Equipe LLZ sem empresa é comportamento normal.
+          Uma pessoa = uma conta. Existem apenas dois tipos: <strong>Cliente</strong> e <strong>Equipe LLZ</strong>.
+          Empresas são vínculos da conta. Cliente sem empresa é estado válido.
         </p>
       </div>
 
@@ -180,177 +103,57 @@ export default function AccountsCenter() {
       )}
 
       <div className="space-y-2">
-        {filtered.map((r) => {
-          const isStaff = r.account_type === "llz_staff";
-          return (
-            <div key={r.id} className="bg-card border border-border rounded-xl p-4 space-y-2">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-sm truncate">{r.full_name || "Sem nome"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{r.email}</p>
-                </div>
-                <div className="flex gap-1 flex-wrap">
-                  <Badge variant="outline" className="text-[10px]">{isStaff ? "Equipe LLZ" : "Cliente"}</Badge>
-                  <Badge variant={r.is_approved ? "secondary" : "outline"} className="text-[10px]">
-                    {r.is_approved ? "Ativo" : "Pendente"}
-                  </Badge>
-                  {!r.is_approved && r.rejection_reason && (
-                    <Badge variant="destructive" className="text-[10px]">Bloqueado</Badge>
-                  )}
-                </div>
+        {filtered.map((r) => (
+          <div key={r.id} className="bg-card border border-border rounded-xl p-4 space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-sm truncate">{r.full_name || "Sem nome"}</p>
+                <p className="text-xs text-muted-foreground truncate">{r.email}</p>
               </div>
-
-              <div className="text-[11px] text-muted-foreground space-y-0.5">
-                <p>Cadastro: {r.created_at ? new Date(r.created_at).toLocaleString("pt-BR") : "—"}</p>
-                {isStaff ? (
-                  <p>
-                    Papéis globais:{" "}
-                    {r.roles.length > 0
-                      ? r.roles.map((x) => PLATFORM_ROLE_LABEL[x.role] ?? x.role).join(", ")
-                      : r.invite?.status === "registered"
-                        ? "Cadastro concluído — aguardando ativação LLZ"
-                        : "Nenhum"}
-                    {" • "}Empresa: Nenhuma (esperado)
-                  </p>
-                ) : (
-                  <p>
-                    Empresas:{" "}
-                    {r.memberships.length > 0
-                      ? r.memberships
-                          .map((m) => `${m.companies?.name ?? "—"}${m.is_active ? "" : " (bloqueado na empresa)"}`)
-                          .join(", ")
-                      : "Nenhuma"}
-                  </p>
-                )}
-                {r.invite && <p>Convite LLZ: {r.invite.status}</p>}
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                {!r.is_approved ? (
-                  <Button
-                    size="sm"
-                    className="h-8 text-xs gap-1"
-                    disabled={!isPlatformAdmin || setApproval.isPending}
-                    onClick={() => setApproval.mutate({ userId: r.id, approved: true })}
-                  >
-                    <UserCheck size={14} /> {r.rejection_reason ? "Reativar conta" : "Aprovar conta"}
-                  </Button>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1"
-                    disabled={!isPlatformAdmin || setApproval.isPending}
-                    onClick={() => setApproval.mutate({ userId: r.id, approved: false })}
-                  >
-                    <UserX size={14} /> Bloquear conta
-                  </Button>
-                )}
-                {!isStaff && r.memberships.length === 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1"
-                    disabled={!isPlatformSuperAdmin || addToStaff.isPending}
-                    onClick={() => { setStaffRole(""); setStaffTargetId(r.id); }}
-                  >
-                    <Crown size={14} /> Adicionar à Equipe LLZ
-                  </Button>
-                )}
-                {!isStaff && r.memberships.length > 0 && (
-                  <span className="text-[11px] text-muted-foreground self-center">
-                    Vinculada a empresa cliente ({r.memberships.map((m) => m.companies?.name ?? "—").join(", ")}) — não
-                    pode virar Equipe LLZ.
-                  </span>
+              <div className="flex gap-1 flex-wrap">
+                <Badge variant="outline" className="text-[10px]">{accountLabel(r)}</Badge>
+                <Badge variant={r.is_approved ? "secondary" : "outline"} className="text-[10px]">
+                  {statusLabel(r)}
+                </Badge>
+                {r.is_super_admin && <Badge className="text-[10px] gap-1"><Crown size={10} /> Super Admin</Badge>}
+                {r.account_type === "llz_staff" && !r.is_staff_active && !r.is_super_admin && (
+                  <Badge variant="outline" className="text-[10px]">Aguardando ativação</Badge>
                 )}
               </div>
-
             </div>
-          );
-        })}
-      </div>
 
-      <Dialog
-        open={!!staffTarget}
-        onOpenChange={(o) => { if (!o) { setStaffTargetId(null); setStaffRole(""); } }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Adicionar à Equipe LLZ</DialogTitle>
-            <DialogDescription>
-              Escolha conscientemente o cargo global. Nenhum cargo é atribuído automaticamente.
-            </DialogDescription>
-          </DialogHeader>
-
-          {staffTarget && (
-            <div className="space-y-3">
-              <div className="border border-border rounded-lg p-3 text-xs space-y-1">
-                <p className="font-semibold text-sm">{staffTarget.full_name || "Sem nome"}</p>
-                <p className="text-muted-foreground">{staffTarget.email}</p>
-                <p className="text-muted-foreground">
-                  Tipo atual: {staffTarget.account_type === "llz_staff" ? "Equipe LLZ" : "Cliente"}
-                </p>
-                {staffTarget.memberships.length === 0 ? (
-                  <p className="text-muted-foreground">Vínculo empresarial: nenhum (confirmado)</p>
-                ) : (
-                  <p className="text-destructive">
-                    Vínculo empresarial: {staffTarget.memberships.map((m) => m.companies?.name ?? "—").join(", ")} —
-                    conversão bloqueada.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Cargo global (obrigatório)</Label>
-                <Select value={staffRole} onValueChange={setStaffRole}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Selecione o cargo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MANAGEABLE_ROLES.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {staffRole && (
-                <p className="text-[11px] text-muted-foreground">
-                  Esta conta passará a ser do tipo Equipe LLZ e receberá acesso global de{" "}
-                  <strong>{MANAGEABLE_ROLES.find((r) => r.value === staffRole)?.label}</strong>. Nenhuma empresa será
-                  criada.
+            <div className="text-[11px] text-muted-foreground space-y-0.5">
+              {r.account_type === "llz_staff" ? (
+                <p>Empresa: Nenhuma (esperado para Equipe LLZ)</p>
+              ) : r.companies.length === 0 ? (
+                <p className="flex items-center gap-1"><Building2 size={11} /> Cliente · Sem empresa</p>
+              ) : (
+                <p className="flex items-center gap-1">
+                  <Building2 size={11} />
+                  {r.companies
+                    .map(
+                      (c) =>
+                        `${c.company} (${COMPANY_ROLE_LABELS[c.role] ?? c.role}${c.is_active ? "" : " · bloqueado"}${
+                          c.is_main_focal_point ? " · ponto focal" : ""
+                        })`,
+                    )
+                    .join(", ")}
                 </p>
               )}
+              <p>
+                Última atividade:{" "}
+                {r.last_activity ? new Date(r.last_activity).toLocaleString("pt-BR") : "sem registro"}
+              </p>
             </div>
-          )}
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => { setStaffTargetId(null); setStaffRole(""); }}
-            >
-              Cancelar
+            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => setOpenId(r.id)}>
+              Abrir e administrar
             </Button>
-            <Button
-              size="sm"
-              className="h-8 text-xs gap-1"
-              disabled={
-                !isPlatformSuperAdmin ||
-                !staffRole ||
-                !staffTarget ||
-                staffTarget.memberships.length > 0 ||
-                addToStaff.isPending
-              }
-              onClick={() => staffTarget && addToStaff.mutate({ userId: staffTarget.id, role: staffRole })}
-            >
-              <Crown size={14} /> Confirmar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        ))}
+      </div>
+
+      <UserDetailDialog userId={openId} onClose={() => setOpenId(null)} />
     </div>
   );
-
 }
