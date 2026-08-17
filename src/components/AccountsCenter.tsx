@@ -9,18 +9,16 @@ import UserDetailDialog, {
   COMPANY_ROLE_LABELS,
   UserOverviewRow,
   accountLabel,
-  statusLabel,
 } from "@/components/UserDetailDialog";
 
-type Filter = "all" | "pending" | "customers" | "no_company" | "staff" | "blocked";
+type Filter = "all" | "pending" | "customers" | "no_company" | "staff";
 
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "Todas" },
-  { key: "pending", label: "Pendentes" },
+  { key: "pending", label: "Sem acesso" },
   { key: "customers", label: "Clientes" },
   { key: "no_company", label: "Sem empresa" },
   { key: "staff", label: "Equipe LLZ" },
-  { key: "blocked", label: "Bloqueadas" },
 ];
 
 interface Props {
@@ -55,7 +53,6 @@ export default function AccountsCenter({ initialUserId }: Props) {
       if (filter === "customers") return r.account_type !== "llz_staff";
       if (filter === "no_company") return r.account_type !== "llz_staff" && r.companies.length === 0;
       if (filter === "staff") return r.account_type === "llz_staff";
-      if (filter === "blocked") return !r.is_approved && !!r.rejection_reason;
       return true;
     });
   }, [data, search, filter]);
@@ -113,7 +110,7 @@ export default function AccountsCenter({ initialUserId }: Props) {
               <div className="flex gap-1 flex-wrap">
                 <Badge variant="outline" className="text-[10px]">{accountLabel(r)}</Badge>
                 <Badge variant={r.is_approved ? "secondary" : "outline"} className="text-[10px]">
-                  {statusLabel(r)}
+                  {r.is_approved ? "Ativo" : "Sem acesso"}
                 </Badge>
                 {r.is_super_admin && <Badge className="text-[10px] gap-1"><Crown size={10} /> Super Admin</Badge>}
                 {r.account_type === "llz_staff" && !r.is_staff_active && !r.is_super_admin && (
