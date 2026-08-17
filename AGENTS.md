@@ -262,3 +262,22 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
   tipo de conta.
 - Trial hoje é apenas rótulo (`status='trial'` + `trial_ends_at`), sem ciclo de
   assinatura. Cobrança/gateway: NOT_IMPLEMENTED (6.19C).
+
+## Fase 6.20 — modelo centrado em conta (identidade)
+
+- Uma pessoa = uma conta. Só existem dois tipos: **Cliente** e **Equipe LLZ**
+  (`profiles.account_type`). Empresa é **vínculo** (`company_members`), nunca
+  identidade. "Cliente sem empresa" é estado válido e visível na interface.
+- Equipe LLZ não tem cargos globais: acesso interno vem de
+  `staff_activated_at` (ou do super admin). `platform_admin`, `support_agent` e
+  `developer` saíram da interface e não devem voltar.
+- Central de usuários (`AccountsCenter` + `UserDetailDialog`) usa
+  `admin_users_overview` / `admin_user_detail` e as RPCs canônicas
+  `company_member_link`, `company_member_unlink`, `company_member_set_role`,
+  `company_member_set_active`, `company_member_set_focal`, `staff_activate`,
+  `staff_remove`, `staff_add_existing_account`, `account_set_approval`.
+  Nenhum INSERT/DELETE direto em `company_members` ou `profiles` pela UI.
+- Exclusão de conta removida do painel: desvincular empresa **nunca** apaga
+  `profiles` nem `auth.users`.
+- Vínculo inativo não é selecionado automaticamente no `CompanyContext`.
+- Super admin não pode ser bloqueado nem removido da equipe pela interface.
