@@ -54,7 +54,7 @@ Cada empresa possui seus dados completamente isolados. Todas as tabelas utilizam
 O administrador pode bloquear/desbloquear abas específicas por usuário, controlando exatamente quais funcionalidades cada pessoa acessa.
 
 **Equipe LLZ (papéis globais):**
-Os papéis globais (super_admin, platform_admin, support_agent, developer) são concedidos em user_roles. Toda a equipe entra pelo login normal, com e-mail e senha individuais — não existe atalho de acesso automático.
+A Equipe LLZ é um tipo de conta (account_type = llz_staff) ativada pelo super administrador; não existem cargos globais adicionais. Toda a equipe entra pelo login normal, com e-mail e senha individuais — não existe atalho de acesso automático.
 
 
 **Segurança:**

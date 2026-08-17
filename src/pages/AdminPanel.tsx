@@ -47,8 +47,8 @@ export default function AdminPanel() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<"companies" | "deployments" | "accounts" | "companyUsers" | "platform" | "activity" | "audit" | "system">("companies");
   const [usersCenterCompanyId, setUsersCenterCompanyId] = useState<string | null>(null);
+  const [focusUserId, setFocusUserId] = useState<string | null>(null);
   const [permDialogUser, setPermDialogUser] = useState<any>(null);
-  const [deleteDialogUser, setDeleteDialogUser] = useState<any>(null);
   const [editCompany, setEditCompany] = useState<any>(null);
   const [editCompanyName, setEditCompanyName] = useState("");
   const [deleteCompany, setDeleteCompany] = useState<any>(null);
@@ -316,27 +316,6 @@ export default function AdminPanel() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      // Delete user_roles, tab_permissions, company_members, profile
-      await Promise.all([
-        supabase.from("user_roles").delete().eq("user_id", userId),
-        supabase.from("user_tab_permissions").delete().eq("user_id", userId),
-        supabase.from("company_members").delete().eq("user_id", userId),
-      ]);
-      const { error } = await supabase.from("profiles").delete().eq("id", userId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-profiles"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-tab-permissions"] });
-      toast({ title: "Usuário excluído" });
-      setDeleteDialogUser(null);
-    },
-    onError: (e: Error) => toast({ title: "Erro ao excluir", description: friendlyError(e), variant: "destructive" }),
-  });
-
   const permMutation = useMutation({
     mutationFn: async ({ userId, tabKey, allowed }: { userId: string; tabKey: string; allowed: boolean }) => {
       if (allowed) {
@@ -410,7 +389,7 @@ export default function AdminPanel() {
       {/* Contas (visão global de todas as contas) */}
       {tab === "deployments" && <DeploymentCenter />}
 
-      {tab === "accounts" && <AccountsCenter />}
+      {tab === "accounts" && <AccountsCenter initialUserId={focusUserId} />}
 
       {/* Usuários das Empresas (cargos empresariais + diagnóstico) */}
       {tab === "companyUsers" && (
@@ -448,7 +427,9 @@ export default function AdminPanel() {
       )}
 
       {/* Equipe LLZ (papéis GLOBAIS da plataforma + convites) */}
-      {tab === "platform" && <PlatformStaffCenter />}
+      {tab === "platform" && (
+        <PlatformStaffCenter onOpenUser={(id) => { setFocusUserId(id); setTab("accounts"); }} />
+      )}
 
 
       {/* Audit Tab */}
@@ -688,27 +669,6 @@ export default function AdminPanel() {
                 </label>
               );
             })}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteDialogUser} onOpenChange={(o) => !o && setDeleteDialogUser(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle size={18} /> Excluir Usuário
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Tem certeza que deseja excluir <strong>{deleteDialogUser?.full_name || deleteDialogUser?.email}</strong>?
-            Esta ação remove o perfil, permissões e dados de acesso. Não pode ser desfeita.
-          </p>
-          <div className="flex gap-3 mt-4">
-            <Button variant="outline" className="flex-1" onClick={() => setDeleteDialogUser(null)}>Cancelar</Button>
-            <Button variant="destructive" className="flex-1" onClick={() => deleteMutation.mutate(deleteDialogUser.id)} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending ? "Excluindo..." : "Excluir"}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
