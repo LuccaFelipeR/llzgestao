@@ -123,11 +123,11 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       // Memberships of this user
       const { data: memberships } = await (supabase as any)
         .from("company_members")
-        .select("company_id, role, is_main_focal_point, companies(id,name)")
+        .select("company_id, role, is_main_focal_point, is_active, companies(id,name)")
         .eq("user_id", user.id);
 
       let available: AvailableCompany[] = (memberships ?? [])
-        .filter((m: any) => m.companies)
+        .filter((m: any) => m.companies && m.is_active !== false)
         .map((m: any) => ({
           id: m.company_id,
           name: m.companies?.name ?? "—",
