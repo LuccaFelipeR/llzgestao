@@ -33,19 +33,43 @@ serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey);
     const { type, companyId: overrideCompanyId, scope } = await req.json();
 
-    // Check role
-    const { data: roleRow } = await admin.from("user_roles").select("role").eq("user_id", callerId).eq("role", "admin").maybeSingle();
-    const isSuperAdmin = !!roleRow;
+    // Autorização canônica (Fase 6.21): equipe LLZ vem de is_platform_staff,
+    // nunca de leitura direta de papéis legados em user_roles.
+    const { data: staffFlag } = await admin.rpc("is_platform_staff", { _user_id: callerId });
+    const isStaff = staffFlag === true;
 
     // Resolve target company
     let companyId: string | null = null;
     let globalView = false;
-    if (isSuperAdmin && scope === "global") {
+    if (isStaff && scope === "global") {
       globalView = true;
-    } else if (isSuperAdmin && overrideCompanyId) {
+    } else if (isStaff && overrideCompanyId) {
+      companyId = overrideCompanyId;
+    } else if (overrideCompanyId) {
+      // Cliente: a empresa selecionada é respeitada, mas só depois de provar
+      // a membership ativa do chamador (fronteira de tenant no backend).
+      const { data: allowed } = await admin
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", callerId)
+        .eq("company_id", overrideCompanyId)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Empresa não vinculada à sua conta." }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       companyId = overrideCompanyId;
     } else {
-      const { data: member } = await admin.from("company_members").select("company_id").eq("user_id", callerId).order("created_at", { ascending: true }).limit(1).maybeSingle();
+      const { data: member } = await admin
+        .from("company_members")
+        .select("company_id")
+        .eq("user_id", callerId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
       companyId = member?.company_id ?? null;
     }
 
@@ -54,6 +78,21 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Entitlement validado no backend — o gate visual do frontend não basta.
+    if (!globalView && companyId) {
+      const { data: hasAi } = await admin.rpc("has_feature", {
+        _company_id: companyId,
+        _feature: "ai_insights",
+      });
+      if (hasAi !== true) {
+        return new Response(
+          JSON.stringify({ error: "O plano atual da empresa não inclui IA Insights." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+    }
+
 
     // ===== Gather data (scoped) =====
     const scoped = (q: any) => globalView ? q : q.eq("company_id", companyId);
