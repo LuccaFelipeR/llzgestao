@@ -43,7 +43,13 @@ export default function AIInsights() {
       if (isSuperAdmin) {
         if (effectiveScope === "global") body.scope = "global";
         else if (effectiveScope !== "current") body.companyId = effectiveScope;
+        else if (currentCompanyId) body.companyId = currentCompanyId;
+      } else if (currentCompanyId) {
+        // Fase 6.21: a empresa analisada é sempre a selecionada no contexto.
+        // O backend revalida a membership antes de aceitar.
+        body.companyId = currentCompanyId;
       }
+
 
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-insights`, {
         method: "POST",
