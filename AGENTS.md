@@ -281,3 +281,33 @@ problemas visuais, gaps de onboarding e oportunidades comerciais.
   `profiles` nem `auth.users`.
 - Vínculo inativo não é selecionado automaticamente no `CompanyContext`.
 - Super admin não pode ser bloqueado nem removido da equipe pela interface.
+
+## Fase 6.21 — auditoria forense integral e consolidação segura
+
+- **Fonte única de verdade agora é documental e obrigatória:**
+  `docs/CANONICAL_ARCHITECTURE_6_21.md`. Em conflito entre código, banco e
+  documentação, vale esse arquivo. Achados com evidência em
+  `docs/STRUCTURAL_AUDIT_6_21.md`; legado → canônico em
+  `docs/LEGACY_DEPRECATION_MAP_6_21.md`.
+- **Edge Functions:** autorização de equipe LLZ vem de `is_platform_staff`,
+  nunca de leitura direta de `user_roles`. A empresa alvo é sempre revalidada
+  contra `company_members` do chamador — proibido `limit(1)` na membership.
+  Entitlement é validado no backend (`has_feature`), não só na tela.
+- **Nenhuma função `SECURITY DEFINER` do schema `public` é executável por
+  `anon`.** Ao criar uma nova, revogue `EXECUTE` de `anon` e `PUBLIC`.
+- **Cobertura real de testes:** os 34 testes são unitários e puros. RLS,
+  integração, Edge Functions e E2E multiempresa **não** têm teste automatizado.
+  Não afirmar isolamento multi-tenant como "validado por teste".
+
+### Dívidas abertas que exigem aprovação humana (não corrigir sem pedir)
+
+F-01 papel legado `admin` ainda vale como super admin (2 contas de staff
+afetadas) · F-02 papéis de empresa (`supervisor`) gravados na tabela global
+`user_roles` (3 contas cliente) · F-03 `PLATFORM_ROLES` no `AuthContext` como
+segunda porta de acesso · F-07 dois parsers de endereço divergentes com dados
+reais nos dois formatos · F-08 lote/validade validados só no Recebimento
+Guiado · F-09 picking e criação de listas não atômicos · F-10 `AdminPanel`
+grava direto em `company_members` e faz `companies.delete()` · F-11 gate de
+plano só em IA Insights · F-12 operador empurrado ao onboarding que não pode
+concluir · F-14 `user_tab_permissions` sem `company_id` · F-15
+`ConversationalSearch` com lista própria de rotas.
